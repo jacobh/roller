@@ -1,5 +1,5 @@
 pub mod ola {
-    include!(concat!(env!("OUT_DIR"), "/ola.proto.rs"));
+    tonic::include_proto!("ola.proto");
 }
 
 fn main() {
