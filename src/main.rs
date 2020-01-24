@@ -11,6 +11,10 @@ pub mod ola {
     include!(concat!(env!("OUT_DIR"), "/ola.proto.rs"));
 }
 
+mod ola_rpc {
+    include!(concat!(env!("OUT_DIR"), "/ola.rpc.rs"));
+}
+
 struct OlaClient {
     stream: TcpStream,
 }
