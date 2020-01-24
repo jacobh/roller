@@ -1,10 +1,3 @@
-use ola::ola_server_service_client::OlaServerServiceClient;
-use ola::DmxData;
-
-pub mod ola {
-    tonic::include_proto!("ola.proto");
-}
-
 fn pad_512(mut vec: Vec<u8>) -> Vec<u8> {
     while vec.len() < 512 {
         vec.push(0)
@@ -12,29 +5,22 @@ fn pad_512(mut vec: Vec<u8>) -> Vec<u8> {
     vec
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut client = OlaServerServiceClient::connect("http://127.0.0.1:9010").await?;
+pub mod ola {
+    include!(concat!(env!("OUT_DIR"), "/ola.proto.rs"));
+}
 
-    loop {
-        println!("red");
-        client.stream_dmx_data(DmxData {
-            universe: 10,
-            data: pad_512(vec![255, 0, 0, 0]),
-            priority: Some(1),
-        }).await?;
+fn main() {
+    let _red = ola::DmxData {
+        universe: 10,
+        data: pad_512(vec![255, 0, 0, 0]),
+        priority: Some(1),
+    };
 
-        std::thread::sleep(std::time::Duration::from_secs(1));
+    let _blue = ola::DmxData {
+        universe: 10,
+        data: pad_512(vec![0, 0, 255, 0]),
+        priority: Some(1),
+    };
 
-        println!("blue");
-        client.stream_dmx_data(DmxData {
-            universe: 10,
-            data: pad_512(vec![0, 255, 0, 0]),
-            priority: Some(1),
-        }).await?;
-
-        std::thread::sleep(std::time::Duration::from_secs(1));
-    }
-
-    Ok(())
+    println!("Hello, world!");
 }
