@@ -16,6 +16,11 @@ mod ola_rpc {
     include!(concat!(env!("OUT_DIR"), "/ola.rpc.rs"));
 }
 
+const PROTOCOL_VERSION: u32 = 1;
+const VERSION_MASK: u32 = 0xf0000000;
+const SIZE_MASK: u32 = 0x0fffffff;
+const RECEIVE_BUFFER_SIZE: usize = 8192;
+
 struct OlaClient {
     stream: TcpStream,
     sequence: usize,
