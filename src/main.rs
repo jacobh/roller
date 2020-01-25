@@ -2,6 +2,7 @@ use async_std::prelude::*;
 
 mod ola_client;
 mod fixture;
+mod project;
 
 fn pad_512(mut vec: Vec<u8>) -> Vec<u8> {
     while vec.len() < 512 {

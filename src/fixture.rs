@@ -15,5 +15,6 @@ enum FixtureProfileChannel {
 struct FixtureProfile {
     slug: String,
     label: String,
+    channel_count: usize,
     channels: Vec<FixtureProfileChannel>
 }
