@@ -8,7 +8,7 @@ enum FixtureProfileChannel {
     CoolWhite,
     Pan,
     Tilt,
-    Unused
+    Unused,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -16,5 +16,5 @@ struct FixtureProfile {
     slug: String,
     label: String,
     channel_count: usize,
-    channels: Vec<FixtureProfileChannel>
+    channels: Vec<FixtureProfileChannel>,
 }

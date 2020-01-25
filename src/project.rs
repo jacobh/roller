@@ -9,11 +9,11 @@ struct ProjectFixture {
 #[derive(Debug, Clone, Deserialize)]
 struct ProjectUniverse {
     universe_id: usize,
-    fixtures: Vec<ProjectFixture>
+    fixtures: Vec<ProjectFixture>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 struct Project {
     label: String,
-    universes: Vec<ProjectUniverse>
+    universes: Vec<ProjectUniverse>,
 }
