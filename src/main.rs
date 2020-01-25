@@ -32,6 +32,12 @@ fn new_header(length: usize) -> [u8; 4] {
     header_u32.to_le_bytes()
 }
 
+fn serialize_message(message: impl prost::Message) -> Result<Vec<u8>, prost::EncodeError> {
+    let mut buf = Vec::<u8>::new();
+    message.encode(&mut buf)?;
+    Ok(buf)
+}
+
 struct OlaClient {
     stream: TcpStream,
     sequence: usize,
@@ -60,15 +66,17 @@ impl OlaClient {
         OlaClient::connect("localhost:9010").await
     }
 
+    fn iterate_sequence(&mut self) -> usize {
+        let out = self.sequence.clone();
+        self.sequence += 1;
+        out
+    }
+
     async fn send_message(
         &mut self,
         message: ola_rpc::RpcMessage,
     ) -> Result<(), async_std::io::Error> {
-        let serialized_message = {
-            let mut buf = Vec::<u8>::new();
-            message.encode(&mut buf)?;
-            buf
-        };
+        let serialized_message = serialize_message(message)?;
 
         let mut bytes = new_header(serialized_message.len()).to_vec();
         bytes.extend(serialized_message);
@@ -76,6 +84,21 @@ impl OlaClient {
         self.stream.write_all(&bytes).await?;
 
         Ok(())
+    }
+
+    async fn call_method(
+        &mut self,
+        method_name: impl Into<String>,
+        request: impl prost::Message,
+    ) -> Result<(), async_std::io::Error> {
+        let message = ola_rpc::RpcMessage {
+            r#type: ola_rpc::Type::Request as i32,
+            id: Some(self.iterate_sequence() as u32),
+            name: Some(method_name.into()),
+            buffer: Some(serialize_message(request)?),
+        };
+
+        self.send_message(message).await
     }
 }
 
