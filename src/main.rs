@@ -1,4 +1,5 @@
 use async_std::net::{TcpStream, ToSocketAddrs};
+use std::collections::HashMap;
 
 fn pad_512(mut vec: Vec<u8>) -> Vec<u8> {
     while vec.len() < 512 {
@@ -17,11 +18,23 @@ mod ola_rpc {
 
 struct OlaClient {
     stream: TcpStream,
+    sequence: usize,
+    outstanding_requests: HashMap<usize, Box<dyn prost::Message>>,
+    outstanding_responses: HashMap<usize, Box<dyn prost::Message>>,
+    received_bytes_buffer: Vec<u8>,
+    current_message_expected_size: Option<usize>,
+    skip_current_message: bool,
 }
 impl OlaClient {
     async fn connect(host: impl ToSocketAddrs) -> Result<OlaClient, async_std::io::Error> {
         Ok(OlaClient {
             stream: TcpStream::connect(host).await?,
+            sequence: 0,
+            outstanding_requests: HashMap::new(),
+            outstanding_responses: HashMap::new(),
+            received_bytes_buffer: vec![],
+            current_message_expected_size: None,
+            skip_current_message: false,
         })
     }
     async fn connect_localhost() -> Result<OlaClient, async_std::io::Error> {
