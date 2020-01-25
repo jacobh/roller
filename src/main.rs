@@ -1,4 +1,9 @@
-use async_std::net::{TcpStream, ToSocketAddrs};
+use async_std::{
+    net::{TcpStream, ToSocketAddrs},
+    prelude::*,
+};
+use byteorder::{ByteOrder, LittleEndian};
+use prost::Message;
 use std::collections::HashMap;
 
 fn pad_512(mut vec: Vec<u8>) -> Vec<u8> {
@@ -21,6 +26,15 @@ const VERSION_MASK: u32 = 0xf0000000;
 const SIZE_MASK: u32 = 0x0fffffff;
 const RECEIVE_BUFFER_SIZE: usize = 8192;
 
+fn new_header(length: usize) -> [u8; 4] {
+    let length = length as u32;
+    let header_u32 = ((PROTOCOL_VERSION << 28) & VERSION_MASK) | (length & SIZE_MASK);
+
+    let mut buf = [0; 4];
+    LittleEndian::write_u32(&mut buf, header_u32);
+    buf
+}
+
 struct OlaClient {
     stream: TcpStream,
     sequence: usize,
@@ -32,8 +46,11 @@ struct OlaClient {
 }
 impl OlaClient {
     async fn connect(host: impl ToSocketAddrs) -> Result<OlaClient, async_std::io::Error> {
+        let stream = TcpStream::connect(host).await?;
+        stream.set_nodelay(true)?;
+
         Ok(OlaClient {
-            stream: TcpStream::connect(host).await?,
+            stream: stream,
             sequence: 0,
             outstanding_requests: HashMap::new(),
             outstanding_responses: HashMap::new(),
@@ -44,6 +61,24 @@ impl OlaClient {
     }
     async fn connect_localhost() -> Result<OlaClient, async_std::io::Error> {
         OlaClient::connect("localhost:9010").await
+    }
+
+    async fn send_message(
+        &mut self,
+        message: ola_rpc::RpcMessage,
+    ) -> Result<(), async_std::io::Error> {
+        let serialized_message = {
+            let mut buf = Vec::<u8>::new();
+            message.encode(&mut buf)?;
+            buf
+        };
+
+        let mut bytes = new_header(serialized_message.len()).to_vec();
+        bytes.extend(serialized_message);
+
+        self.stream.write_all(&bytes).await?;
+
+        Ok(())
     }
 }
 
