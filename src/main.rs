@@ -2,7 +2,6 @@ use async_std::{
     net::{TcpStream, ToSocketAddrs},
     prelude::*,
 };
-use byteorder::{ByteOrder, LittleEndian};
 use prost::Message;
 use std::collections::HashMap;
 
@@ -30,9 +29,7 @@ fn new_header(length: usize) -> [u8; 4] {
     let length = length as u32;
     let header_u32 = ((PROTOCOL_VERSION << 28) & VERSION_MASK) | (length & SIZE_MASK);
 
-    let mut buf = [0; 4];
-    LittleEndian::write_u32(&mut buf, header_u32);
-    buf
+    header_u32.to_le_bytes()
 }
 
 struct OlaClient {
