@@ -5,6 +5,10 @@ use async_std::{
 use prost::Message;
 use std::collections::HashMap;
 
+mod ola {
+    include!(concat!(env!("OUT_DIR"), "/ola.proto.rs"));
+}
+
 mod ola_rpc {
     include!(concat!(env!("OUT_DIR"), "/ola.rpc.rs"));
 }
@@ -98,7 +102,7 @@ impl OlaClient {
         universe: i32,
         dmx_data: impl Into<Vec<u8>>,
     ) -> Result<(), async_std::io::Error> {
-        let message = crate::ola::DmxData {
+        let message = ola::DmxData {
             universe: universe,
             data: dmx_data.into(),
             priority: Some(1),

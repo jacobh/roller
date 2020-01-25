@@ -1,6 +1,5 @@
 use async_std::prelude::*;
 
-mod ola;
 mod ola_client;
 mod fixture;
 
