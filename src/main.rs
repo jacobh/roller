@@ -86,11 +86,14 @@ impl OlaClient {
         Ok(())
     }
 
-    async fn call_stream_method(
+    async fn call_stream_method<T>(
         &mut self,
         method_name: impl Into<String>,
-        request: impl prost::Message,
-    ) -> Result<(), async_std::io::Error> {
+        request: T,
+    ) -> Result<(), async_std::io::Error>
+    where
+        T: prost::Message,
+    {
         let message = ola_rpc::RpcMessage {
             r#type: ola_rpc::Type::StreamRequest as i32,
             id: Some(self.iterate_sequence() as u32),
@@ -120,11 +123,15 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     loop {
         println!("red");
-        ola_client.call_stream_method("StreamDmxData", red.clone()).await?;
+        ola_client
+            .call_stream_method("StreamDmxData", red.clone())
+            .await?;
         async_std::task::sleep(std::time::Duration::from_millis(100)).await;
-        
+
         println!("blue");
-        ola_client.call_stream_method("StreamDmxData", blue.clone()).await?;
+        ola_client
+            .call_stream_method("StreamDmxData", blue.clone())
+            .await?;
         async_std::task::sleep(std::time::Duration::from_millis(100)).await;
     }
 
