@@ -2,8 +2,6 @@ use async_std::{
     net::{TcpStream, ToSocketAddrs},
     prelude::*,
 };
-use prost::Message;
-use std::collections::HashMap;
 
 mod ola {
     include!(concat!(env!("OUT_DIR"), "/ola.proto.rs"));
@@ -16,7 +14,6 @@ mod ola_rpc {
 const PROTOCOL_VERSION: u32 = 1;
 const VERSION_MASK: u32 = 0xf0000000;
 const SIZE_MASK: u32 = 0x0fffffff;
-const RECEIVE_BUFFER_SIZE: usize = 8192;
 
 fn new_header(length: usize) -> [u8; 4] {
     let length = length as u32;
@@ -34,11 +31,6 @@ fn serialize_message(message: impl prost::Message) -> Result<Vec<u8>, prost::Enc
 pub struct OlaClient {
     stream: TcpStream,
     sequence: usize,
-    outstanding_requests: HashMap<usize, Box<dyn prost::Message>>,
-    outstanding_responses: HashMap<usize, Box<dyn prost::Message>>,
-    received_bytes_buffer: Vec<u8>,
-    current_message_expected_size: Option<usize>,
-    skip_current_message: bool,
 }
 impl OlaClient {
     pub async fn connect(host: impl ToSocketAddrs) -> Result<OlaClient, async_std::io::Error> {
@@ -48,11 +40,6 @@ impl OlaClient {
         Ok(OlaClient {
             stream: stream,
             sequence: 0,
-            outstanding_requests: HashMap::new(),
-            outstanding_responses: HashMap::new(),
-            received_bytes_buffer: vec![],
-            current_message_expected_size: None,
-            skip_current_message: false,
         })
     }
     pub async fn connect_localhost() -> Result<OlaClient, async_std::io::Error> {
