@@ -86,13 +86,13 @@ impl OlaClient {
         Ok(())
     }
 
-    async fn call_method(
+    async fn call_stream_method(
         &mut self,
         method_name: impl Into<String>,
         request: impl prost::Message,
     ) -> Result<(), async_std::io::Error> {
         let message = ola_rpc::RpcMessage {
-            r#type: ola_rpc::Type::Request as i32,
+            r#type: ola_rpc::Type::StreamRequest as i32,
             id: Some(self.iterate_sequence() as u32),
             name: Some(method_name.into()),
             buffer: Some(serialize_message(request)?),
@@ -102,18 +102,31 @@ impl OlaClient {
     }
 }
 
-fn main() {
-    let _red = ola::DmxData {
+#[async_std::main]
+async fn main() -> Result<(), async_std::io::Error> {
+    let red = ola::DmxData {
         universe: 10,
         data: pad_512(vec![255, 0, 0, 0]),
         priority: Some(1),
     };
 
-    let _blue = ola::DmxData {
+    let blue = ola::DmxData {
         universe: 10,
         data: pad_512(vec![0, 0, 255, 0]),
         priority: Some(1),
     };
 
-    println!("Hello, world!");
+    let mut ola_client = OlaClient::connect_localhost().await?;
+
+    loop {
+        println!("red");
+        ola_client.call_stream_method("StreamDmxData", red.clone()).await?;
+        async_std::task::sleep(std::time::Duration::from_millis(100)).await;
+        
+        println!("blue");
+        ola_client.call_stream_method("StreamDmxData", blue.clone()).await?;
+        async_std::task::sleep(std::time::Duration::from_millis(100)).await;
+    }
+
+    Ok(())
 }
