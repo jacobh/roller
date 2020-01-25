@@ -75,7 +75,7 @@ impl OlaClient {
         Ok(())
     }
 
-    pub async fn call_stream_method<T>(
+    async fn call_stream_method<T>(
         &mut self,
         method_name: impl Into<String>,
         request: T,
@@ -91,5 +91,19 @@ impl OlaClient {
         };
 
         self.send_message(message).await
+    }
+
+    pub async fn send_dmx_data(
+        &mut self,
+        universe: i32,
+        dmx_data: impl Into<Vec<u8>>,
+    ) -> Result<(), async_std::io::Error> {
+        let message = crate::ola::DmxData {
+            universe: universe,
+            data: dmx_data.into(),
+            priority: Some(1),
+        };
+
+        self.call_stream_method("StreamDmxData", message).await
     }
 }
