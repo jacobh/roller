@@ -1,0 +1,13 @@
+slug = "ebay_par_can"
+label = "eBay Par Can"
+channel_count = 8
+channels = [
+    "dimmer",
+    "red",
+    "blue",
+    "green",
+    "unused",
+    "unused",
+    "unused",
+    "unused",
+]

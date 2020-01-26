@@ -1,0 +1,19 @@
+slug = "mini_led_moving_head"
+label = "Mini LED Moving Head"
+channel_count = 14
+channels = [
+    "pan",
+    "unused", # pan fine
+    "tilt",
+    "unused", # tilt fine
+    "dimmer",
+    "unused", # x/y speed
+    "red",
+    "blue",
+    "green",
+    "cool_white",
+    "unused",
+    "unused",
+    "unused",
+    "unused",
+]

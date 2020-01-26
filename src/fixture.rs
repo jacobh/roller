@@ -2,6 +2,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Clone, Copy, Deserialize)]
 enum FixtureProfileChannel {
+    Dimmer,
     Red,
     Green,
     Blue,

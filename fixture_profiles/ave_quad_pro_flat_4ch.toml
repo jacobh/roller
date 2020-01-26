@@ -1,0 +1,9 @@
+slug = "ave_quad_pro_flat_4ch"
+label = "AVE Quad Pro Flat 4ch"
+channel_count = 4
+channels = [
+    "red",
+    "green",
+    "blue",
+    "cool_white",
+]
