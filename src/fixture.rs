@@ -23,6 +23,9 @@ pub struct FixtureProfile {
     channels: Vec<FixtureProfileChannel>,
 }
 impl FixtureProfile {
+    fn is_dimmable(&self) -> bool {
+        self.channels.contains(&FixtureProfileChannel::Dimmer)
+    }
     fn is_colorable(&self) -> bool {
         self.channels.contains(&FixtureProfileChannel::Red)
             && self.channels.contains(&FixtureProfileChannel::Green)
@@ -31,6 +34,9 @@ impl FixtureProfile {
     fn is_positionable(&self) -> bool {
         self.channels.contains(&FixtureProfileChannel::Tilt)
             && self.channels.contains(&FixtureProfileChannel::Pan)
+    }
+    fn channel_index(&self, channel: FixtureProfileChannel) -> Option<usize> {
+        self.channels.iter().position(|x| *x == channel)
     }
 }
 
@@ -71,10 +77,10 @@ impl Fixture {
             position: None,
         }
     }
-    fn set_dimmer(&mut self, dimmer: f64) {
+    pub fn set_dimmer(&mut self, dimmer: f64) {
         self.dimmer = dimmer;
     }
-    fn set_color(&mut self, color: (u8, u8, u8)) -> Result<(), &'static str> {
+    pub fn set_color(&mut self, color: (u8, u8, u8)) -> Result<(), &'static str> {
         if self.profile.is_colorable() {
             self.color = Some(color);
             Ok(())
@@ -82,12 +88,56 @@ impl Fixture {
             Err("Unable to set color. profile does not support it")
         }
     }
-    fn set_position(&mut self, position: (f64, f64)) -> Result<(), &'static str> {
+    pub fn set_position(&mut self, position: (f64, f64)) -> Result<(), &'static str> {
         if self.profile.is_positionable() {
             self.position = Some(position);
             Ok(())
         } else {
             Err("Unable to set position. profile does not support it")
         }
+    }
+    pub fn relative_dmx(&self) -> Vec<u8> {
+        let mut dmx: Vec<u8> = (0..self.profile.channel_count).map(|_| 0).collect();
+
+        if self.profile.is_dimmable() {
+            dmx[self
+                .profile
+                .channel_index(FixtureProfileChannel::Dimmer)
+                .unwrap()] = (255 as f64 * self.dimmer) as u8;
+        }
+
+        if let Some(color) = self.color {
+            let (mut red, mut blue, mut green) = color;
+
+            // If light doesn't have dimmer control, scale the color values instead
+            if !self.profile.is_dimmable() {
+                red = (red as f64 * self.dimmer) as u8;
+                blue = (blue as f64 * self.dimmer) as u8;
+                green = (green as f64 * self.dimmer) as u8;
+            }
+
+            dmx[self
+                .profile
+                .channel_index(FixtureProfileChannel::Red)
+                .unwrap()] = red;
+            dmx[self
+                .profile
+                .channel_index(FixtureProfileChannel::Blue)
+                .unwrap()] = blue;
+            dmx[self
+                .profile
+                .channel_index(FixtureProfileChannel::Green)
+                .unwrap()] = green;
+        }
+
+        // TODO positions
+
+        dmx
+    }
+    pub fn absolute_dmx(&self) -> Vec<Option<u8>> {
+        (0..self.start_channel)
+            .map(|_| None)
+            .chain(self.relative_dmx().into_iter().map(Some))
+            .collect()
     }
 }
