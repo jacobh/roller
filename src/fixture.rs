@@ -23,6 +23,12 @@ pub struct FixtureProfile {
     channels: Vec<FixtureProfileChannel>,
 }
 impl FixtureProfile {
+    pub async fn load(
+        path: impl AsRef<async_std::path::Path>,
+    ) -> Result<FixtureProfile, async_std::io::Error> {
+        let fixture_profile_contents = async_std::fs::read(path).await?;
+        Ok(toml::from_slice(&fixture_profile_contents)?)
+    }
     pub fn is_dimmable(&self) -> bool {
         self.channels.contains(&FixtureProfileChannel::Dimmer)
     }
@@ -47,9 +53,8 @@ pub async fn load_fixture_profiles(
     let mut fixture_profiles = HashMap::new();
     while let Some(entry) = profile_paths.next().await {
         let path = entry?.path();
-        let fixture_profile_contents = async_std::fs::read(path).await?;
 
-        let fixture_profile: FixtureProfile = toml::from_slice(&fixture_profile_contents)?;
+        let fixture_profile = FixtureProfile::load(path).await?;
         fixture_profiles.insert(fixture_profile.slug.clone(), Arc::new(fixture_profile));
     }
 
