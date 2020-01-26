@@ -4,8 +4,8 @@ channel_count = 8
 channels = [
     "dimmer",
     "red",
-    "blue",
     "green",
+    "blue",
     "unused",
     "unused",
     "unused",

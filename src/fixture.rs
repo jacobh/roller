@@ -107,13 +107,13 @@ impl Fixture {
         }
 
         if let Some(color) = self.color {
-            let (mut red, mut blue, mut green) = color;
+            let (mut red, mut green, mut blue) = color;
 
             // If light doesn't have dimmer control, scale the color values instead
             if !self.profile.is_dimmable() {
                 red = (red as f64 * self.dimmer) as u8;
-                blue = (blue as f64 * self.dimmer) as u8;
                 green = (green as f64 * self.dimmer) as u8;
+                blue = (blue as f64 * self.dimmer) as u8;
             }
 
             dmx[self
@@ -122,12 +122,12 @@ impl Fixture {
                 .unwrap()] = red;
             dmx[self
                 .profile
-                .channel_index(FixtureProfileChannel::Blue)
-                .unwrap()] = blue;
-            dmx[self
-                .profile
                 .channel_index(FixtureProfileChannel::Green)
                 .unwrap()] = green;
+            dmx[self
+                .profile
+                .channel_index(FixtureProfileChannel::Blue)
+                .unwrap()] = blue;
         }
 
         // TODO positions
@@ -135,7 +135,7 @@ impl Fixture {
         dmx
     }
     pub fn absolute_dmx(&self) -> Vec<Option<u8>> {
-        (0..self.start_channel)
+        (0..(self.start_channel-1))
             .map(|_| None)
             .chain(self.relative_dmx().into_iter().map(Some))
             .collect()

@@ -6,11 +6,11 @@ channels = [
     "unused", # pan fine
     "tilt",
     "unused", # tilt fine
-    "dimmer",
     "unused", # x/y speed
+    "dimmer",
     "red",
-    "blue",
     "green",
+    "blue",
     "cool_white",
     "unused",
     "unused",
