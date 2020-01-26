@@ -1,4 +1,4 @@
-use async_std::prelude::*;
+use async_std::{prelude::*, sync::Arc};
 use serde::Deserialize;
 use std::collections::HashMap;
 
@@ -34,8 +34,8 @@ impl FixtureProfile {
     }
 }
 
-pub async fn load_fixture_profiles() -> Result<HashMap<String, FixtureProfile>, async_std::io::Error>
-{
+pub async fn load_fixture_profiles(
+) -> Result<HashMap<String, Arc<FixtureProfile>>, async_std::io::Error> {
     let mut profile_paths = async_std::fs::read_dir("./fixture_profiles").await?;
 
     let mut fixture_profiles = HashMap::new();
@@ -44,15 +44,15 @@ pub async fn load_fixture_profiles() -> Result<HashMap<String, FixtureProfile>, 
         let fixture_profile_contents = async_std::fs::read(path).await?;
 
         let fixture_profile: FixtureProfile = toml::from_slice(&fixture_profile_contents)?;
-        fixture_profiles.insert(fixture_profile.slug.clone(), fixture_profile);
+        fixture_profiles.insert(fixture_profile.slug.clone(), Arc::new(fixture_profile));
     }
 
     Ok(fixture_profiles)
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Fixture {
-    profile: FixtureProfile,
+    profile: Arc<FixtureProfile>,
     universe: usize,
     start_channel: usize,
 
@@ -61,7 +61,7 @@ pub struct Fixture {
     position: Option<(f64, f64)>, // -1.0 - +1.0
 }
 impl Fixture {
-    pub fn new(profile: FixtureProfile, universe: usize, start_channel: usize) -> Fixture {
+    pub fn new(profile: Arc<FixtureProfile>, universe: usize, start_channel: usize) -> Fixture {
         Fixture {
             profile,
             universe,
