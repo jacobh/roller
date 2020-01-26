@@ -23,7 +23,7 @@ fn fold_fixture_dmx_data<'a>(fixtures: impl Iterator<Item = &'a fixture::Fixture
     }
 
     dmx_data
-} 
+}
 
 #[async_std::main]
 async fn main() -> Result<(), async_std::io::Error> {
