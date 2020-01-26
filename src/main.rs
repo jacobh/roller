@@ -13,6 +13,11 @@ fn pad_512(mut vec: Vec<u8>) -> Vec<u8> {
 
 #[async_std::main]
 async fn main() -> Result<(), async_std::io::Error> {
+    let project = project::Project::load("./roller_project.toml").await?;
+    dbg!(&project);
+    let fixtures = project.fixtures().await?;
+    dbg!(fixtures);
+
     let red = vec![255, 0, 0, 0];
     let green = vec![0, 255, 0, 0];
     let blue = vec![0, 0, 255, 0];

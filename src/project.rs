@@ -1,5 +1,7 @@
 use serde::Deserialize;
 
+use crate::fixture::Fixture;
+
 #[derive(Debug, Clone, Deserialize)]
 struct ProjectFixture {
     start_channel: usize,
@@ -13,7 +15,38 @@ struct ProjectUniverse {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-struct Project {
+pub struct Project {
     label: String,
     universes: Vec<ProjectUniverse>,
+}
+impl Project {
+    pub async fn load(
+        path: impl AsRef<async_std::path::Path>,
+    ) -> Result<Project, async_std::io::Error> {
+        let config_file_contents = async_std::fs::read(path).await?;
+
+        let project: Project = toml::from_slice(&config_file_contents)?;
+        Ok(project)
+    }
+    pub async fn fixtures(&self) -> Result<Vec<Fixture>, async_std::io::Error> {
+        let fixture_profiles = crate::fixture::load_fixture_profiles().await?;
+
+        Ok(self
+            .universes
+            .iter()
+            .flat_map(|universe| {
+                universe
+                    .fixtures
+                    .iter()
+                    .map(|project_fixture| {
+                        let profile = fixture_profiles
+                            .get(&project_fixture.fixture_profile_slug)
+                            .unwrap()
+                            .clone();
+                        Fixture::new(profile, universe.universe_id, project_fixture.start_channel)
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect())
+    }
 }
