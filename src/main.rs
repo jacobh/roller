@@ -27,7 +27,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         println!("green");
         ola_client.send_dmx_data(10, green.clone()).await?;
         async_std::task::sleep(std::time::Duration::from_millis(100)).await;
-        
+
         println!("blue");
         ola_client.send_dmx_data(10, blue.clone()).await?;
         async_std::task::sleep(std::time::Duration::from_millis(100)).await;
