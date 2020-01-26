@@ -23,15 +23,15 @@ pub struct FixtureProfile {
     channels: Vec<FixtureProfileChannel>,
 }
 impl FixtureProfile {
-    fn is_dimmable(&self) -> bool {
+    pub fn is_dimmable(&self) -> bool {
         self.channels.contains(&FixtureProfileChannel::Dimmer)
     }
-    fn is_colorable(&self) -> bool {
+    pub fn is_colorable(&self) -> bool {
         self.channels.contains(&FixtureProfileChannel::Red)
             && self.channels.contains(&FixtureProfileChannel::Green)
             && self.channels.contains(&FixtureProfileChannel::Blue)
     }
-    fn is_positionable(&self) -> bool {
+    pub fn is_positionable(&self) -> bool {
         self.channels.contains(&FixtureProfileChannel::Tilt)
             && self.channels.contains(&FixtureProfileChannel::Pan)
     }
@@ -58,7 +58,7 @@ pub async fn load_fixture_profiles(
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Fixture {
-    profile: Arc<FixtureProfile>,
+    pub profile: Arc<FixtureProfile>,
     universe: usize,
     start_channel: usize,
 
@@ -130,7 +130,16 @@ impl Fixture {
                 .unwrap()] = blue;
         }
 
-        // TODO positions
+        if let Some(position) = self.position {
+            dmx[self
+                .profile
+                .channel_index(FixtureProfileChannel::Tilt)
+                .unwrap()] = (255.0 * ((position.1 + 1.0) / 2.0)) as u8;
+            dmx[self
+                .profile
+                .channel_index(FixtureProfileChannel::Pan)
+                .unwrap()] = (255.0 * ((position.0 + 1.0) / 2.0)) as u8;
+        }
 
         dmx
     }

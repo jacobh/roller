@@ -32,6 +32,12 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
 
+    for fixture in fixtures.iter_mut() {
+        if fixture.profile.is_positionable() {
+            fixture.set_position((0.0, 1.0)).unwrap();
+        }
+    }
+
     loop {
         println!("red");
         for fixture in fixtures.iter_mut() {
