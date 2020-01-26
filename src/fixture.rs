@@ -135,7 +135,7 @@ impl Fixture {
         dmx
     }
     pub fn absolute_dmx(&self) -> Vec<Option<u8>> {
-        (0..(self.start_channel-1))
+        (0..(self.start_channel - 1))
             .map(|_| None)
             .chain(self.relative_dmx().into_iter().map(Some))
             .collect()
