@@ -1,6 +1,7 @@
 use async_std::prelude::*;
 
 mod fixture;
+mod midi_control;
 mod ola_client;
 mod project;
 
@@ -37,6 +38,8 @@ async fn main() -> Result<(), async_std::io::Error> {
             fixture.set_position((0.0, 1.0)).unwrap();
         }
     }
+
+    let midi_controller = midi_control::MidiController::new_for_device_name("APC MINI").unwrap();
 
     loop {
         println!("red");
