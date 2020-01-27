@@ -28,12 +28,12 @@ impl From<rimd::MidiMessage> for MidiEvent {
 }
 
 pub struct MidiController {
-    client: coremidi::Client,
-    source: coremidi::Source,
-    input_port: coremidi::InputPort,
-    output_port: coremidi::OutputPort,
-
-    pub input_receiver: async_std::sync::Receiver<MidiEvent>,
+    _client: coremidi::Client,
+    _source: coremidi::Source,
+    _input_port: coremidi::InputPort,
+    _output_port: coremidi::OutputPort,
+    
+    input_receiver: async_std::sync::Receiver<MidiEvent>,
 }
 impl MidiController {
     pub fn new_for_device_name(name: &str) -> Result<MidiController, ()> {
@@ -61,10 +61,10 @@ impl MidiController {
             .unwrap();
 
         Ok(MidiController {
-            client: midi_client,
-            source: source,
-            input_port: midi_input_port,
-            output_port: midi_output_port,
+            _client: midi_client,
+            _source: source,
+            _input_port: midi_input_port,
+            _output_port: midi_output_port,
             input_receiver: input_receiver,
         })
     }

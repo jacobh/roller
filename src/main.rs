@@ -40,9 +40,9 @@ async fn main() -> Result<(), async_std::io::Error> {
     }
 
     let midi_controller = midi_control::MidiController::new_for_device_name("APC MINI").unwrap();
+    let events = midi_controller.incoming_events();
     async_std::task::spawn(async {
-        midi_controller
-            .input_receiver
+        events
             .for_each(|midi_event| {
                 dbg!(midi_event);
             })
