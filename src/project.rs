@@ -31,7 +31,7 @@ impl Project {
     pub async fn fixtures(&self) -> Result<Vec<Fixture>, async_std::io::Error> {
         let fixture_profiles = crate::fixture::load_fixture_profiles().await?;
 
-        Ok(self
+        let fixtures = self
             .universes
             .iter()
             .flat_map(|universe| {
@@ -47,6 +47,10 @@ impl Project {
                     })
                     .collect::<Vec<_>>()
             })
-            .collect())
+            .collect();
+
+        // TODO validate fixture addresses don't overlap
+
+        Ok(fixtures)
     }
 }

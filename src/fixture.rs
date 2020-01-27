@@ -27,7 +27,11 @@ impl FixtureProfile {
         path: impl AsRef<async_std::path::Path>,
     ) -> Result<FixtureProfile, async_std::io::Error> {
         let fixture_profile_contents = async_std::fs::read(path).await?;
-        Ok(toml::from_slice(&fixture_profile_contents)?)
+        let profile: FixtureProfile = toml::from_slice(&fixture_profile_contents)?;
+
+        // Ensure channel count is correct
+        assert_eq!(profile.channel_count, profile.channels.len());
+        Ok(profile)
     }
     pub fn is_dimmable(&self) -> bool {
         self.channels.contains(&FixtureProfileChannel::Dimmer)
