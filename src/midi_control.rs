@@ -1,4 +1,52 @@
 use async_std::prelude::*;
+use std::collections::HashMap;
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum LightingEvent {
+    UpdateMasterDimmer { dimmer: f64 },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum MidiControl {
+    MasterDimmer,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MidiControlMapping {
+    control_channel: u8,
+    midi_control: MidiControl,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MidiMapping {
+    controls: HashMap<u8, MidiControlMapping>,
+}
+impl MidiMapping {
+    fn new(controls: Vec<MidiControlMapping>) -> MidiMapping {
+        MidiMapping {
+            controls: controls
+                .into_iter()
+                .map(|mapping| (mapping.control_channel, mapping))
+                .collect(),
+        }
+    }
+    fn try_midi_to_lighting_event(
+        &self,
+        midi_event: &MidiEvent,
+    ) -> Result<LightingEvent, &'static str> {
+        match midi_event {
+            MidiEvent::ControlChange { control, value } => match self.controls.get(control) {
+                Some(midi_control_mapping) => match midi_control_mapping.midi_control {
+                    MidiControl::MasterDimmer => Ok(LightingEvent::UpdateMasterDimmer {
+                        dimmer: 1.0 / 127.0 * (*value as f64),
+                    }),
+                },
+                None => Err("unknown control channel"),
+            },
+            _ => Err("unknown midi event type"),
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MidiEvent {
@@ -32,7 +80,8 @@ pub struct MidiController {
     _source: coremidi::Source,
     _input_port: coremidi::InputPort,
     _output_port: coremidi::OutputPort,
-    
+
+    midi_mapping: MidiMapping,
     input_receiver: async_std::sync::Receiver<MidiEvent>,
 }
 impl MidiController {
@@ -65,10 +114,22 @@ impl MidiController {
             _source: source,
             _input_port: midi_input_port,
             _output_port: midi_output_port,
+            midi_mapping: MidiMapping::new(vec![MidiControlMapping {
+                control_channel: 56,
+                midi_control: MidiControl::MasterDimmer,
+            }]),
             input_receiver: input_receiver,
         })
     }
-    pub fn incoming_events(&self) -> impl Stream<Item = MidiEvent> {
+    pub fn midi_events(&self) -> impl Stream<Item = MidiEvent> {
         self.input_receiver.clone()
+    }
+    pub fn lighting_events(&self) -> impl Stream<Item = LightingEvent> {
+        let mapping = self.midi_mapping.clone();
+        self.input_receiver
+            .clone()
+            .map(move |midi_event| mapping.try_midi_to_lighting_event(&midi_event).ok())
+            .filter(|lighting_event| lighting_event.is_some())
+            .map(|lighting_event| lighting_event.unwrap())
     }
 }
