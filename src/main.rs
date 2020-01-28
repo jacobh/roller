@@ -1,4 +1,6 @@
 use async_std::prelude::*;
+use futures::future::FutureExt;
+use std::sync::Mutex;
 
 mod fixture;
 mod midi_control;
@@ -27,13 +29,26 @@ async fn flush_fixtures<'a>(
     client.send_dmx_data(10, dmx_data).await
 }
 
+async fn tick(
+    ola_client: &mut ola_client::OlaClient,
+    fixtures: &mut Vec<fixture::Fixture>,
+    master_dimmer: f64,
+) -> Result<(), async_std::io::Error> {
+    for fixture in fixtures.iter_mut() {
+        fixture.set_dimmer(master_dimmer);
+        fixture.set_color((255, 0, 0)).unwrap();
+    }
+    flush_fixtures(ola_client, fixtures.iter()).await?;
+    async_std::task::sleep(std::time::Duration::from_millis(1000 / 40)).await;
+    Ok(())
+}
+
 #[async_std::main]
 async fn main() -> Result<(), async_std::io::Error> {
     let project = project::Project::load("./roller_project.toml").await?;
     let mut fixtures = project.fixtures().await?;
 
-    // TODO this doesn't change for now
-    let master_dimmer = 1.0;
+    let mut master_dimmer = 1.0;
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
 
@@ -44,45 +59,20 @@ async fn main() -> Result<(), async_std::io::Error> {
     }
 
     let midi_controller = midi_control::MidiController::new_for_device_name("APC MINI").unwrap();
-    let events = midi_controller.lighting_events();
-    async_std::task::spawn(async {
-        events
-            .for_each(|event| {
-                dbg!(&event);
-                match event {
-                    midi_control::LightingEvent::UpdateMasterDimmer { dimmer: _dimmer } => {
-                        // update master dimmer
-                    }
-                }
-            })
-            .await;
-    });
+    let mut events = midi_controller.lighting_events();
 
     loop {
-        println!("red");
-        for fixture in fixtures.iter_mut() {
-            fixture.set_dimmer(master_dimmer);
-            fixture.set_color((255, 0, 0)).unwrap();
-        }
-        flush_fixtures(&mut ola_client, fixtures.iter()).await?;
-        async_std::task::sleep(std::time::Duration::from_millis(500)).await;
-
-        println!("green");
-        for fixture in fixtures.iter_mut() {
-            fixture.set_dimmer(master_dimmer);
-            fixture.set_color((0, 255, 0)).unwrap();
-        }
-        flush_fixtures(&mut ola_client, fixtures.iter()).await?;
-        async_std::task::sleep(std::time::Duration::from_millis(500)).await;
-
-        println!("blue");
-        for fixture in fixtures.iter_mut() {
-            fixture.set_dimmer(master_dimmer);
-            fixture.set_color((0, 0, 255)).unwrap();
-        }
-        flush_fixtures(&mut ola_client, fixtures.iter()).await?;
-        async_std::task::sleep(std::time::Duration::from_millis(500)).await;
+        futures::future::select(
+            tick(&mut ola_client, &mut fixtures, master_dimmer).boxed(),
+            // receive incoming midi
+            events.next().map(|event| match event {
+                Some(midi_control::LightingEvent::UpdateMasterDimmer { dimmer }) => {
+                    dbg!(&dimmer);
+                    master_dimmer = dimmer
+                }
+                None => panic!(),
+            }),
+        )
+        .await;
     }
-
-    Ok(())
 }
