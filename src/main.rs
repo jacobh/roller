@@ -5,15 +5,8 @@ mod midi_control;
 mod ola_client;
 mod project;
 
-fn pad_512(mut vec: Vec<u8>) -> Vec<u8> {
-    while vec.len() < 512 {
-        vec.push(0)
-    }
-    vec
-}
-
 fn fold_fixture_dmx_data<'a>(fixtures: impl Iterator<Item = &'a fixture::Fixture>) -> Vec<u8> {
-    let mut dmx_data: Vec<u8> = (0..512).map(|_| 0).collect();
+    let mut dmx_data: Vec<u8> = vec![0; 512];
 
     for fixture in fixtures {
         for (channel, value) in fixture.absolute_dmx().into_iter().enumerate() {
