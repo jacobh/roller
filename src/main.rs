@@ -26,6 +26,14 @@ fn fold_fixture_dmx_data<'a>(fixtures: impl Iterator<Item = &'a fixture::Fixture
     dmx_data
 }
 
+async fn flush_fixtures<'a>(
+    client: &mut ola_client::OlaClient,
+    fixtures: impl Iterator<Item = &'a fixture::Fixture>,
+) -> Result<(), async_std::io::Error> {
+    let dmx_data = fold_fixture_dmx_data(fixtures);
+    client.send_dmx_data(10, dmx_data).await
+}
+
 #[async_std::main]
 async fn main() -> Result<(), async_std::io::Error> {
     let project = project::Project::load("./roller_project.toml").await?;
@@ -54,24 +62,21 @@ async fn main() -> Result<(), async_std::io::Error> {
         for fixture in fixtures.iter_mut() {
             fixture.set_color((255, 0, 0)).unwrap();
         }
-        let dmx_data = fold_fixture_dmx_data(fixtures.iter());
-        ola_client.send_dmx_data(10, dmx_data).await?;
+        flush_fixtures(&mut ola_client, fixtures.iter()).await?;
         async_std::task::sleep(std::time::Duration::from_millis(500)).await;
 
         println!("green");
         for fixture in fixtures.iter_mut() {
             fixture.set_color((0, 255, 0)).unwrap();
         }
-        let dmx_data = fold_fixture_dmx_data(fixtures.iter());
-        ola_client.send_dmx_data(10, dmx_data).await?;
+        flush_fixtures(&mut ola_client, fixtures.iter()).await?;
         async_std::task::sleep(std::time::Duration::from_millis(500)).await;
 
         println!("blue");
         for fixture in fixtures.iter_mut() {
             fixture.set_color((0, 0, 255)).unwrap();
         }
-        let dmx_data = fold_fixture_dmx_data(fixtures.iter());
-        ola_client.send_dmx_data(10, dmx_data).await?;
+        flush_fixtures(&mut ola_client, fixtures.iter()).await?;
         async_std::task::sleep(std::time::Duration::from_millis(500)).await;
     }
 
