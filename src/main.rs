@@ -39,6 +39,9 @@ async fn main() -> Result<(), async_std::io::Error> {
     let project = project::Project::load("./roller_project.toml").await?;
     let mut fixtures = project.fixtures().await?;
 
+    // TODO this doesn't change for now
+    let master_dimmer = 1.0;
+
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
 
     for fixture in fixtures.iter_mut() {
@@ -52,7 +55,12 @@ async fn main() -> Result<(), async_std::io::Error> {
     async_std::task::spawn(async {
         events
             .for_each(|event| {
-                dbg!(event);
+                dbg!(&event);
+                match event {
+                    midi_control::LightingEvent::UpdateMasterDimmer { dimmer: _dimmer } => {
+                        // update master dimmer
+                    }
+                }
             })
             .await;
     });
@@ -60,6 +68,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     loop {
         println!("red");
         for fixture in fixtures.iter_mut() {
+            fixture.set_dimmer(master_dimmer);
             fixture.set_color((255, 0, 0)).unwrap();
         }
         flush_fixtures(&mut ola_client, fixtures.iter()).await?;
@@ -67,6 +76,7 @@ async fn main() -> Result<(), async_std::io::Error> {
 
         println!("green");
         for fixture in fixtures.iter_mut() {
+            fixture.set_dimmer(master_dimmer);
             fixture.set_color((0, 255, 0)).unwrap();
         }
         flush_fixtures(&mut ola_client, fixtures.iter()).await?;
@@ -74,6 +84,7 @@ async fn main() -> Result<(), async_std::io::Error> {
 
         println!("blue");
         for fixture in fixtures.iter_mut() {
+            fixture.set_dimmer(master_dimmer);
             fixture.set_color((0, 0, 255)).unwrap();
         }
         flush_fixtures(&mut ola_client, fixtures.iter()).await?;
