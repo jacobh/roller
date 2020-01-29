@@ -9,10 +9,10 @@ pub enum Color {
     Violet,
     DarkBlue,
     Teal,
-    Green
+    Green,
 }
 impl Color {
-    pub fn to_hsl(self) -> Hsl {
+    pub fn to_hsl(self) -> Hsl<palette::encoding::srgb::Srgb, f64> {
         match self {
             Color::White => Hsl::new(0.0, 0.0, 1.0),
             Color::Yellow => Hsl::new(42.0, 1.0, 1.0),
@@ -24,7 +24,7 @@ impl Color {
             Color::Green => Hsl::new(120.0, 1.0, 1.0),
         }
     }
-    pub fn to_rgb(self) -> palette::LinSrgb {
+    pub fn to_rgb(self) -> palette::LinSrgb<f64> {
         palette::LinSrgb::from(self.to_hsl())
     }
 }

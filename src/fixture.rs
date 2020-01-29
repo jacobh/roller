@@ -72,7 +72,7 @@ pub struct Fixture {
     start_channel: usize,
 
     dimmer: f64, // 0.0 - 1.0
-    color: Option<(u8, u8, u8)>,
+    color: Option<palette::LinSrgb<f64>>,
     position: Option<(f64, f64)>, // -1.0 - +1.0
 }
 impl Fixture {
@@ -89,7 +89,7 @@ impl Fixture {
     pub fn set_dimmer(&mut self, dimmer: f64) {
         self.dimmer = dimmer;
     }
-    pub fn set_color(&mut self, color: (u8, u8, u8)) -> Result<(), &'static str> {
+    pub fn set_color(&mut self, color: palette::LinSrgb<f64>) -> Result<(), &'static str> {
         if self.profile.is_colorable() {
             self.color = Some(color);
             Ok(())
@@ -116,27 +116,27 @@ impl Fixture {
         }
 
         if let Some(color) = self.color {
-            let (mut red, mut green, mut blue) = color;
+            let (mut red, mut green, mut blue) = color.into_components();
 
             // If light doesn't have dimmer control, scale the color values instead
             if !self.profile.is_dimmable() {
-                red = (red as f64 * self.dimmer) as u8;
-                green = (green as f64 * self.dimmer) as u8;
-                blue = (blue as f64 * self.dimmer) as u8;
+                red = red * self.dimmer;
+                green = green * self.dimmer;
+                blue = blue * self.dimmer;
             }
 
             dmx[self
                 .profile
                 .channel_index(FixtureProfileChannel::Red)
-                .unwrap()] = red;
+                .unwrap()] = red as u8;
             dmx[self
                 .profile
                 .channel_index(FixtureProfileChannel::Green)
-                .unwrap()] = green;
+                .unwrap()] = green as u8;
             dmx[self
                 .profile
                 .channel_index(FixtureProfileChannel::Blue)
-                .unwrap()] = blue;
+                .unwrap()] = blue as u8;
         }
 
         if let Some(position) = self.position {
