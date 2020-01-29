@@ -89,9 +89,9 @@ impl Fixture {
     pub fn set_dimmer(&mut self, dimmer: f64) {
         self.dimmer = dimmer;
     }
-    pub fn set_color(&mut self, color: palette::LinSrgb<f64>) -> Result<(), &'static str> {
+    pub fn set_color(&mut self, color: impl Into<palette::LinSrgb<f64>>) -> Result<(), &'static str> {
         if self.profile.is_colorable() {
-            self.color = Some(color);
+            self.color = Some(color.into());
             Ok(())
         } else {
             Err("Unable to set color. profile does not support it")
@@ -128,15 +128,15 @@ impl Fixture {
             dmx[self
                 .profile
                 .channel_index(FixtureProfileChannel::Red)
-                .unwrap()] = red as u8;
+                .unwrap()] = (255.0 * red) as u8;
             dmx[self
                 .profile
                 .channel_index(FixtureProfileChannel::Green)
-                .unwrap()] = green as u8;
+                .unwrap()] = (255.0 * green) as u8;
             dmx[self
                 .profile
                 .channel_index(FixtureProfileChannel::Blue)
-                .unwrap()] = blue as u8;
+                .unwrap()] = (255.0 * blue) as u8;
         }
 
         if let Some(position) = self.position {

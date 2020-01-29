@@ -81,7 +81,7 @@ async fn main() -> Result<(), async_std::io::Error> {
             Event::Tick => {
                 for fixture in fixtures.iter_mut() {
                     fixture.set_dimmer(master_dimmer);
-                    fixture.set_color(palette::LinSrgb::<f64>::new(255.0, 0.0, 0.0)).unwrap();
+                    fixture.set_color(color::Color::Violet).unwrap();
                 }
                 flush_fixtures(&mut ola_client, fixtures.iter()).await
                     .expect("flush_fixtures");
