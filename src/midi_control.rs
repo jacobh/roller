@@ -121,13 +121,12 @@ impl MidiController {
             input_receiver: input_receiver,
         })
     }
-    pub fn midi_events(&self) -> impl Stream<Item = MidiEvent> {
+    fn midi_events(&self) -> impl Stream<Item = MidiEvent> {
         self.input_receiver.clone()
     }
     pub fn lighting_events(&self) -> impl Stream<Item = LightingEvent> {
         let mapping = self.midi_mapping.clone();
-        self.input_receiver
-            .clone()
+        self.midi_events()
             .map(move |midi_event| mapping.try_midi_to_lighting_event(&midi_event).ok())
             .filter(|lighting_event| lighting_event.is_some())
             .map(|lighting_event| lighting_event.unwrap())
