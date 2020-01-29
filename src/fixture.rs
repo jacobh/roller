@@ -70,17 +70,24 @@ pub struct Fixture {
     pub profile: Arc<FixtureProfile>,
     universe: usize,
     start_channel: usize,
+    pub group_id: Option<usize>,
 
     dimmer: f64, // 0.0 - 1.0
     color: Option<palette::LinSrgb<f64>>,
     position: Option<(f64, f64)>, // -1.0 - +1.0
 }
 impl Fixture {
-    pub fn new(profile: Arc<FixtureProfile>, universe: usize, start_channel: usize) -> Fixture {
+    pub fn new(
+        profile: Arc<FixtureProfile>,
+        universe: usize,
+        start_channel: usize,
+        group_id: Option<usize>,
+    ) -> Fixture {
         Fixture {
             profile,
             universe,
             start_channel,
+            group_id,
             dimmer: 1.0,
             color: None,
             position: None,

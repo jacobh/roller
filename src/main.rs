@@ -1,6 +1,7 @@
 use async_std::prelude::*;
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
+use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 mod color;
@@ -54,6 +55,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     let mut fixtures = project.fixtures().await?;
 
     let mut master_dimmer = 1.0;
+    let mut group_dimmers: HashMap<usize, f64> = HashMap::new();
     let mut global_color = color::Color::Violet;
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
@@ -80,7 +82,12 @@ async fn main() -> Result<(), async_std::io::Error> {
         match event {
             Event::Tick => {
                 for fixture in fixtures.iter_mut() {
-                    fixture.set_dimmer(master_dimmer);
+                    let group_dimmer = *fixture
+                        .group_id
+                        .and_then(|group_id| group_dimmers.get(&group_id))
+                        .unwrap_or(&1.0);
+
+                    fixture.set_dimmer(master_dimmer * group_dimmer);
                     fixture.set_color(global_color).unwrap();
                 }
                 flush_fixtures(&mut ola_client, fixtures.iter())
@@ -90,6 +97,10 @@ async fn main() -> Result<(), async_std::io::Error> {
             Event::Lighting(LightingEvent::UpdateMasterDimmer { dimmer }) => {
                 dbg!(&dimmer);
                 master_dimmer = dimmer;
+            }
+            Event::Lighting(LightingEvent::UpdateGroupDimmer { group_id, dimmer }) => {
+                dbg!(&dimmer);
+                group_dimmers.insert(group_id, dimmer);
             }
             Event::Lighting(LightingEvent::UpdateGlobalColor { color }) => {
                 global_color = dbg!(color);

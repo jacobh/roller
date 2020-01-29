@@ -6,12 +6,14 @@ use crate::color::Color;
 #[derive(Debug, Clone, PartialEq)]
 pub enum LightingEvent {
     UpdateMasterDimmer { dimmer: f64 },
+    UpdateGroupDimmer { group_id: usize, dimmer: f64 },
     UpdateGlobalColor { color: Color },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MidiControl {
     MasterDimmer,
+    GroupDimmer { group_id: usize },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -57,6 +59,10 @@ impl MidiMapping {
             MidiEvent::ControlChange { control, value } => match self.controls.get(control) {
                 Some(midi_control_mapping) => match midi_control_mapping.midi_control {
                     MidiControl::MasterDimmer => Ok(LightingEvent::UpdateMasterDimmer {
+                        dimmer: 1.0 / 127.0 * (*value as f64),
+                    }),
+                    MidiControl::GroupDimmer { group_id } => Ok(LightingEvent::UpdateGroupDimmer {
+                        group_id,
                         dimmer: 1.0 / 127.0 * (*value as f64),
                     }),
                 },
@@ -145,10 +151,20 @@ impl MidiController {
             _input_port: midi_input_port,
             _output_port: midi_output_port,
             midi_mapping: MidiMapping::new(
-                vec![MidiControlMapping {
-                    control_channel: 56,
-                    midi_control: MidiControl::MasterDimmer,
-                }],
+                vec![
+                    MidiControlMapping {
+                        control_channel: 56,
+                        midi_control: MidiControl::MasterDimmer,
+                    },
+                    MidiControlMapping {
+                        control_channel: 48,
+                        midi_control: MidiControl::GroupDimmer { group_id: 1 },
+                    },
+                    MidiControlMapping {
+                        control_channel: 49,
+                        midi_control: MidiControl::GroupDimmer { group_id: 2 },
+                    },
+                ],
                 vec![
                     MidiNoteMapping {
                         note: 56,

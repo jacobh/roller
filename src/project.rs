@@ -5,6 +5,7 @@ use crate::fixture::Fixture;
 #[derive(Debug, Clone, Deserialize)]
 struct ProjectFixture {
     start_channel: usize,
+    group_id: Option<usize>,
     fixture_profile_slug: String,
 }
 
@@ -43,7 +44,12 @@ impl Project {
                             .get(&project_fixture.fixture_profile_slug)
                             .unwrap()
                             .clone();
-                        Fixture::new(profile, universe.universe_id, project_fixture.start_channel)
+                        Fixture::new(
+                            profile,
+                            universe.universe_id,
+                            project_fixture.start_channel,
+                            project_fixture.group_id,
+                        )
                     })
                     .collect::<Vec<_>>()
             })
