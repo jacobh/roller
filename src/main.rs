@@ -3,6 +3,7 @@ use std::time::{Instant, Duration};
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
 
+mod color;
 mod fixture;
 mod midi_control;
 mod ola_client;
