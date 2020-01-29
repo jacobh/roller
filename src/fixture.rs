@@ -89,7 +89,10 @@ impl Fixture {
     pub fn set_dimmer(&mut self, dimmer: f64) {
         self.dimmer = dimmer;
     }
-    pub fn set_color(&mut self, color: impl Into<palette::LinSrgb<f64>>) -> Result<(), &'static str> {
+    pub fn set_color(
+        &mut self,
+        color: impl Into<palette::LinSrgb<f64>>,
+    ) -> Result<(), &'static str> {
         if self.profile.is_colorable() {
             self.color = Some(color.into());
             Ok(())

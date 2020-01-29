@@ -1,7 +1,7 @@
 use async_std::prelude::*;
-use std::time::{Instant, Duration};
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
+use std::time::{Duration, Instant};
 
 mod color;
 mod fixture;
@@ -40,12 +40,11 @@ fn tick_stream() -> impl Stream<Item = ()> {
         let until = next_tick_at;
         next_tick_at += Duration::from_millis(1000 / 40);
         let now = Instant::now();
-        async_std::task::sleep(
-            if now < until {
-                until - now
-            } else {
-                Duration::from_secs(0)
-            })
+        async_std::task::sleep(if now < until {
+            until - now
+        } else {
+            Duration::from_secs(0)
+        })
     })
 }
 
@@ -55,6 +54,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     let mut fixtures = project.fixtures().await?;
 
     let mut master_dimmer = 1.0;
+    let mut global_color = color::Color::Violet;
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
 
@@ -81,14 +81,18 @@ async fn main() -> Result<(), async_std::io::Error> {
             Event::Tick => {
                 for fixture in fixtures.iter_mut() {
                     fixture.set_dimmer(master_dimmer);
-                    fixture.set_color(color::Color::Violet).unwrap();
+                    fixture.set_color(global_color).unwrap();
                 }
-                flush_fixtures(&mut ola_client, fixtures.iter()).await
+                flush_fixtures(&mut ola_client, fixtures.iter())
+                    .await
                     .expect("flush_fixtures");
             }
             Event::Lighting(LightingEvent::UpdateMasterDimmer { dimmer }) => {
                 dbg!(&dimmer);
                 master_dimmer = dimmer;
+            }
+            Event::Lighting(LightingEvent::UpdateGlobalColor { color }) => {
+                global_color = dbg!(color);
             }
         }
     }

@@ -1,9 +1,12 @@
 use async_std::prelude::*;
 use std::collections::HashMap;
 
+use crate::color::Color;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum LightingEvent {
     UpdateMasterDimmer { dimmer: f64 },
+    UpdateGlobalColor { color: Color },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -18,15 +21,31 @@ pub struct MidiControlMapping {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub enum MidiNoteAction {
+    UpdateGlobalColor { color: Color },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MidiNoteMapping {
+    note: u8,
+    on_action: MidiNoteAction,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MidiMapping {
     controls: HashMap<u8, MidiControlMapping>,
+    notes: HashMap<u8, MidiNoteMapping>,
 }
 impl MidiMapping {
-    fn new(controls: Vec<MidiControlMapping>) -> MidiMapping {
+    fn new(controls: Vec<MidiControlMapping>, notes: Vec<MidiNoteMapping>) -> MidiMapping {
         MidiMapping {
             controls: controls
                 .into_iter()
                 .map(|mapping| (mapping.control_channel, mapping))
+                .collect(),
+            notes: notes
+                .into_iter()
+                .map(|mapping| (mapping.note, mapping))
                 .collect(),
         }
     }
@@ -43,7 +62,18 @@ impl MidiMapping {
                 },
                 None => Err("unknown control channel"),
             },
-            _ => Err("unknown midi event type"),
+            MidiEvent::NoteOn { note, .. } => match self.notes.get(note) {
+                Some(midi_note_mapping) => match &midi_note_mapping.on_action {
+                    action => match action {
+                        MidiNoteAction::UpdateGlobalColor { color } => {
+                            Ok(LightingEvent::UpdateGlobalColor { color: *color })
+                        }
+                    },
+                },
+                None => Err("No mapping for this note"),
+            },
+            MidiEvent::NoteOff { .. } => Err("Not yet implemented"),
+            MidiEvent::Other(_) => Err("unknown midi event type"),
         }
     }
 }
@@ -98,7 +128,7 @@ impl MidiController {
             .input_port(&format!("roller-input-{}", name), move |packet_list| {
                 for packet in packet_list.iter() {
                     let midi_message = rimd::MidiMessage::from_bytes(packet.data().to_vec());
-                    let midi_event = MidiEvent::from(midi_message);
+                    let midi_event = dbg!(MidiEvent::from(midi_message));
                     async_std::task::block_on(input_sender.send(midi_event));
                 }
             })
@@ -114,10 +144,58 @@ impl MidiController {
             _source: source,
             _input_port: midi_input_port,
             _output_port: midi_output_port,
-            midi_mapping: MidiMapping::new(vec![MidiControlMapping {
-                control_channel: 56,
-                midi_control: MidiControl::MasterDimmer,
-            }]),
+            midi_mapping: MidiMapping::new(
+                vec![MidiControlMapping {
+                    control_channel: 56,
+                    midi_control: MidiControl::MasterDimmer,
+                }],
+                vec![
+                    MidiNoteMapping {
+                        note: 56,
+                        on_action: MidiNoteAction::UpdateGlobalColor {
+                            color: Color::White,
+                        },
+                    },
+                    MidiNoteMapping {
+                        note: 48,
+                        on_action: MidiNoteAction::UpdateGlobalColor {
+                            color: Color::Yellow,
+                        },
+                    },
+                    MidiNoteMapping {
+                        note: 40,
+                        on_action: MidiNoteAction::UpdateGlobalColor {
+                            color: Color::DeepOrange,
+                        },
+                    },
+                    MidiNoteMapping {
+                        note: 32,
+                        on_action: MidiNoteAction::UpdateGlobalColor { color: Color::Red },
+                    },
+                    MidiNoteMapping {
+                        note: 24,
+                        on_action: MidiNoteAction::UpdateGlobalColor {
+                            color: Color::Violet,
+                        },
+                    },
+                    MidiNoteMapping {
+                        note: 16,
+                        on_action: MidiNoteAction::UpdateGlobalColor {
+                            color: Color::DarkBlue,
+                        },
+                    },
+                    MidiNoteMapping {
+                        note: 8,
+                        on_action: MidiNoteAction::UpdateGlobalColor { color: Color::Teal },
+                    },
+                    MidiNoteMapping {
+                        note: 0,
+                        on_action: MidiNoteAction::UpdateGlobalColor {
+                            color: Color::Green,
+                        },
+                    },
+                ],
+            ),
             input_receiver: input_receiver,
         })
     }
