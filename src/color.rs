@@ -28,13 +28,13 @@ impl Color {
         palette::LinSrgb::from(self.to_hsl())
     }
 }
-impl Into<palette::LinSrgb<f64>> for Color {
-    fn into(self) -> palette::LinSrgb<f64> {
-        self.to_rgb()
+impl From<Color> for palette::LinSrgb<f64> {
+    fn from(color: Color) -> palette::LinSrgb<f64> {
+        color.to_rgb()
     }
 }
-impl Into<Hsl<palette::encoding::srgb::Srgb, f64>> for Color {
-    fn into(self) -> Hsl<palette::encoding::srgb::Srgb, f64> {
-        self.to_hsl()
+impl From<Color> for Hsl<palette::encoding::srgb::Srgb, f64> {
+    fn from(color: Color) -> Hsl<palette::encoding::srgb::Srgb, f64> {
+        color.to_hsl()
     }
 }
