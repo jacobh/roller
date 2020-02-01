@@ -17,5 +17,5 @@ pub fn triangle_down(progress: f64) -> f64 {
 }
 
 pub fn sine(progress: f64) -> f64 {
-    f64::sin(std::f64::consts::PI * 2.0 * progress) / 2.0
+    (f64::sin(std::f64::consts::PI * 2.0 * progress) / 2.0) + 0.5
 }

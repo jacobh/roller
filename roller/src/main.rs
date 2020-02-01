@@ -5,10 +5,10 @@ use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 mod color;
+mod effect;
 mod fixture;
 mod midi_control;
 mod project;
-mod effect;
 
 use crate::midi_control::LightingEvent;
 
@@ -57,6 +57,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     let mut master_dimmer = 1.0;
     let mut group_dimmers: HashMap<usize, f64> = HashMap::new();
     let mut global_color = color::Color::Violet;
+    let bpm = 128.0;
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
 
@@ -73,6 +74,8 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     let midi_controller = midi_control::MidiController::new_for_device_name("APC MINI").unwrap();
 
+    let started_at = Instant::now();
+
     let ticks = tick_stream().map(|()| Event::Tick);
     let lighting_events = midi_controller.lighting_events().map(Event::Lighting);
     let events = stream::select(ticks, lighting_events);
@@ -81,13 +84,21 @@ async fn main() -> Result<(), async_std::io::Error> {
     while let Some(event) = events.next().await {
         match event {
             Event::Tick => {
+                let elapsed_duration_secs = {
+                    let elapsed_duration = Instant::now() - started_at;
+                    elapsed_duration.as_millis() as f64 / 1000.0
+                };
+                let meter_duration_secs = 60.0 / bpm * 4.0;
+                let meter_completion =
+                    1.0 / meter_duration_secs * (elapsed_duration_secs % meter_duration_secs);
+
                 for fixture in fixtures.iter_mut() {
                     let group_dimmer = *fixture
                         .group_id
                         .and_then(|group_id| group_dimmers.get(&group_id))
                         .unwrap_or(&1.0);
 
-                    fixture.set_dimmer(master_dimmer * group_dimmer);
+                    fixture.set_dimmer(master_dimmer * group_dimmer * effect::triangle_down(meter_completion));
                     fixture.set_color(global_color).unwrap();
                 }
                 flush_fixtures(&mut ola_client, fixtures.iter())
