@@ -1,7 +1,7 @@
 use palette::{Hsl, Hue, RgbHue};
 
-use crate::color::Hsl64;
 use crate::clock::{Beats, ClockSnapshot};
+use crate::color::Hsl64;
 
 pub struct DimmerEffect {
     effect: Box<dyn Fn(f64) -> f64>,
@@ -53,10 +53,7 @@ pub struct ColorEffect {
     meter_beats: Beats,
 }
 impl ColorEffect {
-    pub fn new(
-        effect: impl Fn(Hsl64, f64) -> Hsl64 + 'static,
-        meter_beats: Beats,
-    ) -> ColorEffect {
+    pub fn new(effect: impl Fn(Hsl64, f64) -> Hsl64 + 'static, meter_beats: Beats) -> ColorEffect {
         ColorEffect {
             meter_beats,
             effect: Box::new(effect),
@@ -69,7 +66,7 @@ impl ColorEffect {
 }
 
 pub fn hue_shift_30(color: Hsl64, progress: f64) -> Hsl64 {
-    color.shift_hue(RgbHue::<f64>::from_degrees(sine(progress) * 30.0))
+    color.shift_hue(RgbHue::<f64>::from_degrees(triangle_down(progress) * 30.0))
 }
 
 // Utilities
