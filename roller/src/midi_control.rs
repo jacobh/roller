@@ -9,6 +9,7 @@ pub enum LightingEvent {
     UpdateMasterDimmer { dimmer: f64 },
     UpdateGroupDimmer { group_id: usize, dimmer: f64 },
     UpdateGlobalColor { color: Color },
+    UpdateGlobalEffectIntensity(f64),
     TapTempo(Instant),
 }
 
@@ -16,6 +17,7 @@ pub enum LightingEvent {
 pub enum MidiControl {
     MasterDimmer,
     GroupDimmer { group_id: usize },
+    GlobalEffectIntensity,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -68,6 +70,9 @@ impl MidiMapping {
                         group_id,
                         dimmer: 1.0 / 127.0 * (*value as f64),
                     }),
+                    MidiControl::GlobalEffectIntensity => Ok(
+                        LightingEvent::UpdateGlobalEffectIntensity(1.0 / 127.0 * (*value as f64)),
+                    ),
                 },
                 None => Err("unknown control channel"),
             },
@@ -157,16 +162,20 @@ impl MidiController {
             midi_mapping: MidiMapping::new(
                 vec![
                     MidiControlMapping {
-                        control_channel: 56,
-                        midi_control: MidiControl::MasterDimmer,
-                    },
-                    MidiControlMapping {
                         control_channel: 48,
                         midi_control: MidiControl::GroupDimmer { group_id: 1 },
                     },
                     MidiControlMapping {
                         control_channel: 49,
                         midi_control: MidiControl::GroupDimmer { group_id: 2 },
+                    },
+                    MidiControlMapping {
+                        control_channel: 55,
+                        midi_control: MidiControl::GlobalEffectIntensity,
+                    },
+                    MidiControlMapping {
+                        control_channel: 56,
+                        midi_control: MidiControl::MasterDimmer,
                     },
                 ],
                 vec![

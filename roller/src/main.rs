@@ -60,8 +60,8 @@ async fn main() -> Result<(), async_std::io::Error> {
     let mut master_dimmer = 1.0;
     let mut group_dimmers: FxHashMap<usize, f64> = FxHashMap::default();
     let mut global_color = color::Color::Violet;
-    let active_dimmer_effects: Vec<effect::DimmerEffect> =
-        vec![Box::new(|x| effect::intensity(effect::saw_down(x), 0.75))];
+    let mut effect_intensity = 0.75;
+    let active_dimmer_effects: Vec<effect::DimmerEffect> = vec![Box::new(effect::saw_up)];
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
 
@@ -86,10 +86,13 @@ async fn main() -> Result<(), async_std::io::Error> {
     while let Some(event) = events.next().await {
         match event {
             Event::Tick => {
-                let meter_progress = clock.meter_progress(1.0);
-                let effect_dimmer = active_dimmer_effects
-                    .iter()
-                    .fold(1.0, |dimmer, effect| dimmer * effect(meter_progress));
+                let meter_progress = clock.meter_progress(4.0);
+                let effect_dimmer = effect::intensity(
+                    active_dimmer_effects
+                        .iter()
+                        .fold(1.0, |dimmer, effect| dimmer * effect(meter_progress)),
+                    effect_intensity,
+                );
 
                 for fixture in fixtures.iter_mut() {
                     let group_dimmer = *fixture
@@ -107,6 +110,9 @@ async fn main() -> Result<(), async_std::io::Error> {
             Event::Lighting(LightingEvent::UpdateMasterDimmer { dimmer }) => {
                 dbg!(&dimmer);
                 master_dimmer = dimmer;
+            }
+            Event::Lighting(LightingEvent::UpdateGlobalEffectIntensity(intensity)) => {
+                effect_intensity = intensity;
             }
             Event::Lighting(LightingEvent::UpdateGroupDimmer { group_id, dimmer }) => {
                 dbg!(&dimmer);
