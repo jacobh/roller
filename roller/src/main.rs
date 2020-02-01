@@ -7,7 +7,6 @@ use std::time::{Duration, Instant};
 mod color;
 mod fixture;
 mod midi_control;
-mod ola_client;
 mod project;
 
 use crate::midi_control::LightingEvent;
