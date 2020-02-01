@@ -1,4 +1,25 @@
-pub type DimmerEffect = Box<dyn Fn(f64) -> f64>;
+pub struct DimmerEffect {
+    effect: Box<dyn Fn(f64) -> f64>,
+    meter_beats: f64,
+    intensity: f64,
+}
+impl DimmerEffect {
+    pub fn new(
+        effect: impl Fn(f64) -> f64 + 'static,
+        meter_beats: f64,
+        intensity: f64,
+    ) -> DimmerEffect {
+        DimmerEffect {
+            meter_beats,
+            intensity,
+            effect: Box::new(effect),
+        }
+    }
+    pub fn dimmer(&self, clock: &crate::clock::ClockSnapshot) -> f64 {
+        let progress = clock.meter_progress(self.meter_beats);
+        intensity((self.effect)(progress), self.intensity)
+    }
+}
 
 // Effects
 pub fn saw_up(progress: f64) -> f64 {

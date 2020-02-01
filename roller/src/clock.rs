@@ -38,9 +38,28 @@ impl Clock {
     pub fn bpm(&self) -> f64 {
         self.bpm
     }
-    pub fn secs_elapsed(&self) -> f64 {
+    fn secs_elapsed(&self) -> f64 {
         let elapsed_duration = Instant::now() - self.started_at;
         elapsed_duration.as_millis() as f64 / 1000.0
+    }
+    pub fn snapshot(&self) -> ClockSnapshot {
+        ClockSnapshot {
+            secs_elapsed: self.secs_elapsed(),
+            bpm: self.bpm,
+        }
+    }
+}
+
+pub struct ClockSnapshot {
+    secs_elapsed: f64,
+    bpm: f64,
+}
+impl ClockSnapshot {
+    pub fn bpm(&self) -> f64 {
+        self.bpm
+    }
+    pub fn secs_elapsed(&self) -> f64 {
+        self.secs_elapsed
     }
     pub fn secs_per_meter(&self, beats: f64) -> f64 {
         60.0 / self.bpm * beats
