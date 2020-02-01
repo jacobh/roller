@@ -30,7 +30,8 @@ impl Clock {
 
             self.started_at = now;
 
-            let beat_duration_secs = (time_elapsed.as_millis() as f64 / 1000.0) / self.taps.len() as f64;
+            let beat_duration_secs =
+                (time_elapsed.as_millis() as f64 / 1000.0) / self.taps.len() as f64;
             self.bpm = 60.0 / beat_duration_secs;
         }
     }
