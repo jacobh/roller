@@ -1,12 +1,14 @@
+use crate::clock::{Beats, ClockSnapshot};
+
 pub struct DimmerEffect {
     effect: Box<dyn Fn(f64) -> f64>,
-    meter_beats: f64,
+    meter_beats: Beats,
     intensity: f64,
 }
 impl DimmerEffect {
     pub fn new(
         effect: impl Fn(f64) -> f64 + 'static,
-        meter_beats: f64,
+        meter_beats: Beats,
         intensity: f64,
     ) -> DimmerEffect {
         DimmerEffect {
@@ -15,7 +17,7 @@ impl DimmerEffect {
             effect: Box::new(effect),
         }
     }
-    pub fn dimmer(&self, clock: &crate::clock::ClockSnapshot) -> f64 {
+    pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
         let progress = clock.meter_progress(self.meter_beats);
         intensity((self.effect)(progress), self.intensity)
     }

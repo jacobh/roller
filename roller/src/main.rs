@@ -11,7 +11,7 @@ mod fixture;
 mod midi_control;
 mod project;
 
-use crate::clock::Clock;
+use crate::clock::{Beats, Clock};
 use crate::midi_control::LightingEvent;
 
 fn fold_fixture_dmx_data<'a>(fixtures: impl Iterator<Item = &'a fixture::Fixture>) -> Vec<u8> {
@@ -62,9 +62,9 @@ async fn main() -> Result<(), async_std::io::Error> {
     let mut global_color = color::Color::Violet;
     let mut effect_intensity = 0.75;
     let active_dimmer_effects = vec![
-        effect::DimmerEffect::new(effect::sine, 4.0, 0.5),
-        effect::DimmerEffect::new(effect::saw_down, 1.0, 0.8),
-        effect::DimmerEffect::new(effect::triangle_down, 0.25, 1.0)
+        effect::DimmerEffect::new(effect::sine, Beats::new(4.0), 0.5),
+        effect::DimmerEffect::new(effect::saw_down, Beats::new(1.0), 0.8),
+        effect::DimmerEffect::new(effect::triangle_down, Beats::new(0.25), 1.0),
     ];
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;

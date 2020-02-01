@@ -1,4 +1,8 @@
+use derive_more::{Add, Constructor, From, Into};
 use std::time::{Duration, Instant};
+
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Add, From, Into, Constructor)]
+pub struct Beats(f64);
 
 pub struct Clock {
     started_at: Instant,
@@ -61,10 +65,10 @@ impl ClockSnapshot {
     pub fn secs_elapsed(&self) -> f64 {
         self.secs_elapsed
     }
-    pub fn secs_per_meter(&self, beats: f64) -> f64 {
-        60.0 / self.bpm * beats
+    pub fn secs_per_meter(&self, beats: Beats) -> f64 {
+        60.0 / self.bpm * f64::from(beats)
     }
-    pub fn meter_progress(&self, beats: f64) -> f64 {
+    pub fn meter_progress(&self, beats: Beats) -> f64 {
         let secs_elapsed = self.secs_elapsed();
         let secs_per_meter = self.secs_per_meter(beats);
 
