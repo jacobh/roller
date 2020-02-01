@@ -59,7 +59,8 @@ async fn main() -> Result<(), async_std::io::Error> {
     let mut master_dimmer = 1.0;
     let mut group_dimmers: FxHashMap<usize, f64> = FxHashMap::default();
     let mut global_color = color::Color::Violet;
-    let active_dimmer_effects: Vec<effect::DimmerEffect> = vec![Box::new(effect::saw_up)];
+    let active_dimmer_effects: Vec<effect::DimmerEffect> =
+        vec![Box::new(|x| effect::intensity(effect::saw_up(x), 0.75))];
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
 
