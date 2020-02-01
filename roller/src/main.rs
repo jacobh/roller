@@ -59,6 +59,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     let mut master_dimmer = 1.0;
     let mut group_dimmers: FxHashMap<usize, f64> = FxHashMap::default();
     let mut global_color = color::Color::Violet;
+    let active_dimmer_effects: Vec<effect::DimmerEffect> = vec![Box::new(effect::saw_up)];
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
 
@@ -85,17 +86,18 @@ async fn main() -> Result<(), async_std::io::Error> {
     while let Some(event) = events.next().await {
         match event {
             Event::Tick => {
+                let meter_progress = clock.meter_progress(4.0);
+                let effect_dimmer = active_dimmer_effects
+                    .iter()
+                    .fold(1.0, |dimmer, effect| dimmer * effect(meter_progress));
+
                 for fixture in fixtures.iter_mut() {
                     let group_dimmer = *fixture
                         .group_id
                         .and_then(|group_id| group_dimmers.get(&group_id))
                         .unwrap_or(&1.0);
 
-                    fixture.set_dimmer(
-                        master_dimmer
-                            * group_dimmer
-                            * effect::triangle_down(clock.meter_progress(4.0)),
-                    );
+                    fixture.set_dimmer(master_dimmer * group_dimmer * effect_dimmer);
                     fixture.set_color(global_color).unwrap();
                 }
                 flush_fixtures(&mut ola_client, fixtures.iter())

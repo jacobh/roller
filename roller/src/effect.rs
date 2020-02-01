@@ -1,4 +1,4 @@
-pub type DimmerEffect = Box<Fn(f64) -> f64>;
+pub type DimmerEffect = Box<dyn Fn(f64) -> f64>;
 
 pub fn saw_up(progress: f64) -> f64 {
     progress
