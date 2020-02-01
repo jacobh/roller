@@ -1,3 +1,6 @@
+use palette::{Hsl, Hue, RgbHue};
+
+use crate::color::Hsl64;
 use crate::clock::{Beats, ClockSnapshot};
 
 pub struct DimmerEffect {
@@ -42,6 +45,31 @@ pub fn triangle_down(progress: f64) -> f64 {
 
 pub fn sine(progress: f64) -> f64 {
     (f64::sin(std::f64::consts::PI * 2.0 * progress) / 2.0) + 0.5
+}
+
+// color effects
+pub struct ColorEffect {
+    effect: Box<dyn Fn(Hsl64, f64) -> Hsl64>,
+    meter_beats: Beats,
+}
+impl ColorEffect {
+    pub fn new(
+        effect: impl Fn(Hsl64, f64) -> Hsl64 + 'static,
+        meter_beats: Beats,
+    ) -> ColorEffect {
+        ColorEffect {
+            meter_beats,
+            effect: Box::new(effect),
+        }
+    }
+    pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
+        let progress = clock.meter_progress(self.meter_beats);
+        (self.effect)(color, progress)
+    }
+}
+
+pub fn hue_shift_30(color: Hsl64, progress: f64) -> Hsl64 {
+    color.shift_hue(RgbHue::<f64>::from_degrees(sine(progress) * 30.0))
 }
 
 // Utilities

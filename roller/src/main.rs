@@ -63,8 +63,12 @@ async fn main() -> Result<(), async_std::io::Error> {
     let mut effect_intensity = 0.75;
     let active_dimmer_effects = vec![
         effect::DimmerEffect::new(effect::sine, Beats::new(4.0), 0.5),
-        effect::DimmerEffect::new(effect::saw_down, Beats::new(1.0), 0.8),
-        effect::DimmerEffect::new(effect::triangle_down, Beats::new(0.25), 1.0),
+        effect::DimmerEffect::new(effect::sine, Beats::new(1.0), 0.5),
+        effect::DimmerEffect::new(effect::triangle_down, Beats::new(0.25), 0.2),
+    ];
+    let active_color_effects = vec![
+        effect::ColorEffect::new(effect::hue_shift_30, Beats::new(8.0)),
+        effect::ColorEffect::new(effect::hue_shift_30, Beats::new(0.5)),
     ];
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
@@ -98,6 +102,10 @@ async fn main() -> Result<(), async_std::io::Error> {
                     effect_intensity,
                 );
 
+                let color = active_color_effects.iter().fold(global_color.to_hsl(), |color, effect| {
+                    effect.color(color, &clock_snapshot)
+                });
+
                 for fixture in fixtures.iter_mut() {
                     let group_dimmer = *fixture
                         .group_id
@@ -105,7 +113,7 @@ async fn main() -> Result<(), async_std::io::Error> {
                         .unwrap_or(&1.0);
 
                     fixture.set_dimmer(master_dimmer * group_dimmer * effect_dimmer);
-                    fixture.set_color(global_color).unwrap();
+                    fixture.set_color(color).unwrap();
                 }
                 flush_fixtures(&mut ola_client, fixtures.iter())
                     .await
