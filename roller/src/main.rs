@@ -56,11 +56,12 @@ async fn main() -> Result<(), async_std::io::Error> {
     let project = project::Project::load("./roller_project.toml").await?;
     let mut fixtures = project.fixtures().await?;
 
+    let mut clock = Clock::new(128.0);
     let mut master_dimmer = 1.0;
     let mut group_dimmers: FxHashMap<usize, f64> = FxHashMap::default();
     let mut global_color = color::Color::Violet;
     let active_dimmer_effects: Vec<effect::DimmerEffect> =
-        vec![Box::new(|x| effect::intensity(effect::saw_up(x), 0.75))];
+        vec![Box::new(|x| effect::intensity(effect::saw_down(x), 0.75))];
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
 
@@ -77,8 +78,6 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     let midi_controller = midi_control::MidiController::new_for_device_name("APC MINI").unwrap();
 
-    let clock = Clock::new(128.0);
-
     let ticks = tick_stream().map(|()| Event::Tick);
     let lighting_events = midi_controller.lighting_events().map(Event::Lighting);
     let events = stream::select(ticks, lighting_events);
@@ -87,7 +86,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     while let Some(event) = events.next().await {
         match event {
             Event::Tick => {
-                let meter_progress = clock.meter_progress(4.0);
+                let meter_progress = clock.meter_progress(1.0);
                 let effect_dimmer = active_dimmer_effects
                     .iter()
                     .fold(1.0, |dimmer, effect| dimmer * effect(meter_progress));
@@ -115,6 +114,10 @@ async fn main() -> Result<(), async_std::io::Error> {
             }
             Event::Lighting(LightingEvent::UpdateGlobalColor { color }) => {
                 global_color = dbg!(color);
+            }
+            Event::Lighting(LightingEvent::TapTempo(now)) => {
+                clock.tap(now);
+                dbg!(clock.bpm());
             }
         }
     }

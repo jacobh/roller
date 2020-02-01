@@ -1,5 +1,6 @@
 use async_std::prelude::*;
 use rustc_hash::FxHashMap;
+use std::time::Instant;
 
 use crate::color::Color;
 
@@ -8,6 +9,7 @@ pub enum LightingEvent {
     UpdateMasterDimmer { dimmer: f64 },
     UpdateGroupDimmer { group_id: usize, dimmer: f64 },
     UpdateGlobalColor { color: Color },
+    TapTempo(Instant),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -25,6 +27,7 @@ pub struct MidiControlMapping {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MidiNoteAction {
     UpdateGlobalColor { color: Color },
+    TapTempo,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -74,6 +77,7 @@ impl MidiMapping {
                         MidiNoteAction::UpdateGlobalColor { color } => {
                             Ok(LightingEvent::UpdateGlobalColor { color: *color })
                         }
+                        MidiNoteAction::TapTempo => Ok(LightingEvent::TapTempo(Instant::now())),
                     },
                 },
                 None => Err("No mapping for this note"),
@@ -166,6 +170,12 @@ impl MidiController {
                     },
                 ],
                 vec![
+                    // Misc
+                    MidiNoteMapping {
+                        note: 98,
+                        on_action: MidiNoteAction::TapTempo,
+                    },
+                    // Colours
                     MidiNoteMapping {
                         note: 56,
                         on_action: MidiNoteAction::UpdateGlobalColor {
