@@ -1,7 +1,7 @@
 use async_std::prelude::*;
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 use std::time::{Duration, Instant};
 
 mod clock;
@@ -57,7 +57,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     let mut fixtures = project.fixtures().await?;
 
     let mut master_dimmer = 1.0;
-    let mut group_dimmers: HashMap<usize, f64> = HashMap::new();
+    let mut group_dimmers: FxHashMap<usize, f64> = FxHashMap::default();
     let mut global_color = color::Color::Violet;
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;

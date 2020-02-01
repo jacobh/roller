@@ -1,6 +1,6 @@
 use async_std::{prelude::*, sync::Arc};
 use serde::Deserialize;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -51,10 +51,10 @@ impl FixtureProfile {
 }
 
 pub async fn load_fixture_profiles(
-) -> Result<HashMap<String, Arc<FixtureProfile>>, async_std::io::Error> {
+) -> Result<FxHashMap<String, Arc<FixtureProfile>>, async_std::io::Error> {
     let mut profile_paths = async_std::fs::read_dir("./fixture_profiles").await?;
 
-    let mut fixture_profiles = HashMap::new();
+    let mut fixture_profiles = FxHashMap::default();
     while let Some(entry) = profile_paths.next().await {
         let path = entry?.path();
 

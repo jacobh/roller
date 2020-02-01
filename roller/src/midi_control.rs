@@ -1,5 +1,5 @@
 use async_std::prelude::*;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 use crate::color::Color;
 
@@ -35,8 +35,8 @@ pub struct MidiNoteMapping {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MidiMapping {
-    controls: HashMap<u8, MidiControlMapping>,
-    notes: HashMap<u8, MidiNoteMapping>,
+    controls: FxHashMap<u8, MidiControlMapping>,
+    notes: FxHashMap<u8, MidiNoteMapping>,
 }
 impl MidiMapping {
     fn new(controls: Vec<MidiControlMapping>, notes: Vec<MidiNoteMapping>) -> MidiMapping {
