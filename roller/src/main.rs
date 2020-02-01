@@ -8,6 +8,7 @@ mod color;
 mod fixture;
 mod midi_control;
 mod project;
+mod effect;
 
 use crate::midi_control::LightingEvent;
 
