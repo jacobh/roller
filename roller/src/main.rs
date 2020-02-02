@@ -82,6 +82,34 @@ impl EngineState {
             }
         }
     }
+    fn update_fixtures(&self, fixtures: &mut Vec<fixture::Fixture>) {
+        let clock_snapshot = self.clock.snapshot();
+        let effect_dimmer = effect::intensity(
+            self.active_dimmer_effects
+                .iter()
+                .fold(1.0, |dimmer, effect| {
+                    dimmer * effect.dimmer(&clock_snapshot)
+                }),
+            self.effect_intensity,
+        );
+
+        let color = self
+            .active_color_effects
+            .iter()
+            .fold(self.global_color.to_hsl(), |color, effect| {
+                effect.color(color, &clock_snapshot)
+            });
+
+        for fixture in fixtures.iter_mut() {
+            let group_dimmer = *fixture
+                .group_id
+                .and_then(|group_id| self.group_dimmers.get(&group_id))
+                .unwrap_or(&1.0);
+
+            fixture.set_dimmer(self.master_dimmer * group_dimmer * effect_dimmer);
+            fixture.set_color(color).unwrap();
+        }
+    }
 }
 
 #[async_std::main]
@@ -129,29 +157,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     while let Some(event) = events.next().await {
         match event {
             Event::Tick => {
-                let clock_snapshot = state.clock.snapshot();
-                let effect_dimmer = effect::intensity(
-                    state.active_dimmer_effects.iter().fold(1.0, |dimmer, effect| {
-                        dimmer * effect.dimmer(&clock_snapshot)
-                    }),
-                    state.effect_intensity,
-                );
-
-                let color = state.active_color_effects
-                    .iter()
-                    .fold(state.global_color.to_hsl(), |color, effect| {
-                        effect.color(color, &clock_snapshot)
-                    });
-
-                for fixture in fixtures.iter_mut() {
-                    let group_dimmer = *fixture
-                        .group_id
-                        .and_then(|group_id| state.group_dimmers.get(&group_id))
-                        .unwrap_or(&1.0);
-
-                    fixture.set_dimmer(state.master_dimmer * group_dimmer * effect_dimmer);
-                    fixture.set_color(color).unwrap();
-                }
+                state.update_fixtures(&mut fixtures);
                 flush_fixtures(&mut ola_client, fixtures.iter())
                     .await
                     .expect("flush_fixtures");
