@@ -51,25 +51,60 @@ fn tick_stream() -> impl Stream<Item = ()> {
     })
 }
 
+struct EngineState {
+    clock: Clock,
+    master_dimmer: f64,
+    group_dimmers: FxHashMap<usize, f64>,
+    global_color: color::Color,
+    effect_intensity: f64,
+    active_dimmer_effects: Vec<effect::DimmerEffect>,
+    active_color_effects: Vec<effect::ColorEffect>,
+}
+impl EngineState {
+    fn apply_event(&mut self, event: LightingEvent) {
+        dbg!(&event);
+        match event {
+            LightingEvent::UpdateMasterDimmer { dimmer } => {
+                self.master_dimmer = dimmer;
+            }
+            LightingEvent::UpdateGlobalEffectIntensity(intensity) => {
+                self.effect_intensity = intensity;
+            }
+            LightingEvent::UpdateGroupDimmer { group_id, dimmer } => {
+                self.group_dimmers.insert(group_id, dimmer);
+            }
+            LightingEvent::UpdateGlobalColor { color } => {
+                self.global_color = color;
+            }
+            LightingEvent::TapTempo(now) => {
+                self.clock.tap(now);
+                dbg!(self.clock.bpm());
+            }
+        }
+    }
+}
+
 #[async_std::main]
 async fn main() -> Result<(), async_std::io::Error> {
     let project = project::Project::load("./roller_project.toml").await?;
     let mut fixtures = project.fixtures().await?;
 
-    let mut clock = Clock::new(128.0);
-    let mut master_dimmer = 1.0;
-    let mut group_dimmers: FxHashMap<usize, f64> = FxHashMap::default();
-    let mut global_color = color::Color::Violet;
-    let mut effect_intensity = 0.0;
-    let active_dimmer_effects = vec![
-        effect::DimmerEffect::new(effect::sine, Beats::new(4.0), 0.5),
-        effect::DimmerEffect::new(effect::sine, Beats::new(1.0), 0.5),
-        effect::DimmerEffect::new(effect::triangle_down, Beats::new(0.25), 0.2),
-    ];
-    let active_color_effects = vec![effect::ColorEffect::new(
-        effect::hue_shift_30,
-        Beats::new(8.0),
-    )];
+    let mut state = EngineState {
+        clock: Clock::new(128.0),
+        master_dimmer: 1.0,
+        group_dimmers: FxHashMap::default(),
+        global_color: color::Color::Violet,
+        effect_intensity: 0.0,
+        active_dimmer_effects: vec![
+            effect::DimmerEffect::new(effect::sine, Beats::new(4.0), 0.5),
+            effect::DimmerEffect::new(effect::sine, Beats::new(1.0), 0.5),
+            effect::DimmerEffect::new(effect::triangle_down, Beats::new(0.25), 0.2),
+        ],
+        active_color_effects: vec![effect::ColorEffect::new(
+            effect::hue_shift_30,
+            Beats::new(8.0),
+        )],
+    };
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
 
@@ -94,50 +129,35 @@ async fn main() -> Result<(), async_std::io::Error> {
     while let Some(event) = events.next().await {
         match event {
             Event::Tick => {
-                let clock_snapshot = clock.snapshot();
+                let clock_snapshot = state.clock.snapshot();
                 let effect_dimmer = effect::intensity(
-                    active_dimmer_effects.iter().fold(1.0, |dimmer, effect| {
+                    state.active_dimmer_effects.iter().fold(1.0, |dimmer, effect| {
                         dimmer * effect.dimmer(&clock_snapshot)
                     }),
-                    effect_intensity,
+                    state.effect_intensity,
                 );
 
-                let color = active_color_effects
+                let color = state.active_color_effects
                     .iter()
-                    .fold(global_color.to_hsl(), |color, effect| {
+                    .fold(state.global_color.to_hsl(), |color, effect| {
                         effect.color(color, &clock_snapshot)
                     });
 
                 for fixture in fixtures.iter_mut() {
                     let group_dimmer = *fixture
                         .group_id
-                        .and_then(|group_id| group_dimmers.get(&group_id))
+                        .and_then(|group_id| state.group_dimmers.get(&group_id))
                         .unwrap_or(&1.0);
 
-                    fixture.set_dimmer(master_dimmer * group_dimmer * effect_dimmer);
+                    fixture.set_dimmer(state.master_dimmer * group_dimmer * effect_dimmer);
                     fixture.set_color(color).unwrap();
                 }
                 flush_fixtures(&mut ola_client, fixtures.iter())
                     .await
                     .expect("flush_fixtures");
             }
-            Event::Lighting(LightingEvent::UpdateMasterDimmer { dimmer }) => {
-                dbg!(&dimmer);
-                master_dimmer = dimmer;
-            }
-            Event::Lighting(LightingEvent::UpdateGlobalEffectIntensity(intensity)) => {
-                effect_intensity = intensity;
-            }
-            Event::Lighting(LightingEvent::UpdateGroupDimmer { group_id, dimmer }) => {
-                dbg!(&dimmer);
-                group_dimmers.insert(group_id, dimmer);
-            }
-            Event::Lighting(LightingEvent::UpdateGlobalColor { color }) => {
-                global_color = dbg!(color);
-            }
-            Event::Lighting(LightingEvent::TapTempo(now)) => {
-                clock.tap(now);
-                dbg!(clock.bpm());
+            Event::Lighting(event) => {
+                state.apply_event(event);
             }
         }
     }
