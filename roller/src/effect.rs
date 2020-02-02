@@ -21,30 +21,30 @@ impl DimmerEffect {
         }
     }
     pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
-        let progress = clock.meter_progress(self.meter_beats);
-        intensity((self.effect)(progress), self.intensity)
+        let progress_percent = clock.meter_progress_percent(self.meter_beats);
+        intensity((self.effect)(progress_percent), self.intensity)
     }
 }
 
-// Effects
-pub fn saw_up(progress: f64) -> f64 {
-    progress
+// Effects for `x` in the range 0.0 - 1.0
+pub fn saw_up(x: f64) -> f64 {
+    x
 }
 
-pub fn saw_down(progress: f64) -> f64 {
-    1.0 - progress
+pub fn saw_down(x: f64) -> f64 {
+    1.0 - x
 }
 
-pub fn triangle_down(progress: f64) -> f64 {
-    if progress > 0.5 {
-        (progress - 0.5) * 2.0
+pub fn triangle_down(x: f64) -> f64 {
+    if x > 0.5 {
+        (x - 0.5) * 2.0
     } else {
-        1.0 - (progress * 2.0)
+        1.0 - (x * 2.0)
     }
 }
 
-pub fn sine(progress: f64) -> f64 {
-    (f64::sin(std::f64::consts::PI * 2.0 * progress) / 2.0) + 0.5
+pub fn sine(x: f64) -> f64 {
+    (f64::sin(std::f64::consts::PI * 2.0 * x) / 2.0) + 0.5
 }
 
 // color effects
@@ -60,13 +60,13 @@ impl ColorEffect {
         }
     }
     pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
-        let progress = clock.meter_progress(self.meter_beats);
-        (self.effect)(color, progress)
+        let progress_percent = clock.meter_progress_percent(self.meter_beats);
+        (self.effect)(color, progress_percent)
     }
 }
 
-pub fn hue_shift_30(color: Hsl64, progress: f64) -> Hsl64 {
-    color.shift_hue(RgbHue::<f64>::from_degrees(triangle_down(progress) * 30.0))
+pub fn hue_shift_30(color: Hsl64, progress_percent: f64) -> Hsl64 {
+    color.shift_hue(RgbHue::<f64>::from_degrees(triangle_down(progress_percent) * 30.0))
 }
 
 // Utilities
