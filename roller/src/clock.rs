@@ -65,7 +65,7 @@ impl ClockSnapshot {
 
         ClockSnapshot {
             secs_elapsed: self.secs_elapsed + secs_to_shift,
-            bpm: self.bpm
+            bpm: self.bpm,
         }
     }
     pub fn bpm(&self) -> f64 {
@@ -74,12 +74,12 @@ impl ClockSnapshot {
     pub fn secs_elapsed(&self) -> f64 {
         self.secs_elapsed
     }
-    pub fn secs_per_meter(&self, beats: Beats) -> f64 {
-        60.0 / self.bpm * f64::from(beats)
+    pub fn secs_per_meter(&self, meter_length: Beats) -> f64 {
+        60.0 / self.bpm * f64::from(meter_length)
     }
-    pub fn meter_progress_percent(&self, beats: Beats) -> f64 {
+    pub fn meter_progress_percent(&self, meter_length: Beats) -> f64 {
         let secs_elapsed = self.secs_elapsed();
-        let secs_per_meter = self.secs_per_meter(beats);
+        let secs_per_meter = self.secs_per_meter(meter_length);
 
         1.0 / secs_per_meter * (secs_elapsed % secs_per_meter)
     }

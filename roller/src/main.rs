@@ -84,7 +84,7 @@ impl EngineState {
     }
     fn update_fixtures(&self, fixtures: &mut Vec<fixture::Fixture>) {
         let clock_snapshot = self.clock.snapshot();
-        
+
         for (i, fixture) in fixtures.iter_mut().enumerate() {
             let clock_snapshot = clock_snapshot.shift(Beats::new(i as f64));
 
@@ -96,7 +96,7 @@ impl EngineState {
                     }),
                 self.effect_intensity,
             );
-    
+
             let color = self
                 .active_color_effects
                 .iter()
