@@ -84,23 +84,26 @@ impl EngineState {
     }
     fn update_fixtures(&self, fixtures: &mut Vec<fixture::Fixture>) {
         let clock_snapshot = self.clock.snapshot();
-        let effect_dimmer = effect::intensity(
-            self.active_dimmer_effects
+        
+        for (i, fixture) in fixtures.iter_mut().enumerate() {
+            let clock_snapshot = clock_snapshot.shift(Beats::new(i as f64));
+
+            let effect_dimmer = effect::intensity(
+                self.active_dimmer_effects
+                    .iter()
+                    .fold(1.0, |dimmer, effect| {
+                        dimmer * effect.dimmer(&clock_snapshot)
+                    }),
+                self.effect_intensity,
+            );
+    
+            let color = self
+                .active_color_effects
                 .iter()
-                .fold(1.0, |dimmer, effect| {
-                    dimmer * effect.dimmer(&clock_snapshot)
-                }),
-            self.effect_intensity,
-        );
+                .fold(self.global_color.to_hsl(), |color, effect| {
+                    effect.color(color, &clock_snapshot)
+                });
 
-        let color = self
-            .active_color_effects
-            .iter()
-            .fold(self.global_color.to_hsl(), |color, effect| {
-                effect.color(color, &clock_snapshot)
-            });
-
-        for fixture in fixtures.iter_mut() {
             let group_dimmer = *fixture
                 .group_id
                 .and_then(|group_id| self.group_dimmers.get(&group_id))
@@ -124,12 +127,12 @@ async fn main() -> Result<(), async_std::io::Error> {
         global_color: color::Color::Violet,
         effect_intensity: 0.0,
         active_dimmer_effects: vec![
-            effect::DimmerEffect::new(effect::triangle_down, Beats::new(4.0), 0.5),
-            effect::DimmerEffect::new(effect::saw_up, Beats::new(3.0), 0.5),
+            effect::DimmerEffect::new(effect::triangle_down, Beats::new(4.0), 1.0),
+            effect::DimmerEffect::new(effect::triangle_down, Beats::new(2.0), 0.8),
         ],
         active_color_effects: vec![effect::ColorEffect::new(
             effect::hue_shift_30,
-            Beats::new(8.0),
+            Beats::new(5.0),
         )],
     };
 

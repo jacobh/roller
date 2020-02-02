@@ -59,6 +59,15 @@ pub struct ClockSnapshot {
     bpm: f64,
 }
 impl ClockSnapshot {
+    pub fn shift(&self, beats: Beats) -> ClockSnapshot {
+        let secs_per_beat = 60.0 / self.bpm;
+        let secs_to_shift = secs_per_beat * f64::from(beats);
+
+        ClockSnapshot {
+            secs_elapsed: self.secs_elapsed + secs_to_shift,
+            bpm: self.bpm
+        }
+    }
     pub fn bpm(&self) -> f64 {
         self.bpm
     }
