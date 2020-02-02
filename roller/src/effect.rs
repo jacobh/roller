@@ -66,7 +66,9 @@ impl ColorEffect {
 }
 
 pub fn hue_shift_30(color: Hsl64, progress_percent: f64) -> Hsl64 {
-    color.shift_hue(RgbHue::<f64>::from_degrees(triangle_down(progress_percent) * 30.0))
+    color.shift_hue(RgbHue::<f64>::from_degrees(
+        triangle_down(progress_percent) * 30.0,
+    ))
 }
 
 // Utilities
