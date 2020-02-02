@@ -124,9 +124,8 @@ async fn main() -> Result<(), async_std::io::Error> {
         global_color: color::Color::Violet,
         effect_intensity: 0.0,
         active_dimmer_effects: vec![
-            effect::DimmerEffect::new(effect::sine, Beats::new(4.0), 0.5),
-            effect::DimmerEffect::new(effect::sine, Beats::new(1.0), 0.5),
-            effect::DimmerEffect::new(effect::triangle_down, Beats::new(0.25), 0.2),
+            effect::DimmerEffect::new(effect::triangle_down, Beats::new(4.0), 0.5),
+            effect::DimmerEffect::new(effect::saw_up, Beats::new(3.0), 0.5),
         ],
         active_color_effects: vec![effect::ColorEffect::new(
             effect::hue_shift_30,
