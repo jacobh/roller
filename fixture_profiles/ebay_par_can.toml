@@ -1,13 +1,35 @@
 slug = "ebay_par_can"
 label = "eBay Par Can"
 channel_count = 8
-channels = [
-    "dimmer",
-    "red",
-    "green",
-    "blue",
-    "unused",
-    "unused",
-    "unused",
-    "unused",
-]
+
+[[channels]]
+channel = 1
+parameter = "dimmer"
+
+[[channels]]
+channel = 2
+parameter = "red"
+
+[[channels]]
+channel = 3
+parameter = "green"
+
+[[channels]]
+channel = 4
+parameter = "blue"
+
+[[channels]]
+channel = 5
+parameter = "unused"
+
+[[channels]]
+channel = 6
+parameter = "unused"
+
+[[channels]]
+channel = 7
+parameter = "unused"
+
+[[channels]]
+channel = 8
+parameter = "unused"

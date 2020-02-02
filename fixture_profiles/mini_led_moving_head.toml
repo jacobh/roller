@@ -1,19 +1,62 @@
 slug = "mini_led_moving_head"
 label = "Mini LED Moving Head"
 channel_count = 14
-channels = [
-    "pan",
-    "unused", # pan fine
-    "tilt",
-    "unused", # tilt fine
-    "unused", # x/y speed
-    "dimmer",
-    "red",
-    "green",
-    "blue",
-    "cool_white",
-    "unused",
-    "unused",
-    "unused",
-    "unused",
-]
+
+[[channels]]
+channel = 1
+parameter = "pan"
+
+#  pan fine
+[[channels]]
+channel = 2
+parameter = "unused"
+
+[[channels]]
+channel = 3
+parameter = "tilt"
+
+# tilt fine
+[[channels]]
+channel = 4
+parameter = "unused"
+
+# x/y speed
+[[channels]]
+channel = 5
+parameter = "unused"
+
+[[channels]]
+channel = 6
+parameter = "dimmer"
+
+[[channels]]
+channel = 7
+parameter = "red"
+
+[[channels]]
+channel = 8
+parameter = "green"
+
+[[channels]]
+channel = 9
+parameter = "blue"
+
+[[channels]]
+channel = 10
+parameter = "cool_white"
+
+[[channels]]
+channel = 11
+parameter = "unused"
+
+[[channels]]
+channel = 12
+parameter = "unused"
+
+[[channels]]
+channel = 13
+parameter = "unused"
+
+[[channels]]
+channel = 14
+parameter = "unused"

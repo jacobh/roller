@@ -1,9 +1,19 @@
 slug = "ave_quad_pro_flat_4ch"
 label = "AVE Quad Pro Flat 4ch"
 channel_count = 4
-channels = [
-    "red",
-    "green",
-    "blue",
-    "cool_white",
-]
+
+[[channels]]
+channel = 1
+parameter = "red"
+
+[[channels]]
+channel = 2
+parameter = "green"
+
+[[channels]]
+channel = 3
+parameter = "blue"
+
+[[channels]]
+channel = 4
+parameter = "cool_white"
