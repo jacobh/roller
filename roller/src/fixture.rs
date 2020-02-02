@@ -2,7 +2,7 @@ use async_std::{prelude::*, sync::Arc};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Hash)]
 #[serde(rename_all = "snake_case")]
 enum FixtureParameter {
     Dimmer,
@@ -53,6 +53,7 @@ struct FixtureProfileData {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FixtureProfile {
     data: FixtureProfileData,
+    parameters: FxHashMap<FixtureParameter, FixtureProfileChannel>,
 }
 impl FixtureProfile {
     pub async fn load(
@@ -61,29 +62,37 @@ impl FixtureProfile {
         let fixture_profile_contents = async_std::fs::read(path).await?;
         let profile_data: FixtureProfileData = toml::from_slice(&fixture_profile_contents)?;
 
+        let parameters = profile_data
+            .channels
+            .iter()
+            .map(|channel| (channel.parameter, channel.clone()))
+            .collect();
+
         // Ensure channel count is correct
         assert_eq!(profile_data.channel_count, profile_data.channels.len());
-        Ok(FixtureProfile { data: profile_data })
-    }
-    fn parameters<'a>(&'a self) -> impl Iterator<Item = FixtureParameter> + 'a {
-        self.data.channels.iter().map(|channel| channel.parameter)
-    }
-    fn has_parameter(&self, parameter: FixtureParameter) -> bool {
-        self.parameters().find(|x| *x == parameter).is_some()
+        Ok(FixtureProfile {
+            parameters,
+            data: profile_data,
+        })
     }
     pub fn is_dimmable(&self) -> bool {
-        self.has_parameter(FixtureParameter::Dimmer)
+        self.parameters.get(&FixtureParameter::Dimmer).is_some()
     }
     pub fn is_colorable(&self) -> bool {
-        self.has_parameter(FixtureParameter::Red)
-            && self.has_parameter(FixtureParameter::Green)
-            && self.has_parameter(FixtureParameter::Blue)
+        [
+            FixtureParameter::Red,
+            FixtureParameter::Green,
+            FixtureParameter::Blue,
+        ]
+        .into_iter()
+        .map(|parameter| self.parameters.get(parameter))
+        .all(|channel| channel.is_some())
     }
     pub fn is_positionable(&self) -> bool {
-        self.has_parameter(FixtureParameter::Tilt) && self.has_parameter(FixtureParameter::Pan)
-    }
-    fn channel(&self, parameter: FixtureParameter) -> Option<&FixtureProfileChannel> {
-        self.data.channels.iter().find(|x| x.parameter == parameter)
+        [FixtureParameter::Tilt, FixtureParameter::Pan]
+            .into_iter()
+            .map(|parameter| self.parameters.get(parameter))
+            .all(|channel| channel.is_some())
     }
 }
 
@@ -153,10 +162,11 @@ impl Fixture {
         }
     }
     pub fn relative_dmx(&self) -> Vec<u8> {
+        let parameters = &self.profile.parameters;
         let mut dmx: Vec<u8> = (0..self.profile.data.channel_count).map(|_| 0).collect();
 
         if self.profile.is_dimmable() {
-            let channel = self.profile.channel(FixtureParameter::Dimmer).unwrap();
+            let channel = &parameters[&FixtureParameter::Dimmer];
 
             dmx[channel.channel_index()] = channel.encode_value(self.dimmer);
         }
@@ -171,9 +181,9 @@ impl Fixture {
                 blue = blue * self.dimmer;
             }
 
-            let red_channel = self.profile.channel(FixtureParameter::Red).unwrap();
-            let green_channel = self.profile.channel(FixtureParameter::Green).unwrap();
-            let blue_channel = self.profile.channel(FixtureParameter::Blue).unwrap();
+            let red_channel = &parameters[&FixtureParameter::Red];
+            let green_channel = &parameters[&FixtureParameter::Green];
+            let blue_channel = &parameters[&FixtureParameter::Blue];
 
             dmx[red_channel.channel_index()] = red_channel.encode_value(red);
             dmx[green_channel.channel_index()] = green_channel.encode_value(green);
@@ -181,8 +191,8 @@ impl Fixture {
         }
 
         if let Some(position) = self.position {
-            let tilt_channel = self.profile.channel(FixtureParameter::Tilt).unwrap();
-            let pan_channel = self.profile.channel(FixtureParameter::Pan).unwrap();
+            let tilt_channel = &parameters[&FixtureParameter::Tilt];
+            let pan_channel = &parameters[&FixtureParameter::Pan];
 
             dmx[tilt_channel.channel_index()] = tilt_channel.encode_value((position.1 + 1.0) / 2.0);
             dmx[pan_channel.channel_index()] = pan_channel.encode_value((position.0 + 1.0) / 2.0);
