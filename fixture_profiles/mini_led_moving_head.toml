@@ -28,6 +28,8 @@ parameter = "unused"
 [[channels]]
 channel = 6
 parameter = "dimmer"
+min_value = 8
+max_value = 134
 
 [[channels]]
 channel = 7
