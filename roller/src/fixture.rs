@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "snake_case")]
-enum FixtureProfileChannel {
+enum FixtureParameter {
     Dimmer,
     Red,
     Green,
@@ -16,37 +16,66 @@ enum FixtureProfileChannel {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-pub struct FixtureProfile {
+struct FixtureProfileChannel {
+    parameter: FixtureParameter,
+    channel: usize,
+    #[serde(default = "FixtureProfileChannel::default_min_value")]
+    min_value: usize,
+    #[serde(default = "FixtureProfileChannel::default_max_value")]
+    max_value: usize,
+}
+impl FixtureProfileChannel {
+    const fn default_min_value() -> usize {
+        0
+    }
+    const fn default_max_value() -> usize {
+        255
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+struct FixtureProfileData {
     slug: String,
     label: String,
     channel_count: usize,
     channels: Vec<FixtureProfileChannel>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FixtureProfile {
+    data: FixtureProfileData,
 }
 impl FixtureProfile {
     pub async fn load(
         path: impl AsRef<async_std::path::Path>,
     ) -> Result<FixtureProfile, async_std::io::Error> {
         let fixture_profile_contents = async_std::fs::read(path).await?;
-        let profile: FixtureProfile = toml::from_slice(&fixture_profile_contents)?;
+        let profile_data: FixtureProfileData = toml::from_slice(&fixture_profile_contents)?;
 
         // Ensure channel count is correct
-        assert_eq!(profile.channel_count, profile.channels.len());
-        Ok(profile)
+        assert_eq!(profile_data.channel_count, profile_data.channels.len());
+        Ok(FixtureProfile {data: profile_data})
+    }
+    fn parameters<'a>(&'a self) -> impl Iterator<Item = FixtureParameter> + 'a {
+        self.data.channels.iter().map(|channel| channel.parameter)
+    }
+    fn has_parameter(&self, parameter: FixtureParameter) -> bool {
+        self.parameters().find(|x| *x == parameter).is_some()
     }
     pub fn is_dimmable(&self) -> bool {
-        self.channels.contains(&FixtureProfileChannel::Dimmer)
+        self.has_parameter(FixtureParameter::Dimmer)
     }
     pub fn is_colorable(&self) -> bool {
-        self.channels.contains(&FixtureProfileChannel::Red)
-            && self.channels.contains(&FixtureProfileChannel::Green)
-            && self.channels.contains(&FixtureProfileChannel::Blue)
+        self.has_parameter(FixtureParameter::Red)
+            && self.has_parameter(FixtureParameter::Green)
+            && self.has_parameter(FixtureParameter::Blue)
     }
     pub fn is_positionable(&self) -> bool {
-        self.channels.contains(&FixtureProfileChannel::Tilt)
-            && self.channels.contains(&FixtureProfileChannel::Pan)
+        self.has_parameter(FixtureParameter::Tilt)
+            && self.has_parameter(FixtureParameter::Pan)
     }
-    fn channel_index(&self, channel: FixtureProfileChannel) -> Option<usize> {
-        self.channels.iter().position(|x| *x == channel)
+    fn channel_index(&self, parameter: FixtureParameter) -> Option<usize> {
+        self.data.channels.iter().position(|x| x.parameter == parameter)
     }
 }
 
@@ -59,7 +88,7 @@ pub async fn load_fixture_profiles(
         let path = entry?.path();
 
         let fixture_profile = FixtureProfile::load(path).await?;
-        fixture_profiles.insert(fixture_profile.slug.clone(), Arc::new(fixture_profile));
+        fixture_profiles.insert(fixture_profile.data.slug.clone(), Arc::new(fixture_profile));
     }
 
     Ok(fixture_profiles)
@@ -116,12 +145,12 @@ impl Fixture {
         }
     }
     pub fn relative_dmx(&self) -> Vec<u8> {
-        let mut dmx: Vec<u8> = (0..self.profile.channel_count).map(|_| 0).collect();
+        let mut dmx: Vec<u8> = (0..self.profile.data.channel_count).map(|_| 0).collect();
 
         if self.profile.is_dimmable() {
             dmx[self
                 .profile
-                .channel_index(FixtureProfileChannel::Dimmer)
+                .channel_index(FixtureParameter::Dimmer)
                 .unwrap()] = (255 as f64 * self.dimmer) as u8;
         }
 
@@ -137,26 +166,26 @@ impl Fixture {
 
             dmx[self
                 .profile
-                .channel_index(FixtureProfileChannel::Red)
+                .channel_index(FixtureParameter::Red)
                 .unwrap()] = (255.0 * red) as u8;
             dmx[self
                 .profile
-                .channel_index(FixtureProfileChannel::Green)
+                .channel_index(FixtureParameter::Green)
                 .unwrap()] = (255.0 * green) as u8;
             dmx[self
                 .profile
-                .channel_index(FixtureProfileChannel::Blue)
+                .channel_index(FixtureParameter::Blue)
                 .unwrap()] = (255.0 * blue) as u8;
         }
 
         if let Some(position) = self.position {
             dmx[self
                 .profile
-                .channel_index(FixtureProfileChannel::Tilt)
+                .channel_index(FixtureParameter::Tilt)
                 .unwrap()] = (255.0 * ((position.1 + 1.0) / 2.0)) as u8;
             dmx[self
                 .profile
-                .channel_index(FixtureProfileChannel::Pan)
+                .channel_index(FixtureParameter::Pan)
                 .unwrap()] = (255.0 * ((position.0 + 1.0) / 2.0)) as u8;
         }
 
