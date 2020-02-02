@@ -20,16 +20,25 @@ struct FixtureProfileChannel {
     parameter: FixtureParameter,
     channel: usize,
     #[serde(default = "FixtureProfileChannel::default_min_value")]
-    min_value: usize,
+    min_value: u8,
     #[serde(default = "FixtureProfileChannel::default_max_value")]
-    max_value: usize,
+    max_value: u8,
 }
 impl FixtureProfileChannel {
-    const fn default_min_value() -> usize {
+    const fn default_min_value() -> u8 {
         0
     }
-    const fn default_max_value() -> usize {
+    const fn default_max_value() -> u8 {
         255
+    }
+    fn channel_index(&self) -> usize {
+        self.channel - 1
+    }
+    // value in range 0.0 - 1.0
+    fn encode_value(&self, value: f64) -> u8 {
+        let range = self.max_value - self.min_value;
+
+        self.min_value + (range as f64 * value) as u8
     }
 }
 
@@ -54,7 +63,7 @@ impl FixtureProfile {
 
         // Ensure channel count is correct
         assert_eq!(profile_data.channel_count, profile_data.channels.len());
-        Ok(FixtureProfile {data: profile_data})
+        Ok(FixtureProfile { data: profile_data })
     }
     fn parameters<'a>(&'a self) -> impl Iterator<Item = FixtureParameter> + 'a {
         self.data.channels.iter().map(|channel| channel.parameter)
@@ -71,11 +80,10 @@ impl FixtureProfile {
             && self.has_parameter(FixtureParameter::Blue)
     }
     pub fn is_positionable(&self) -> bool {
-        self.has_parameter(FixtureParameter::Tilt)
-            && self.has_parameter(FixtureParameter::Pan)
+        self.has_parameter(FixtureParameter::Tilt) && self.has_parameter(FixtureParameter::Pan)
     }
-    fn channel_index(&self, parameter: FixtureParameter) -> Option<usize> {
-        self.data.channels.iter().position(|x| x.parameter == parameter)
+    fn channel(&self, parameter: FixtureParameter) -> Option<&FixtureProfileChannel> {
+        self.data.channels.iter().find(|x| x.parameter == parameter)
     }
 }
 
@@ -148,10 +156,9 @@ impl Fixture {
         let mut dmx: Vec<u8> = (0..self.profile.data.channel_count).map(|_| 0).collect();
 
         if self.profile.is_dimmable() {
-            dmx[self
-                .profile
-                .channel_index(FixtureParameter::Dimmer)
-                .unwrap()] = (255 as f64 * self.dimmer) as u8;
+            let channel = self.profile.channel(FixtureParameter::Dimmer).unwrap();
+
+            dmx[channel.channel_index()] = channel.encode_value(self.dimmer);
         }
 
         if let Some(color) = self.color {
@@ -164,29 +171,21 @@ impl Fixture {
                 blue = blue * self.dimmer;
             }
 
-            dmx[self
-                .profile
-                .channel_index(FixtureParameter::Red)
-                .unwrap()] = (255.0 * red) as u8;
-            dmx[self
-                .profile
-                .channel_index(FixtureParameter::Green)
-                .unwrap()] = (255.0 * green) as u8;
-            dmx[self
-                .profile
-                .channel_index(FixtureParameter::Blue)
-                .unwrap()] = (255.0 * blue) as u8;
+            let red_channel = self.profile.channel(FixtureParameter::Red).unwrap();
+            let green_channel = self.profile.channel(FixtureParameter::Green).unwrap();
+            let blue_channel = self.profile.channel(FixtureParameter::Blue).unwrap();
+
+            dmx[red_channel.channel_index()] = red_channel.encode_value(red);
+            dmx[green_channel.channel_index()] = green_channel.encode_value(green);
+            dmx[blue_channel.channel_index()] = blue_channel.encode_value(blue);
         }
 
         if let Some(position) = self.position {
-            dmx[self
-                .profile
-                .channel_index(FixtureParameter::Tilt)
-                .unwrap()] = (255.0 * ((position.1 + 1.0) / 2.0)) as u8;
-            dmx[self
-                .profile
-                .channel_index(FixtureParameter::Pan)
-                .unwrap()] = (255.0 * ((position.0 + 1.0) / 2.0)) as u8;
+            let tilt_channel = self.profile.channel(FixtureParameter::Tilt).unwrap();
+            let pan_channel = self.profile.channel(FixtureParameter::Pan).unwrap();
+
+            dmx[tilt_channel.channel_index()] = tilt_channel.encode_value((position.1 + 1.0) / 2.0);
+            dmx[pan_channel.channel_index()] = pan_channel.encode_value((position.0 + 1.0) / 2.0);
         }
 
         dmx
