@@ -5,23 +5,23 @@ use crate::color::Hsl64;
 
 pub struct DimmerEffect {
     effect: Box<dyn Fn(f64) -> f64>,
-    meter_beats: Beats,
+    meter_length: Beats,
     intensity: f64,
 }
 impl DimmerEffect {
     pub fn new(
         effect: impl Fn(f64) -> f64 + 'static,
-        meter_beats: Beats,
+        meter_length: Beats,
         intensity: f64,
     ) -> DimmerEffect {
         DimmerEffect {
-            meter_beats,
+            meter_length,
             intensity,
             effect: Box::new(effect),
         }
     }
     pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
-        let progress_percent = clock.meter_progress_percent(self.meter_beats);
+        let progress_percent = clock.meter_progress_percent(self.meter_length);
         intensity((self.effect)(progress_percent), self.intensity)
     }
 }
@@ -50,17 +50,17 @@ pub fn sine(x: f64) -> f64 {
 // color effects
 pub struct ColorEffect {
     effect: Box<dyn Fn(Hsl64, f64) -> Hsl64>,
-    meter_beats: Beats,
+    meter_length: Beats,
 }
 impl ColorEffect {
-    pub fn new(effect: impl Fn(Hsl64, f64) -> Hsl64 + 'static, meter_beats: Beats) -> ColorEffect {
+    pub fn new(effect: impl Fn(Hsl64, f64) -> Hsl64 + 'static, meter_length: Beats) -> ColorEffect {
         ColorEffect {
-            meter_beats,
+            meter_length,
             effect: Box::new(effect),
         }
     }
     pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
-        let progress_percent = clock.meter_progress_percent(self.meter_beats);
+        let progress_percent = clock.meter_progress_percent(self.meter_length);
         (self.effect)(color, progress_percent)
     }
 }
