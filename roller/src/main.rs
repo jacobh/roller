@@ -154,6 +154,13 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     let midi_controller = midi_control::MidiController::new_for_device_name("APC MINI").unwrap();
 
+    for i in 0..64 {
+        midi_controller.set_pad_color(i, midi_control::AkaiPadColor::Green);
+        async_std::task::sleep(Duration::from_millis(15)).await;
+    }
+    async_std::task::sleep(Duration::from_millis(150)).await;
+    midi_controller.reset_pads().unwrap();
+
     let ticks = tick_stream().map(|()| Event::Tick);
     let lighting_events = midi_controller.lighting_events().map(Event::Lighting);
     let events = stream::select(ticks, lighting_events);

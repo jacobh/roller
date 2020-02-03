@@ -1,5 +1,6 @@
 use async_std::prelude::*;
 use rustc_hash::FxHashMap;
+use serde::Deserialize;
 use std::time::Instant;
 
 use crate::color::Color;
@@ -125,7 +126,7 @@ pub struct MidiController {
     _source: coremidi::Source,
     destination: coremidi::Destination,
     _input_port: coremidi::InputPort,
-    _output_port: coremidi::OutputPort,
+    output_port: coremidi::OutputPort,
 
     midi_mapping: MidiMapping,
     input_receiver: async_std::sync::Receiver<MidiEvent>,
@@ -164,7 +165,7 @@ impl MidiController {
             _source: source,
             destination: destination,
             _input_port: midi_input_port,
-            _output_port: midi_output_port,
+            output_port: midi_output_port,
             midi_mapping: MidiMapping::new(
                 vec![
                     MidiControlMapping {
@@ -250,9 +251,44 @@ impl MidiController {
             .filter(|lighting_event| lighting_event.is_some())
             .map(|lighting_event| lighting_event.unwrap())
     }
-    pub fn send_packets(&self, packets: &coremidi::PacketList) -> Result<(), &'static str> {
-        self._output_port
+    fn send_packets(&self, packets: &coremidi::PacketList) -> Result<(), &'static str> {
+        self.output_port
             .send(&self.destination, packets)
             .map_err(|_| "failed to send packets")
+    }
+    pub fn set_pad_color(&self, note: u8, pad_color: AkaiPadColor) -> Result<(), &'static str> {
+        let packet = coremidi::PacketBuffer::new(0, &[0x90, note, pad_color.as_byte()]);
+        self.send_packets(&packet)
+    }
+    pub fn reset_pads(&self) -> Result<(), &'static str> {
+        for i in 0..64 {
+            self.set_pad_color(i, AkaiPadColor::Off)?;
+            std::thread::sleep(std::time::Duration::from_millis(1));
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+pub enum AkaiPadColor {
+    Off,
+    Green,
+    GreenBlink,
+    Red,
+    RedBlink,
+    Yellow,
+    YellowBlink,
+}
+impl AkaiPadColor {
+    pub fn as_byte(self) -> u8 {
+        match self {
+            AkaiPadColor::Off => 0,
+            AkaiPadColor::Green => 1,
+            AkaiPadColor::GreenBlink => 2,
+            AkaiPadColor::Red => 3,
+            AkaiPadColor::RedBlink => 4,
+            AkaiPadColor::Yellow => 5,
+            AkaiPadColor::YellowBlink => 6,
+        }
     }
 }
