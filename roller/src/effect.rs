@@ -1,4 +1,4 @@
-use palette::{Hsl, Hue, RgbHue};
+use palette::{Hsl, Hue, RgbHue, Mix};
 
 use crate::clock::{Beats, ClockSnapshot};
 use crate::color::Hsl64;
@@ -74,4 +74,8 @@ pub fn hue_shift_30(color: Hsl64, progress_percent: f64) -> Hsl64 {
 // Utilities
 pub fn intensity(dimmer: f64, intensity: f64) -> f64 {
     1.0 - intensity + dimmer * intensity
+}
+
+pub fn color_intensity(color: Hsl64, effected_color: Hsl64, effect_intensity: f64) -> Hsl64 {
+    color.mix(&effected_color, effect_intensity)
 }

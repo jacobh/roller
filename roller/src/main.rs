@@ -97,12 +97,15 @@ impl EngineState {
                 self.effect_intensity,
             );
 
-            let color = self
-                .active_color_effects
-                .iter()
-                .fold(self.global_color.to_hsl(), |color, effect| {
-                    effect.color(color, &clock_snapshot)
-                });
+            let color = effect::color_intensity(
+                self.global_color.to_hsl(),
+                self.active_color_effects
+                    .iter()
+                    .fold(self.global_color.to_hsl(), |color, effect| {
+                        effect.color(color, &clock_snapshot)
+                    }),
+                self.effect_intensity,
+            );
 
             let group_dimmer = *fixture
                 .group_id
