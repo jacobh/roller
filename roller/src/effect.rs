@@ -1,4 +1,4 @@
-use palette::{Hsl, Hue, RgbHue, Mix};
+use palette::{Hsl, Hue, Mix, RgbHue};
 
 use crate::clock::{Beats, ClockSnapshot};
 use crate::color::Hsl64;

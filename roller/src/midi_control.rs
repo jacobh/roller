@@ -123,6 +123,7 @@ impl From<rimd::MidiMessage> for MidiEvent {
 pub struct MidiController {
     _client: coremidi::Client,
     _source: coremidi::Source,
+    destination: coremidi::Destination,
     _input_port: coremidi::InputPort,
     _output_port: coremidi::OutputPort,
 
@@ -136,6 +137,10 @@ impl MidiController {
         let source = coremidi::Sources
             .into_iter()
             .find(|source| source.display_name() == Some(name.to_owned()))
+            .unwrap();
+        let destination = coremidi::Destinations
+            .into_iter()
+            .find(|dest| dest.display_name() == Some(name.to_owned()))
             .unwrap();
 
         let (input_sender, input_receiver) = async_std::sync::channel::<MidiEvent>(1024);
@@ -157,6 +162,7 @@ impl MidiController {
         Ok(MidiController {
             _client: midi_client,
             _source: source,
+            destination: destination,
             _input_port: midi_input_port,
             _output_port: midi_output_port,
             midi_mapping: MidiMapping::new(
@@ -243,5 +249,10 @@ impl MidiController {
             .map(move |midi_event| mapping.try_midi_to_lighting_event(&midi_event).ok())
             .filter(|lighting_event| lighting_event.is_some())
             .map(|lighting_event| lighting_event.unwrap())
+    }
+    pub fn send_packets(&self, packets: &coremidi::PacketList) -> Result<(), &'static str> {
+        self._output_port
+            .send(&self.destination, packets)
+            .map_err(|_| "failed to send packets")
     }
 }
