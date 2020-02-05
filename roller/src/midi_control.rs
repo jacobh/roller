@@ -124,7 +124,10 @@ impl MidiMapping {
         }
     }
     pub fn initial_pad_states(&self) -> FxHashMap<u8, AkaiPadState> {
-        FxHashMap::default()
+        self.buttons
+            .keys()
+            .map(|note| (*note, AkaiPadState::Yellow))
+            .collect()
     }
 }
 

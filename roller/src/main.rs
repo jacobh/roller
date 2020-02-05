@@ -92,10 +92,13 @@ async fn main() -> Result<(), async_std::io::Error> {
         midi_controller
             .set_pad_color(i, midi_control::AkaiPadState::Green)
             .await;
-        async_std::task::sleep(Duration::from_millis(15)).await;
+        async_std::task::sleep(Duration::from_millis(10)).await;
     }
     async_std::task::sleep(Duration::from_millis(150)).await;
     midi_controller.reset_pads().await;
+    for (note, pad_state) in pad_states.iter() {
+        midi_controller.set_pad_color(*note, *pad_state).await;
+    }
 
     let ticks = tick_stream().map(|()| Event::Tick);
     let lighting_events = midi_controller.lighting_events().map(Event::Lighting);
