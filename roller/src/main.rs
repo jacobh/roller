@@ -53,7 +53,6 @@ async fn main() -> Result<(), async_std::io::Error> {
         clock: Clock::new(128.0),
         master_dimmer: 1.0,
         group_dimmers: FxHashMap::default(),
-        global_color: color::Color::Violet,
         effect_intensity: 0.0,
         active_dimmer_effects: vec![
             effect::DimmerEffect::new(effect::triangle_down, Beats::new(4.0), 1.0),
@@ -63,6 +62,7 @@ async fn main() -> Result<(), async_std::io::Error> {
             effect::hue_shift_30,
             Beats::new(5.0),
         )],
+        active_buttons: vec![],
     };
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;

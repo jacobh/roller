@@ -7,6 +7,12 @@ use crate::color::Color;
 use crate::lighting_engine::LightingEvent;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub enum NoteState {
+    On,
+    Off,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MidiControl {
     MasterDimmer,
     GroupDimmer { group_id: usize },
@@ -19,32 +25,53 @@ pub struct MidiControlMapping {
     midi_control: MidiControl,
 }
 
+// Buttons are used for configurable, creative controls. activating colors, chases, etc
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum MidiNoteAction {
+pub enum ButtonAction {
     UpdateGlobalColor { color: Color },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ButtonMapping {
+    pub note: u8,
+    pub group_id: Option<usize>,
+    pub on_action: ButtonAction,
+}
+
+// Meta buttons are global controls for things like tap tempo, changing page, activating a bank
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum MetaButtonAction {
     TapTempo,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MidiNoteMapping {
+pub struct MetaButtonMapping {
     note: u8,
-    group_id: Option<usize>,
-    on_action: MidiNoteAction,
+    on_action: MetaButtonAction,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MidiMapping {
     controls: FxHashMap<u8, MidiControlMapping>,
-    notes: FxHashMap<u8, MidiNoteMapping>,
+    buttons: FxHashMap<u8, ButtonMapping>,
+    meta_buttons: FxHashMap<u8, MetaButtonMapping>,
 }
 impl MidiMapping {
-    fn new(controls: Vec<MidiControlMapping>, notes: Vec<MidiNoteMapping>) -> MidiMapping {
+    fn new(
+        controls: Vec<MidiControlMapping>,
+        buttons: Vec<ButtonMapping>,
+        meta_buttons: Vec<MetaButtonMapping>,
+    ) -> MidiMapping {
         MidiMapping {
             controls: controls
                 .into_iter()
                 .map(|mapping| (mapping.control_channel, mapping))
                 .collect(),
-            notes: notes
+            buttons: buttons
+                .into_iter()
+                .map(|mapping| (mapping.note, mapping))
+                .collect(),
+            meta_buttons: meta_buttons
                 .into_iter()
                 .map(|mapping| (mapping.note, mapping))
                 .collect(),
@@ -54,6 +81,8 @@ impl MidiMapping {
         &self,
         midi_event: &MidiEvent,
     ) -> Result<LightingEvent, &'static str> {
+        let now = Instant::now();
+
         match midi_event {
             MidiEvent::ControlChange { control, value } => match self.controls.get(control) {
                 Some(midi_control_mapping) => match midi_control_mapping.midi_control {
@@ -70,16 +99,18 @@ impl MidiMapping {
                 },
                 None => Err("unknown control channel"),
             },
-            MidiEvent::NoteOn { note, .. } => match self.notes.get(note) {
-                Some(midi_note_mapping) => match &midi_note_mapping.on_action {
-                    action => match action {
-                        MidiNoteAction::UpdateGlobalColor { color } => {
-                            Ok(LightingEvent::UpdateGlobalColor { color: *color })
-                        }
-                        MidiNoteAction::TapTempo => Ok(LightingEvent::TapTempo(Instant::now())),
+            MidiEvent::NoteOn { note, .. } => match self.buttons.get(note) {
+                Some(button_mapping) => Ok(LightingEvent::UpdateButton(
+                    now,
+                    NoteState::On,
+                    button_mapping.clone(),
+                )),
+                None => match self.meta_buttons.get(note) {
+                    Some(meta_button_mapping) => match meta_button_mapping.on_action {
+                        MetaButtonAction::TapTempo => Ok(LightingEvent::TapTempo(now)),
                     },
+                    None => Err("No mapping for this note"),
                 },
-                None => Err("No mapping for this note"),
             },
             MidiEvent::NoteOff { .. } => Err("Not yet implemented"),
             MidiEvent::Other(_) => Err("unknown midi event type"),
@@ -190,66 +221,64 @@ impl MidiController {
                     },
                 ],
                 vec![
-                    // Misc
-                    MidiNoteMapping {
-                        note: 98,
-                        group_id: None,
-                        on_action: MidiNoteAction::TapTempo,
-                    },
                     // Colours
-                    MidiNoteMapping {
+                    ButtonMapping {
                         note: 56,
                         group_id: Some(1),
-                        on_action: MidiNoteAction::UpdateGlobalColor {
+                        on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::White,
                         },
                     },
-                    MidiNoteMapping {
+                    ButtonMapping {
                         note: 48,
                         group_id: Some(1),
-                        on_action: MidiNoteAction::UpdateGlobalColor {
+                        on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::Yellow,
                         },
                     },
-                    MidiNoteMapping {
+                    ButtonMapping {
                         note: 40,
                         group_id: Some(1),
-                        on_action: MidiNoteAction::UpdateGlobalColor {
+                        on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::DeepOrange,
                         },
                     },
-                    MidiNoteMapping {
+                    ButtonMapping {
                         note: 32,
                         group_id: Some(1),
-                        on_action: MidiNoteAction::UpdateGlobalColor { color: Color::Red },
+                        on_action: ButtonAction::UpdateGlobalColor { color: Color::Red },
                     },
-                    MidiNoteMapping {
+                    ButtonMapping {
                         note: 24,
                         group_id: Some(1),
-                        on_action: MidiNoteAction::UpdateGlobalColor {
+                        on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::Violet,
                         },
                     },
-                    MidiNoteMapping {
+                    ButtonMapping {
                         note: 16,
                         group_id: Some(1),
-                        on_action: MidiNoteAction::UpdateGlobalColor {
+                        on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::DarkBlue,
                         },
                     },
-                    MidiNoteMapping {
+                    ButtonMapping {
                         note: 8,
                         group_id: Some(1),
-                        on_action: MidiNoteAction::UpdateGlobalColor { color: Color::Teal },
+                        on_action: ButtonAction::UpdateGlobalColor { color: Color::Teal },
                     },
-                    MidiNoteMapping {
+                    ButtonMapping {
                         note: 0,
                         group_id: Some(1),
-                        on_action: MidiNoteAction::UpdateGlobalColor {
+                        on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::Green,
                         },
                     },
                 ],
+                vec![MetaButtonMapping {
+                    note: 98,
+                    on_action: MetaButtonAction::TapTempo,
+                }],
             ),
             input_receiver: input_receiver,
             output_sender: output_sender,

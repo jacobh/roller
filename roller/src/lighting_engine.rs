@@ -6,14 +6,15 @@ use crate::{
     color::Color,
     effect::{self, ColorEffect, DimmerEffect},
     fixture::Fixture,
+    midi_control::{ButtonAction, ButtonMapping, NoteState},
 };
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LightingEvent {
     UpdateMasterDimmer { dimmer: f64 },
     UpdateGroupDimmer { group_id: usize, dimmer: f64 },
-    UpdateGlobalColor { color: Color },
     UpdateGlobalEffectIntensity(f64),
+    UpdateButton(Instant, NoteState, ButtonMapping),
     TapTempo(Instant),
 }
 
@@ -21,10 +22,10 @@ pub struct EngineState {
     pub clock: Clock,
     pub master_dimmer: f64,
     pub group_dimmers: FxHashMap<usize, f64>,
-    pub global_color: Color,
     pub effect_intensity: f64,
     pub active_dimmer_effects: Vec<DimmerEffect>,
     pub active_color_effects: Vec<ColorEffect>,
+    pub active_buttons: Vec<(Instant, NoteState, ButtonMapping)>,
 }
 impl EngineState {
     pub fn apply_event(&mut self, event: LightingEvent) {
@@ -39,8 +40,9 @@ impl EngineState {
             LightingEvent::UpdateGroupDimmer { group_id, dimmer } => {
                 self.group_dimmers.insert(group_id, dimmer);
             }
-            LightingEvent::UpdateGlobalColor { color } => {
-                self.global_color = color;
+            LightingEvent::UpdateButton(now, state, mapping) => {
+                self.active_buttons.push((now, state, mapping));
+                // TODO garbage collection
             }
             LightingEvent::TapTempo(now) => {
                 self.clock.tap(now);
@@ -48,8 +50,21 @@ impl EngineState {
             }
         }
     }
+    pub fn global_color(&self) -> Color {
+        self.active_buttons
+            .iter()
+            .flat_map(|(_, state, mapping)| match state {
+                NoteState::On => match mapping.on_action {
+                    ButtonAction::UpdateGlobalColor { color } => Some(color),
+                },
+                NoteState::Off => None,
+            })
+            .last()
+            .unwrap_or_else(|| Color::Violet)
+    }
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
         let clock_snapshot = self.clock.snapshot();
+        let global_color = self.global_color();
 
         for (i, fixture) in fixtures.iter_mut().enumerate() {
             let clock_snapshot = clock_snapshot.shift(Beats::new(i as f64));
@@ -64,10 +79,10 @@ impl EngineState {
             );
 
             let color = effect::color_intensity(
-                self.global_color.to_hsl(),
+                global_color.to_hsl(),
                 self.active_color_effects
                     .iter()
-                    .fold(self.global_color.to_hsl(), |color, effect| {
+                    .fold(global_color.to_hsl(), |color, effect| {
                         effect.color(color, &clock_snapshot)
                     }),
                 self.effect_intensity,
