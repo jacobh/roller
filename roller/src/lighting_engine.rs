@@ -100,13 +100,49 @@ impl EngineState {
     pub fn pad_states(&self, midi_mapping: &MidiMapping) -> FxHashMap<u8, AkaiPadState> {
         let mut state = midi_mapping.initial_pad_states();
 
+        let mut active_group_buttons: FxHashMap<usize, Vec<u8>> = FxHashMap::default();
+
         for (_, note_state, mapping) in self.active_buttons.iter() {
             match note_state {
                 NoteState::On => {
-                    state.insert(mapping.note, AkaiPadState::Red);
+                    state.insert(mapping.note, AkaiPadState::Green);
+
+                    if let Some(group_id) = mapping.group_id {
+                        active_group_buttons
+                            .entry(group_id)
+                            .or_insert_with(|| Vec::new())
+                            .push(mapping.note);
+
+                        let notes_in_group = midi_mapping
+                            .buttons
+                            .values()
+                            .filter(|button| button.group_id == Some(group_id))
+                            .map(|button| button.note)
+                            .filter(|note| *note != mapping.note);
+
+                        for note in notes_in_group {
+                            state.insert(note, AkaiPadState::Red);
+                        }
+                    }
                 }
                 NoteState::Off => {
-                    state.insert(mapping.note, AkaiPadState::Yellow);
+                    state.insert(mapping.note, AkaiPadState::Green);
+
+                    if let Some(group_id) = mapping.group_id {
+                        // This was the last activated button, so it takes precedence
+                        if active_group_buttons[&group_id].last() == Some(&mapping.note) {
+                            let notes_in_group = midi_mapping
+                                .buttons
+                                .values()
+                                .filter(|button| button.group_id == Some(group_id))
+                                .map(|button| button.note)
+                                .filter(|note| *note != mapping.note);
+
+                            for note in notes_in_group {
+                                state.insert(note, AkaiPadState::Yellow);
+                            }
+                        }
+                    }
                 }
             }
         }
