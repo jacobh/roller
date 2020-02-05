@@ -1,7 +1,7 @@
 use async_std::prelude::*;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use crate::color::Color;
 
@@ -124,12 +124,11 @@ impl From<rimd::MidiMessage> for MidiEvent {
 pub struct MidiController {
     _client: coremidi::Client,
     _source: coremidi::Source,
-    destination: coremidi::Destination,
     _input_port: coremidi::InputPort,
-    output_port: coremidi::OutputPort,
 
     midi_mapping: MidiMapping,
     input_receiver: async_std::sync::Receiver<MidiEvent>,
+    output_sender: async_std::sync::Sender<Vec<u8>>,
 }
 impl MidiController {
     pub fn new_for_device_name(name: &str) -> Result<MidiController, ()> {
@@ -138,10 +137,6 @@ impl MidiController {
         let source = coremidi::Sources
             .into_iter()
             .find(|source| source.display_name() == Some(name.to_owned()))
-            .unwrap();
-        let destination = coremidi::Destinations
-            .into_iter()
-            .find(|dest| dest.display_name() == Some(name.to_owned()))
             .unwrap();
 
         let (input_sender, input_receiver) = async_std::sync::channel::<MidiEvent>(1024);
@@ -156,16 +151,32 @@ impl MidiController {
             .unwrap();
         midi_input_port.connect_source(&source).unwrap();
 
+        let (output_sender, mut output_receiver) = async_std::sync::channel::<Vec<u8>>(512);
+
+        let destination = coremidi::Destinations
+            .into_iter()
+            .find(|dest| dest.display_name() == Some(name.to_owned()))
+            .unwrap();
+
         let midi_output_port = midi_client
             .output_port(&format!("roller-input-{}", name))
             .unwrap();
 
+        async_std::task::spawn(async move {
+            while let Some(packet) = output_receiver.next().await {
+                let packets = coremidi::PacketBuffer::new(0, &packet);
+                midi_output_port
+                    .send(&destination, &packets)
+                    .map_err(|_| "failed to send packets")
+                    .unwrap();
+                async_std::task::sleep(Duration::from_millis(1)).await;
+            }
+        });
+
         Ok(MidiController {
             _client: midi_client,
             _source: source,
-            destination: destination,
             _input_port: midi_input_port,
-            output_port: midi_output_port,
             midi_mapping: MidiMapping::new(
                 vec![
                     MidiControlMapping {
@@ -239,6 +250,7 @@ impl MidiController {
                 ],
             ),
             input_receiver: input_receiver,
+            output_sender: output_sender,
         })
     }
     fn midi_events(&self) -> impl Stream<Item = MidiEvent> {
@@ -251,21 +263,17 @@ impl MidiController {
             .filter(|lighting_event| lighting_event.is_some())
             .map(|lighting_event| lighting_event.unwrap())
     }
-    fn send_packets(&self, packets: &coremidi::PacketList) -> Result<(), &'static str> {
-        self.output_port
-            .send(&self.destination, packets)
-            .map_err(|_| "failed to send packets")
+    async fn send_packet(&self, packet: impl Into<Vec<u8>>) {
+        self.output_sender.send(packet.into()).await
     }
-    pub fn set_pad_color(&self, note: u8, pad_color: AkaiPadColor) -> Result<(), &'static str> {
-        let packet = coremidi::PacketBuffer::new(0, &[0x90, note, pad_color.as_byte()]);
-        self.send_packets(&packet)
+    pub async fn set_pad_color(&self, note: u8, pad_color: AkaiPadColor) {
+        self.send_packet(vec![0x90, note, pad_color.as_byte()])
+            .await
     }
-    pub fn reset_pads(&self) -> Result<(), &'static str> {
+    pub async fn reset_pads(&self) {
         for i in 0..64 {
-            self.set_pad_color(i, AkaiPadColor::Off)?;
-            std::thread::sleep(std::time::Duration::from_millis(1));
+            self.set_pad_color(i, AkaiPadColor::Off).await;
         }
-        Ok(())
     }
 }
 
