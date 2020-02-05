@@ -4,15 +4,7 @@ use serde::Deserialize;
 use std::time::{Duration, Instant};
 
 use crate::color::Color;
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum LightingEvent {
-    UpdateMasterDimmer { dimmer: f64 },
-    UpdateGroupDimmer { group_id: usize, dimmer: f64 },
-    UpdateGlobalColor { color: Color },
-    UpdateGlobalEffectIntensity(f64),
-    TapTempo(Instant),
-}
+use crate::lighting_engine::LightingEvent;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MidiControl {

@@ -8,11 +8,12 @@ mod clock;
 mod color;
 mod effect;
 mod fixture;
+mod lighting_engine;
 mod midi_control;
 mod project;
 
 use crate::clock::{Beats, Clock};
-use crate::midi_control::LightingEvent;
+use crate::lighting_engine::{EngineState, LightingEvent};
 
 fn fold_fixture_dmx_data<'a>(fixtures: impl Iterator<Item = &'a fixture::Fixture>) -> Vec<u8> {
     let mut dmx_data: Vec<u8> = vec![0; 512];
@@ -41,73 +42,6 @@ fn tick_stream() -> impl Stream<Item = ()> {
             Duration::from_secs(0)
         })
     })
-}
-
-struct EngineState {
-    clock: Clock,
-    master_dimmer: f64,
-    group_dimmers: FxHashMap<usize, f64>,
-    global_color: color::Color,
-    effect_intensity: f64,
-    active_dimmer_effects: Vec<effect::DimmerEffect>,
-    active_color_effects: Vec<effect::ColorEffect>,
-}
-impl EngineState {
-    fn apply_event(&mut self, event: LightingEvent) {
-        dbg!(&event);
-        match event {
-            LightingEvent::UpdateMasterDimmer { dimmer } => {
-                self.master_dimmer = dimmer;
-            }
-            LightingEvent::UpdateGlobalEffectIntensity(intensity) => {
-                self.effect_intensity = intensity;
-            }
-            LightingEvent::UpdateGroupDimmer { group_id, dimmer } => {
-                self.group_dimmers.insert(group_id, dimmer);
-            }
-            LightingEvent::UpdateGlobalColor { color } => {
-                self.global_color = color;
-            }
-            LightingEvent::TapTempo(now) => {
-                self.clock.tap(now);
-                dbg!(self.clock.bpm());
-            }
-        }
-    }
-    fn update_fixtures(&self, fixtures: &mut Vec<fixture::Fixture>) {
-        let clock_snapshot = self.clock.snapshot();
-
-        for (i, fixture) in fixtures.iter_mut().enumerate() {
-            let clock_snapshot = clock_snapshot.shift(Beats::new(i as f64));
-
-            let effect_dimmer = effect::intensity(
-                self.active_dimmer_effects
-                    .iter()
-                    .fold(1.0, |dimmer, effect| {
-                        dimmer * effect.dimmer(&clock_snapshot)
-                    }),
-                self.effect_intensity,
-            );
-
-            let color = effect::color_intensity(
-                self.global_color.to_hsl(),
-                self.active_color_effects
-                    .iter()
-                    .fold(self.global_color.to_hsl(), |color, effect| {
-                        effect.color(color, &clock_snapshot)
-                    }),
-                self.effect_intensity,
-            );
-
-            let group_dimmer = *fixture
-                .group_id
-                .and_then(|group_id| self.group_dimmers.get(&group_id))
-                .unwrap_or(&1.0);
-
-            fixture.set_dimmer(self.master_dimmer * group_dimmer * effect_dimmer);
-            fixture.set_color(color).unwrap();
-        }
-    }
 }
 
 #[async_std::main]
