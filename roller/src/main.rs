@@ -89,7 +89,7 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     for i in 0..64 {
         midi_controller
-            .set_pad_color(i, midi_control::AkaiPadColor::Green)
+            .set_pad_color(i, midi_control::AkaiPadState::Green)
             .await;
         async_std::task::sleep(Duration::from_millis(15)).await;
     }

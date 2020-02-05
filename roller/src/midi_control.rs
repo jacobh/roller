@@ -297,19 +297,19 @@ impl MidiController {
     async fn send_packet(&self, packet: impl Into<Vec<u8>>) {
         self.output_sender.send(packet.into()).await
     }
-    pub async fn set_pad_color(&self, note: u8, pad_color: AkaiPadColor) {
+    pub async fn set_pad_color(&self, note: u8, pad_color: AkaiPadState) {
         self.send_packet(vec![0x90, note, pad_color.as_byte()])
             .await
     }
     pub async fn reset_pads(&self) {
         for i in 0..64 {
-            self.set_pad_color(i, AkaiPadColor::Off).await;
+            self.set_pad_color(i, AkaiPadState::Off).await;
         }
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-pub enum AkaiPadColor {
+pub enum AkaiPadState {
     Off,
     Green,
     GreenBlink,
@@ -318,16 +318,16 @@ pub enum AkaiPadColor {
     Yellow,
     YellowBlink,
 }
-impl AkaiPadColor {
+impl AkaiPadState {
     pub fn as_byte(self) -> u8 {
         match self {
-            AkaiPadColor::Off => 0,
-            AkaiPadColor::Green => 1,
-            AkaiPadColor::GreenBlink => 2,
-            AkaiPadColor::Red => 3,
-            AkaiPadColor::RedBlink => 4,
-            AkaiPadColor::Yellow => 5,
-            AkaiPadColor::YellowBlink => 6,
+            AkaiPadState::Off => 0,
+            AkaiPadState::Green => 1,
+            AkaiPadState::GreenBlink => 2,
+            AkaiPadState::Red => 3,
+            AkaiPadState::RedBlink => 4,
+            AkaiPadState::Yellow => 5,
+            AkaiPadState::YellowBlink => 6,
         }
     }
 }
