@@ -28,6 +28,7 @@ pub enum MidiNoteAction {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MidiNoteMapping {
     note: u8,
+    group_id: Option<usize>,
     on_action: MidiNoteAction,
 }
 
@@ -192,49 +193,58 @@ impl MidiController {
                     // Misc
                     MidiNoteMapping {
                         note: 98,
+                        group_id: None,
                         on_action: MidiNoteAction::TapTempo,
                     },
                     // Colours
                     MidiNoteMapping {
                         note: 56,
+                        group_id: Some(1),
                         on_action: MidiNoteAction::UpdateGlobalColor {
                             color: Color::White,
                         },
                     },
                     MidiNoteMapping {
                         note: 48,
+                        group_id: Some(1),
                         on_action: MidiNoteAction::UpdateGlobalColor {
                             color: Color::Yellow,
                         },
                     },
                     MidiNoteMapping {
                         note: 40,
+                        group_id: Some(1),
                         on_action: MidiNoteAction::UpdateGlobalColor {
                             color: Color::DeepOrange,
                         },
                     },
                     MidiNoteMapping {
                         note: 32,
+                        group_id: Some(1),
                         on_action: MidiNoteAction::UpdateGlobalColor { color: Color::Red },
                     },
                     MidiNoteMapping {
                         note: 24,
+                        group_id: Some(1),
                         on_action: MidiNoteAction::UpdateGlobalColor {
                             color: Color::Violet,
                         },
                     },
                     MidiNoteMapping {
                         note: 16,
+                        group_id: Some(1),
                         on_action: MidiNoteAction::UpdateGlobalColor {
                             color: Color::DarkBlue,
                         },
                     },
                     MidiNoteMapping {
                         note: 8,
+                        group_id: Some(1),
                         on_action: MidiNoteAction::UpdateGlobalColor { color: Color::Teal },
                     },
                     MidiNoteMapping {
                         note: 0,
+                        group_id: Some(1),
                         on_action: MidiNoteAction::UpdateGlobalColor {
                             color: Color::Green,
                         },
