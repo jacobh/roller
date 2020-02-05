@@ -28,14 +28,6 @@ fn fold_fixture_dmx_data<'a>(fixtures: impl Iterator<Item = &'a fixture::Fixture
     dmx_data
 }
 
-async fn flush_fixtures<'a>(
-    client: &mut ola_client::OlaClient,
-    fixtures: impl Iterator<Item = &'a fixture::Fixture>,
-) -> Result<(), async_std::io::Error> {
-    let dmx_data = fold_fixture_dmx_data(fixtures);
-    client.send_dmx_data(10, dmx_data).await
-}
-
 fn tick_stream() -> impl Stream<Item = ()> {
     let mut next_tick_at = Instant::now();
 
@@ -141,6 +133,13 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
 
+    let (dmx_sender, mut dmx_receiver) = async_std::sync::channel::<(i32, Vec<u8>)>(10);
+    async_std::task::spawn(async move {
+        while let Some((universe, dmx_data)) = dmx_receiver.next().await {
+            ola_client.send_dmx_data(universe, dmx_data).await.unwrap();
+        }
+    });
+
     for fixture in fixtures.iter_mut() {
         if fixture.profile.is_positionable() {
             fixture.set_position((0.0, 1.0)).unwrap();
@@ -155,7 +154,9 @@ async fn main() -> Result<(), async_std::io::Error> {
     let midi_controller = midi_control::MidiController::new_for_device_name("APC MINI").unwrap();
 
     for i in 0..64 {
-        midi_controller.set_pad_color(i, midi_control::AkaiPadColor::Green).await;
+        midi_controller
+            .set_pad_color(i, midi_control::AkaiPadColor::Green)
+            .await;
         async_std::task::sleep(Duration::from_millis(15)).await;
     }
     async_std::task::sleep(Duration::from_millis(150)).await;
@@ -170,9 +171,8 @@ async fn main() -> Result<(), async_std::io::Error> {
         match event {
             Event::Tick => {
                 state.update_fixtures(&mut fixtures);
-                flush_fixtures(&mut ola_client, fixtures.iter())
-                    .await
-                    .expect("flush_fixtures");
+                let dmx_data = fold_fixture_dmx_data(fixtures.iter());
+                dmx_sender.send((10, dmx_data)).await;
             }
             Event::Lighting(event) => {
                 state.apply_event(event);
