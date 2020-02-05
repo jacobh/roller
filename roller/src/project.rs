@@ -6,6 +6,7 @@ use crate::fixture::Fixture;
 struct ProjectFixture {
     start_channel: usize,
     group_id: Option<usize>,
+    #[serde(rename = "fixture_profile")]
     fixture_profile_slug: String,
 }
 

@@ -5,35 +5,35 @@ universe_id = 10
 
     [[universes.fixtures]]
     start_channel = 1
-    fixture_profile_slug = "ave_quad_pro_flat_4ch"
+    fixture_profile = "ave_quad_pro_flat_4ch"
     group_id = 1
 
     [[universes.fixtures]]
     start_channel = 5
-    fixture_profile_slug = "ave_quad_pro_flat_4ch"
+    fixture_profile = "ave_quad_pro_flat_4ch"
     group_id = 1
 
     [[universes.fixtures]]
     start_channel = 9
-    fixture_profile_slug = "ebay_par_can"
+    fixture_profile = "ebay_par_can"
     group_id = 1
 
     [[universes.fixtures]]
     start_channel = 17
-    fixture_profile_slug = "ebay_par_can"
+    fixture_profile = "ebay_par_can"
     group_id = 1
 
     [[universes.fixtures]]
     start_channel = 25
-    fixture_profile_slug = "ebay_par_can"
+    fixture_profile = "ebay_par_can"
     group_id = 1
 
     [[universes.fixtures]]
     start_channel = 33
-    fixture_profile_slug = "mini_led_moving_head"
+    fixture_profile = "mini_led_moving_head"
     group_id = 2
 
     [[universes.fixtures]]
     start_channel = 47
-    fixture_profile_slug = "mini_led_moving_head"
+    fixture_profile = "mini_led_moving_head"
     group_id = 2
