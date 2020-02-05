@@ -112,7 +112,14 @@ impl MidiMapping {
                     None => Err("No mapping for this note"),
                 },
             },
-            MidiEvent::NoteOff { .. } => Err("Not yet implemented"),
+            MidiEvent::NoteOff { note, .. } => match self.buttons.get(note) {
+                Some(button_mapping) => Ok(LightingEvent::UpdateButton(
+                    now,
+                    NoteState::Off,
+                    button_mapping.clone(),
+                )),
+                None => Err("No mapping for this note"),
+            },
             MidiEvent::Other(_) => Err("unknown midi event type"),
         }
     }
