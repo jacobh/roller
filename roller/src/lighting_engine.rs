@@ -6,7 +6,7 @@ use crate::{
     color::Color,
     effect::{self, ColorEffect, DimmerEffect},
     fixture::Fixture,
-    midi_control::{ButtonAction, ButtonMapping, NoteState},
+    midi_control::{AkaiPadState, ButtonAction, ButtonMapping, MidiMapping, NoteState},
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -96,5 +96,21 @@ impl EngineState {
             fixture.set_dimmer(self.master_dimmer * group_dimmer * effect_dimmer);
             fixture.set_color(color).unwrap();
         }
+    }
+    pub fn pad_states(&self, midi_mapping: &MidiMapping) -> FxHashMap<u8, AkaiPadState> {
+        let mut state = midi_mapping.initial_pad_states();
+
+        for (_, note_state, mapping) in self.active_buttons.iter() {
+            match note_state {
+                NoteState::On => {
+                    state.insert(mapping.note, AkaiPadState::Red);
+                }
+                NoteState::Off => {
+                    state.insert(mapping.note, AkaiPadState::Yellow);
+                }
+            }
+        }
+
+        state
     }
 }

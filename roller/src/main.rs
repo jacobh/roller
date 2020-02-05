@@ -86,6 +86,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     }
 
     let midi_controller = midi_control::MidiController::new_for_device_name("APC MINI").unwrap();
+    let mut pad_states = state.pad_states(&midi_controller.midi_mapping);
 
     for i in 0..64 {
         midi_controller
@@ -107,6 +108,23 @@ async fn main() -> Result<(), async_std::io::Error> {
                 state.update_fixtures(&mut fixtures);
                 let dmx_data = fold_fixture_dmx_data(fixtures.iter());
                 dmx_sender.send((10, dmx_data)).await;
+
+                let new_pad_states = state.pad_states(&midi_controller.midi_mapping);
+
+                // find the pads that have updated since the last tick
+                let pad_changeset = new_pad_states.iter().filter(|(note, state)| {
+                    pad_states
+                        .get(note)
+                        .map(|prev_state| state != &prev_state)
+                        .unwrap_or(true)
+                });
+
+                for (note, state) in pad_changeset {
+                    dbg!("SETTING PAD COLOR", note, state);
+                    midi_controller.set_pad_color(*note, *state).await;
+                }
+
+                pad_states = new_pad_states;
             }
             Event::Lighting(event) => {
                 state.apply_event(event);

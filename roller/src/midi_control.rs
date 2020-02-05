@@ -53,8 +53,8 @@ pub struct MetaButtonMapping {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MidiMapping {
     controls: FxHashMap<u8, MidiControlMapping>,
-    buttons: FxHashMap<u8, ButtonMapping>,
-    meta_buttons: FxHashMap<u8, MetaButtonMapping>,
+    pub buttons: FxHashMap<u8, ButtonMapping>,
+    pub meta_buttons: FxHashMap<u8, MetaButtonMapping>,
 }
 impl MidiMapping {
     fn new(
@@ -116,6 +116,9 @@ impl MidiMapping {
             MidiEvent::Other(_) => Err("unknown midi event type"),
         }
     }
+    pub fn initial_pad_states(&self) -> FxHashMap<u8, AkaiPadState> {
+        FxHashMap::default()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -150,7 +153,7 @@ pub struct MidiController {
     _source: coremidi::Source,
     _input_port: coremidi::InputPort,
 
-    midi_mapping: MidiMapping,
+    pub midi_mapping: MidiMapping,
     input_receiver: async_std::sync::Receiver<MidiEvent>,
     output_sender: async_std::sync::Sender<Vec<u8>>,
 }
