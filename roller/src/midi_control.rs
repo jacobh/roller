@@ -6,32 +6,32 @@ use std::time::{Duration, Instant};
 use crate::color::Color;
 use crate::lighting_engine::LightingEvent;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum NoteState {
     On,
     Off,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum MidiControl {
     MasterDimmer,
     GroupDimmer { group_id: usize },
     GlobalEffectIntensity,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MidiControlMapping {
     control_channel: u8,
     midi_control: MidiControl,
 }
 
 // Buttons are used for configurable, creative controls. activating colors, chases, etc
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ButtonAction {
     UpdateGlobalColor { color: Color },
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ButtonMapping {
     pub note: u8,
     pub group_id: Option<usize>,
@@ -39,12 +39,12 @@ pub struct ButtonMapping {
 }
 
 // Meta buttons are global controls for things like tap tempo, changing page, activating a bank
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum MetaButtonAction {
     TapTempo,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MetaButtonMapping {
     note: u8,
     on_action: MetaButtonAction,

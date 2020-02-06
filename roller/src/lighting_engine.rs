@@ -1,6 +1,8 @@
 use rustc_hash::FxHashMap;
 use std::time::Instant;
 
+use crate::utils::FxIndexMap;
+
 use crate::{
     clock::{Beats, Clock},
     color::Color,
@@ -25,7 +27,7 @@ pub struct EngineState {
     pub effect_intensity: f64,
     pub active_dimmer_effects: Vec<DimmerEffect>,
     pub active_color_effects: Vec<ColorEffect>,
-    pub active_buttons: Vec<(Instant, NoteState, ButtonMapping)>,
+    pub button_states: FxIndexMap<(ButtonMapping, NoteState), Instant>,
 }
 impl EngineState {
     pub fn apply_event(&mut self, event: LightingEvent) {
@@ -41,8 +43,9 @@ impl EngineState {
                 self.group_dimmers.insert(group_id, dimmer);
             }
             LightingEvent::UpdateButton(now, state, mapping) => {
-                self.active_buttons.push((now, state, mapping));
-                // TODO garbage collection
+                let key = (mapping, state);
+                self.button_states.shift_remove(&key);
+                self.button_states.insert(key, now);
             }
             LightingEvent::TapTempo(now) => {
                 self.clock.tap(now);
@@ -51,9 +54,9 @@ impl EngineState {
         }
     }
     pub fn global_color(&self) -> Color {
-        self.active_buttons
-            .iter()
-            .flat_map(|(_, state, mapping)| match state {
+        self.button_states
+            .keys()
+            .flat_map(|(mapping, state)| match state {
                 NoteState::On => match mapping.on_action {
                     ButtonAction::UpdateGlobalColor { color } => Some(color),
                 },
@@ -102,7 +105,7 @@ impl EngineState {
 
         let mut active_group_buttons: FxHashMap<usize, Vec<u8>> = FxHashMap::default();
 
-        for (_, note_state, mapping) in self.active_buttons.iter() {
+        for (mapping, note_state) in self.button_states.keys() {
             match note_state {
                 NoteState::On => {
                     state.insert(mapping.note, AkaiPadState::Green);
@@ -130,7 +133,11 @@ impl EngineState {
 
                     if let Some(group_id) = mapping.group_id {
                         // This was the last activated button, so it takes precedence
-                        if active_group_buttons[&group_id].last() == Some(&mapping.note) {
+                        if active_group_buttons
+                            .get(&group_id)
+                            .and_then(|group| group.last())
+                            == Some(&mapping.note)
+                        {
                             let notes_in_group = midi_mapping
                                 .buttons
                                 .values()

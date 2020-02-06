@@ -11,6 +11,7 @@ mod fixture;
 mod lighting_engine;
 mod midi_control;
 mod project;
+mod utils;
 
 use crate::clock::{Beats, Clock};
 use crate::lighting_engine::{EngineState, LightingEvent};
@@ -62,7 +63,7 @@ async fn main() -> Result<(), async_std::io::Error> {
             effect::hue_shift_30,
             Beats::new(5.0),
         )],
-        active_buttons: vec![],
+        button_states: utils::FxIndexMap::default(),
     };
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
@@ -123,7 +124,7 @@ async fn main() -> Result<(), async_std::io::Error> {
                 });
 
                 for (note, state) in pad_changeset {
-                    dbg!("SETTING PAD COLOR", note, state);
+                    // dbg!("SETTING PAD COLOR", note, state);
                     midi_controller.set_pad_color(*note, *state).await;
                 }
 

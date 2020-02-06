@@ -2,7 +2,7 @@ use palette::Hsl;
 
 pub type Hsl64 = Hsl<palette::encoding::srgb::Srgb, f64>;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Color {
     White,
     Yellow,
