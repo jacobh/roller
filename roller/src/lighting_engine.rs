@@ -43,6 +43,12 @@ impl EngineState {
                 self.group_dimmers.insert(group_id, dimmer);
             }
             LightingEvent::UpdateButton(now, state, mapping) => {
+                // If this is a note on event, remove any past note off events to avoid
+                // confusion of a note off event coming before any note on event
+                if state == NoteState::On {
+                    self.button_states.shift_remove(&(mapping.clone(), NoteState::Off));
+                }
+
                 let key = (mapping, state);
                 self.button_states.shift_remove(&key);
                 self.button_states.insert(key, now);
