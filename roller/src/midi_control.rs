@@ -180,9 +180,12 @@ impl MidiController {
         let midi_input_port = midi_client
             .input_port(&format!("roller-input-{}", name), move |packet_list| {
                 for packet in packet_list.iter() {
-                    let midi_message = rimd::MidiMessage::from_bytes(packet.data().to_vec());
-                    let midi_event = dbg!(MidiEvent::from(midi_message));
-                    async_std::task::block_on(input_sender.send(midi_event));
+                    // multiple messages may appear in the same packet
+                    for message_data in packet.data().chunks_exact(3) {
+                        let midi_message = rimd::MidiMessage::from_bytes(message_data.to_vec());
+                        let midi_event = MidiEvent::from(midi_message);
+                        async_std::task::block_on(input_sender.send(midi_event));
+                    }
                 }
             })
             .unwrap();

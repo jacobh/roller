@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use rustc_hash::FxHashMap;
 use std::time::Instant;
 
@@ -31,7 +32,7 @@ pub struct EngineState {
 }
 impl EngineState {
     pub fn apply_event(&mut self, event: LightingEvent) {
-        dbg!(&event);
+        // dbg!(&event);
         match event {
             LightingEvent::UpdateMasterDimmer { dimmer } => {
                 self.master_dimmer = dimmer;
@@ -43,6 +44,13 @@ impl EngineState {
                 self.group_dimmers.insert(group_id, dimmer);
             }
             LightingEvent::UpdateButton(now, state, mapping) => {
+                // If this is a note on event, remove any past note off events to avoid
+                // confusion of a note off event coming before any note on event
+                if state == NoteState::On {
+                    self.button_states
+                        .shift_remove(&(mapping.clone(), NoteState::Off));
+                }
+
                 let key = (mapping, state);
                 self.button_states.shift_remove(&key);
                 self.button_states.insert(key, now);
@@ -54,15 +62,38 @@ impl EngineState {
         }
     }
     pub fn global_color(&self) -> Color {
-        self.button_states
-            .keys()
-            .flat_map(|(mapping, state)| match state {
-                NoteState::On => match mapping.on_action {
-                    ButtonAction::UpdateGlobalColor { color } => Some(color),
-                },
-                NoteState::Off => None,
-            })
+        let mut on_colors: Vec<(u8, Color)> = Vec::new();
+        let mut last_off: Option<(u8, Color)> = None;
+
+        let color_buttons =
+            self.button_states
+                .keys()
+                .flat_map(|(mapping, state)| match mapping.on_action {
+                    ButtonAction::UpdateGlobalColor { color } => Some((mapping.note, state, color)),
+                    _ => None,
+                });
+
+        for (note, state, color) in color_buttons {
+            match state {
+                NoteState::On => {
+                    on_colors.push((note, color));
+                }
+                NoteState::Off => {
+                    let color_idx = on_colors
+                        .iter()
+                        .position(|(color_note, _)| *color_note == note)
+                        .unwrap();
+
+                    on_colors.remove(color_idx);
+                    last_off = Some((note, color));
+                }
+            }
+        }
+
+        on_colors
             .last()
+            .or_else(|| last_off.as_ref())
+            .map(|(_, color)| *color)
             .unwrap_or_else(|| Color::Violet)
     }
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
@@ -103,6 +134,16 @@ impl EngineState {
     pub fn pad_states(&self, midi_mapping: &MidiMapping) -> FxHashMap<u8, AkaiPadState> {
         let mut state = midi_mapping.initial_pad_states();
 
+        let group_notes: FxHashMap<usize, Vec<u8>> = midi_mapping
+            .buttons
+            .values()
+            .group_by(|button| button.group_id)
+            .into_iter()
+            .flat_map(|(group_id, buttons)| {
+                group_id.map(|group_id| (group_id, buttons.map(|button| button.note).collect()))
+            })
+            .collect();
+
         let mut active_group_buttons: FxHashMap<usize, Vec<u8>> = FxHashMap::default();
 
         for (mapping, note_state) in self.button_states.keys() {
@@ -116,38 +157,36 @@ impl EngineState {
                             .or_insert_with(|| Vec::new())
                             .push(mapping.note);
 
-                        let notes_in_group = midi_mapping
-                            .buttons
-                            .values()
-                            .filter(|button| button.group_id == Some(group_id))
-                            .map(|button| button.note)
-                            .filter(|note| *note != mapping.note);
-
-                        for note in notes_in_group {
-                            state.insert(note, AkaiPadState::Red);
+                        if active_group_buttons[&group_id].len() == 1 {
+                            for note in group_notes[&group_id].iter() {
+                                if *note != mapping.note {
+                                    state.insert(*note, AkaiPadState::Red);
+                                }
+                            }
                         }
                     }
                 }
                 NoteState::Off => {
                     state.insert(mapping.note, AkaiPadState::Green);
-
                     if let Some(group_id) = mapping.group_id {
-                        // This was the last activated button, so it takes precedence
-                        if active_group_buttons
-                            .get(&group_id)
-                            .and_then(|group| group.last())
-                            == Some(&mapping.note)
-                        {
-                            let notes_in_group = midi_mapping
-                                .buttons
-                                .values()
-                                .filter(|button| button.group_id == Some(group_id))
-                                .map(|button| button.note)
-                                .filter(|note| *note != mapping.note);
+                        // remove button
+                        let button_idx = active_group_buttons[&group_id]
+                            .iter()
+                            .position(|note| *note == mapping.note)
+                            .unwrap();
+                        active_group_buttons
+                            .get_mut(&group_id)
+                            .unwrap()
+                            .remove(button_idx);
 
-                            for note in notes_in_group {
-                                state.insert(note, AkaiPadState::Yellow);
+                        if active_group_buttons[&group_id].is_empty() {
+                            for note in group_notes[&group_id].iter() {
+                                if *note != mapping.note {
+                                    state.insert(*note, AkaiPadState::Yellow);
+                                }
                             }
+                        } else {
+                            state.insert(mapping.note, AkaiPadState::Red);
                         }
                     }
                 }
