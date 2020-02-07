@@ -34,6 +34,7 @@ pub enum Effect {
     SawDown,
     TriangleDown,
     Sine,
+    ShortSquarePulse,
 }
 impl Effect {
     fn apply(self, x: f64) -> f64 {
@@ -42,6 +43,7 @@ impl Effect {
             Effect::SawDown => saw_down(x),
             Effect::TriangleDown => triangle_down(x),
             Effect::Sine => sine(x),
+            Effect::ShortSquarePulse => short_square_pulse(x),
         }
     }
 }
@@ -65,6 +67,14 @@ pub fn triangle_down(x: f64) -> f64 {
 
 pub fn sine(x: f64) -> f64 {
     (f64::sin(std::f64::consts::PI * 2.0 * x) / 2.0) + 0.5
+}
+
+pub fn short_square_pulse(x: f64) -> f64 {
+    if x < 0.2 {
+        1.0
+    } else {
+        f64::max(0.5 - (x/1.2), 0.0)
+    }
 }
 
 // color effects
