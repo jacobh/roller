@@ -6,10 +6,10 @@ use std::time::{Duration, Instant};
 
 mod clock;
 mod color;
+mod control;
 mod effect;
 mod fixture;
 mod lighting_engine;
-mod midi_control;
 mod project;
 mod utils;
 
@@ -82,12 +82,12 @@ async fn main() -> Result<(), async_std::io::Error> {
         Lighting(LightingEvent),
     }
 
-    let midi_controller = midi_control::MidiController::new_for_device_name("APC MINI").unwrap();
+    let midi_controller = control::midi::MidiController::new_for_device_name("APC MINI").unwrap();
     let mut pad_states = state.pad_states(&midi_controller.midi_mapping);
 
     for i in 0..64 {
         midi_controller
-            .set_pad_color(i, midi_control::AkaiPadState::Green)
+            .set_pad_color(i, control::midi::AkaiPadState::Green)
             .await;
         async_std::task::sleep(Duration::from_millis(10)).await;
     }
