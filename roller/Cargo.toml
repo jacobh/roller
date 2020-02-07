@@ -16,3 +16,4 @@ ola_client = {path = "../ola_client"}
 rustc-hash = "1.0"
 derive_more = "0.99"
 indexmap = "1.3"
+itertools = "*"
