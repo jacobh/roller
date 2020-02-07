@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 
 use crate::utils::FxIndexMap;
@@ -26,7 +26,6 @@ pub struct EngineState {
     pub master_dimmer: f64,
     pub group_dimmers: FxHashMap<usize, f64>,
     pub effect_intensity: f64,
-    pub active_dimmer_effects: Vec<DimmerEffect>,
     pub active_color_effects: Vec<ColorEffect>,
     pub button_states: FxIndexMap<(ButtonMapping, NoteState), Instant>,
 }
@@ -96,19 +95,32 @@ impl EngineState {
             .map(|(_, color)| *color)
             .unwrap_or_else(|| Color::Violet)
     }
+    fn active_dimmer_effects(&self) -> FxHashSet<&DimmerEffect> {
+        let mut active_dimmer_effects = FxHashSet::default();
+
+        for (mapping, state) in self.button_states.keys() {
+            if let ButtonAction::ActivateDimmerEffect(effect) = &mapping.on_action {
+                match state {
+                    NoteState::On => active_dimmer_effects.insert(effect),
+                    NoteState::Off => active_dimmer_effects.remove(&effect),
+                };
+            }
+        }
+
+        active_dimmer_effects
+    }
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
         let clock_snapshot = self.clock.snapshot();
         let global_color = self.global_color();
+        let active_dimmer_effects = self.active_dimmer_effects();
 
         for (i, fixture) in fixtures.iter_mut().enumerate() {
             let clock_snapshot = clock_snapshot.shift(Beats::new(i as f64));
 
             let effect_dimmer = effect::intensity(
-                self.active_dimmer_effects
-                    .iter()
-                    .fold(1.0, |dimmer, effect| {
-                        dimmer * effect.dimmer(&clock_snapshot)
-                    }),
+                active_dimmer_effects.iter().fold(1.0, |dimmer, effect| {
+                    dimmer * effect.dimmer(&clock_snapshot)
+                }),
                 self.effect_intensity,
             );
 
