@@ -47,12 +47,8 @@ impl EngineState {
                 // If this is a note on event, remove any past note off events to avoid
                 // confusion of a note off event coming before any note on event
                 if state == NoteState::On {
-<<<<<<< HEAD
-                    self.button_states.shift_remove(&(mapping.clone(), NoteState::Off));
-=======
                     self.button_states
                         .shift_remove(&(mapping.clone(), NoteState::Off));
->>>>>>> note-states
                 }
 
                 let key = (mapping, state);
