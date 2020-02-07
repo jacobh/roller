@@ -73,7 +73,7 @@ pub fn short_square_pulse(x: f64) -> f64 {
     if x < 0.2 {
         1.0
     } else {
-        f64::max(0.5 - (x/1.2), 0.0)
+        f64::max(0.5 - (x / 1.2), 0.0)
     }
 }
 

@@ -9,7 +9,9 @@ use crate::{
     color::Color,
     effect::{self, ColorEffect, DimmerEffect},
     fixture::Fixture,
-    midi_control::{AkaiPadState, ButtonAction, ButtonMapping, MidiMapping, NoteState},
+    midi_control::{
+        AkaiPadState, ButtonAction, ButtonMapping, ButtonType, MidiMapping, NoteState, ToggleState,
+    },
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -27,7 +29,7 @@ pub struct EngineState {
     pub group_dimmers: FxHashMap<usize, f64>,
     pub effect_intensity: f64,
     pub active_color_effects: Vec<ColorEffect>,
-    pub button_states: FxIndexMap<(ButtonMapping, NoteState), Instant>,
+    pub button_states: FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)>,
 }
 impl EngineState {
     pub fn apply_event(&mut self, event: LightingEvent) {
@@ -51,8 +53,13 @@ impl EngineState {
                 }
 
                 let key = (mapping, state);
-                self.button_states.shift_remove(&key);
-                self.button_states.insert(key, now);
+                let prev_toggle_state = self
+                    .button_states
+                    .shift_remove(&key)
+                    .map(|(toggle_state, _)| toggle_state)
+                    .unwrap_or(ToggleState::Off);
+                self.button_states
+                    .insert(key, (prev_toggle_state.toggle(), now));
             }
             LightingEvent::TapTempo(now) => {
                 self.clock.tap(now);
@@ -98,12 +105,32 @@ impl EngineState {
     fn active_dimmer_effects(&self) -> FxHashSet<&DimmerEffect> {
         let mut active_dimmer_effects = FxHashSet::default();
 
-        for (mapping, state) in self.button_states.keys() {
+        // TODO button groups
+        for ((mapping, state), (toggle_state, _)) in self.button_states.iter() {
             if let ButtonAction::ActivateDimmerEffect(effect) = &mapping.on_action {
-                match state {
-                    NoteState::On => active_dimmer_effects.insert(effect),
-                    NoteState::Off => active_dimmer_effects.remove(&effect),
-                };
+                match mapping.button_type {
+                    ButtonType::Flash => {
+                        match state {
+                            NoteState::On => active_dimmer_effects.insert(effect),
+                            NoteState::Off => active_dimmer_effects.remove(&effect),
+                        };
+                    }
+                    ButtonType::Switch => match state {
+                        NoteState::On => {
+                            active_dimmer_effects.insert(effect);
+                        }
+                        NoteState::Off => {}
+                    },
+                    ButtonType::Toggle => match state {
+                        NoteState::On => {
+                            match toggle_state {
+                                ToggleState::On => active_dimmer_effects.insert(effect),
+                                ToggleState::Off => active_dimmer_effects.remove(&effect),
+                            };
+                        }
+                        NoteState::Off => {}
+                    },
+                }
             }
         }
 

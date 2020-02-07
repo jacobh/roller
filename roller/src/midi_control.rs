@@ -8,10 +8,24 @@ use crate::color::Color;
 use crate::effect::{DimmerEffect, Effect};
 use crate::lighting_engine::LightingEvent;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum NoteState {
     On,
     Off,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ToggleState {
+    On,
+    Off,
+}
+impl ToggleState {
+    pub fn toggle(self) -> ToggleState {
+        match self {
+            ToggleState::On => ToggleState::Off,
+            ToggleState::Off => ToggleState::On,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -335,11 +349,11 @@ impl MidiController {
                     },
                     ButtonMapping {
                         note: 47,
-                        button_type: ButtonType::Toggle,
+                        button_type: ButtonType::Flash,
                         group_id: None,
                         on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                             Effect::ShortSquarePulse,
-                            Beats::new(1.0),
+                            Beats::new(0.5),
                             1.0,
                         )),
                     },
