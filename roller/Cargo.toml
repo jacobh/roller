@@ -5,7 +5,7 @@ authors = ["Jacob Haslehurst <jacob@haslehurst.net>"]
 edition = "2018"
 
 [dependencies]
-async-std = { version = "1.4", features = ["attributes", "unstable"] }
+async-std = { version = "1.5", features = ["attributes", "unstable"] }
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.5.6"
 rimd = { git = "https://github.com/RustAudio/rimd.git" }

@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 prost = "0.6"
-async-std = { version = "1.4", features = ["attributes", "unstable"] }
+async-std = { version = "1.5", features = ["attributes", "unstable"] }
 
 [build-dependencies]
 prost-build = { version = "0.6" }
