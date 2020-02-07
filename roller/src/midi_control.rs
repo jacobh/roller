@@ -333,6 +333,16 @@ impl MidiController {
                             1.0,
                         )),
                     },
+                    ButtonMapping {
+                        note: 47,
+                        button_type: ButtonType::Toggle,
+                        group_id: None,
+                        on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
+                            Effect::ShortSquarePulse,
+                            Beats::new(1.0),
+                            1.0,
+                        )),
+                    },
                 ],
                 vec![MetaButtonMapping {
                     note: 98,
