@@ -3,7 +3,9 @@ use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use std::time::{Duration, Instant};
 
+use crate::clock::Beats;
 use crate::color::Color;
+use crate::effect::{DimmerEffect, Effect};
 use crate::lighting_engine::LightingEvent;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -29,6 +31,7 @@ pub struct MidiControlMapping {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ButtonAction {
     UpdateGlobalColor { color: Color },
+    ActivateDimmerEffect(DimmerEffect),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -83,7 +86,7 @@ impl MidiMapping {
     ) -> Result<LightingEvent, &'static str> {
         let now = Instant::now();
 
-        match midi_event {
+        match dbg!(midi_event) {
             MidiEvent::ControlChange { control, value } => match self.controls.get(control) {
                 Some(midi_control_mapping) => match midi_control_mapping.midi_control {
                     MidiControl::MasterDimmer => Ok(LightingEvent::UpdateMasterDimmer {
@@ -289,6 +292,25 @@ impl MidiController {
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::Green,
                         },
+                    },
+                    // Dimmer Effects
+                    ButtonMapping {
+                        note: 63,
+                        group_id: None,
+                        on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
+                            Effect::TriangleDown,
+                            Beats::new(1.0),
+                            1.0,
+                        )),
+                    },
+                    ButtonMapping {
+                        note: 55,
+                        group_id: None,
+                        on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
+                            Effect::SawUp,
+                            Beats::new(0.5),
+                            1.0,
+                        )),
                     },
                 ],
                 vec![MetaButtonMapping {
