@@ -4,25 +4,39 @@ use crate::clock::{Beats, ClockSnapshot};
 use crate::color::Hsl64;
 
 pub struct DimmerEffect {
-    effect: Box<dyn Fn(f64) -> f64>,
+    effect: Effect,
     meter_length: Beats,
     intensity: f64,
 }
 impl DimmerEffect {
-    pub fn new(
-        effect: impl Fn(f64) -> f64 + 'static,
-        meter_length: Beats,
-        intensity: f64,
-    ) -> DimmerEffect {
+    pub fn new(effect: Effect, meter_length: Beats, intensity: f64) -> DimmerEffect {
         DimmerEffect {
             meter_length,
             intensity,
-            effect: Box::new(effect),
+            effect: effect,
         }
     }
     pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
         let progress_percent = clock.meter_progress_percent(self.meter_length);
-        intensity((self.effect)(progress_percent), self.intensity)
+        intensity(self.effect.apply(progress_percent), self.intensity)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Effect {
+    SawUp,
+    SawDown,
+    TriangleDown,
+    Sine,
+}
+impl Effect {
+    fn apply(self, x: f64) -> f64 {
+        match self {
+            Effect::SawUp => saw_up(x),
+            Effect::SawDown => saw_down(x),
+            Effect::TriangleDown => triangle_down(x),
+            Effect::Sine => sine(x),
+        }
     }
 }
 

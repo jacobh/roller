@@ -56,8 +56,8 @@ async fn main() -> Result<(), async_std::io::Error> {
         group_dimmers: FxHashMap::default(),
         effect_intensity: 0.0,
         active_dimmer_effects: vec![
-            effect::DimmerEffect::new(effect::triangle_down, Beats::new(4.0), 1.0),
-            effect::DimmerEffect::new(effect::triangle_down, Beats::new(2.0), 0.8),
+            effect::DimmerEffect::new(effect::Effect::TriangleDown, Beats::new(4.0), 1.0),
+            effect::DimmerEffect::new(effect::Effect::TriangleDown, Beats::new(2.0), 0.8),
         ],
         active_color_effects: vec![effect::ColorEffect::new(
             effect::hue_shift_30,
