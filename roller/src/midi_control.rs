@@ -35,8 +35,19 @@ pub enum ButtonAction {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ButtonType {
+    // Once enabled, this button, or a button in its group, must stay on)
+    Switch,
+    // Buttons that may be enabled and disabled
+    Toggle,
+    // Buttons that will stay enabled only while the note is held down
+    Flash,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ButtonMapping {
     pub note: u8,
+    pub button_type: ButtonType,
     pub group_id: Option<usize>,
     pub on_action: ButtonAction,
 }
@@ -243,6 +254,7 @@ impl MidiController {
                     // Colours
                     ButtonMapping {
                         note: 56,
+                        button_type: ButtonType::Switch,
                         group_id: Some(1),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::White,
@@ -250,6 +262,7 @@ impl MidiController {
                     },
                     ButtonMapping {
                         note: 48,
+                        button_type: ButtonType::Switch,
                         group_id: Some(1),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::Yellow,
@@ -257,6 +270,7 @@ impl MidiController {
                     },
                     ButtonMapping {
                         note: 40,
+                        button_type: ButtonType::Switch,
                         group_id: Some(1),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::DeepOrange,
@@ -264,11 +278,13 @@ impl MidiController {
                     },
                     ButtonMapping {
                         note: 32,
+                        button_type: ButtonType::Switch,
                         group_id: Some(1),
                         on_action: ButtonAction::UpdateGlobalColor { color: Color::Red },
                     },
                     ButtonMapping {
                         note: 24,
+                        button_type: ButtonType::Switch,
                         group_id: Some(1),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::Violet,
@@ -276,6 +292,7 @@ impl MidiController {
                     },
                     ButtonMapping {
                         note: 16,
+                        button_type: ButtonType::Switch,
                         group_id: Some(1),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::DarkBlue,
@@ -283,11 +300,13 @@ impl MidiController {
                     },
                     ButtonMapping {
                         note: 8,
+                        button_type: ButtonType::Switch,
                         group_id: Some(1),
                         on_action: ButtonAction::UpdateGlobalColor { color: Color::Teal },
                     },
                     ButtonMapping {
                         note: 0,
+                        button_type: ButtonType::Switch,
                         group_id: Some(1),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::Green,
@@ -296,6 +315,7 @@ impl MidiController {
                     // Dimmer Effects
                     ButtonMapping {
                         note: 63,
+                        button_type: ButtonType::Toggle,
                         group_id: None,
                         on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                             Effect::TriangleDown,
@@ -305,6 +325,7 @@ impl MidiController {
                     },
                     ButtonMapping {
                         note: 55,
+                        button_type: ButtonType::Toggle,
                         group_id: None,
                         on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                             Effect::SawUp,
