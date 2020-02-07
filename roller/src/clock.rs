@@ -1,8 +1,20 @@
-use derive_more::{Add, Constructor, From, Into};
+use derive_more::{From, Into};
+use ordered_float::OrderedFloat;
 use std::time::{Duration, Instant};
 
-#[derive(Debug, Copy, Clone, PartialEq, PartialOrd, Add, From, Into, Constructor)]
-pub struct Beats(f64);
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, From, Into)]
+pub struct Beats(OrderedFloat<f64>);
+impl Beats {
+    pub fn new(x: impl Into<OrderedFloat<f64>>) -> Beats {
+        Beats(x.into())
+    }
+}
+
+impl From<Beats> for f64 {
+    fn from(beats: Beats) -> f64 {
+        beats.0.into()
+    }
+}
 
 pub struct Clock {
     started_at: Instant,
