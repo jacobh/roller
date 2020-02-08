@@ -209,7 +209,7 @@ impl Fixture {
 
         dmx
     }
-    pub fn write_dmx(&self, dmx: &mut Vec<u8>) {
+    pub fn write_dmx(&self, dmx: &mut [u8]) {
         for (i, channel) in self.relative_dmx().into_iter().enumerate() {
             dmx[i + self.start_channel - 1] = channel
         }

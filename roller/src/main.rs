@@ -16,8 +16,8 @@ mod utils;
 use crate::clock::{Beats, Clock};
 use crate::lighting_engine::{EngineState, LightingEvent};
 
-fn fold_fixture_dmx_data<'a>(fixtures: impl Iterator<Item = &'a fixture::Fixture>) -> Vec<u8> {
-    let mut dmx_data: Vec<u8> = vec![0; 512];
+fn fold_fixture_dmx_data<'a>(fixtures: impl Iterator<Item = &'a fixture::Fixture>) -> [u8; 512] {
+    let mut dmx_data = [0; 512];
 
     for fixture in fixtures {
         fixture.write_dmx(&mut dmx_data);
@@ -60,10 +60,13 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
 
-    let (dmx_sender, mut dmx_receiver) = async_std::sync::channel::<(i32, Vec<u8>)>(10);
+    let (dmx_sender, mut dmx_receiver) = async_std::sync::channel::<(i32, [u8; 512])>(10);
     async_std::task::spawn(async move {
         while let Some((universe, dmx_data)) = dmx_receiver.next().await {
-            ola_client.send_dmx_data(universe, dmx_data).await.unwrap();
+            ola_client
+                .send_dmx_data(universe, dmx_data.to_vec())
+                .await
+                .unwrap();
         }
     });
 
