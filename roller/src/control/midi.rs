@@ -55,18 +55,9 @@ impl MidiMapping {
 
         match dbg!(midi_event) {
             MidiEvent::ControlChange { control, value } => match self.faders.get(control) {
-                Some(midi_fader_mapping) => match midi_fader_mapping.fader_type {
-                    FaderType::MasterDimmer => Ok(LightingEvent::UpdateMasterDimmer {
-                        dimmer: 1.0 / 127.0 * (*value as f64),
-                    }),
-                    FaderType::GroupDimmer { group_id } => Ok(LightingEvent::UpdateGroupDimmer {
-                        group_id,
-                        dimmer: 1.0 / 127.0 * (*value as f64),
-                    }),
-                    FaderType::GlobalEffectIntensity => Ok(
-                        LightingEvent::UpdateGlobalEffectIntensity(1.0 / 127.0 * (*value as f64)),
-                    ),
-                },
+                Some(midi_fader_mapping) => Ok(midi_fader_mapping
+                    .fader_type
+                    .lighting_event(1.0 / 127.0 * (*value as f64))),
                 None => Err("unknown control channel"),
             },
             MidiEvent::NoteOn { note, .. } => match self.buttons.get(note) {
