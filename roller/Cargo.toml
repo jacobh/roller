@@ -8,7 +8,6 @@ edition = "2018"
 async-std = { version = "*", features = ["attributes", "unstable"] }
 serde = { version = "*", features = ["derive"] }
 toml = "*"
-rimd = { git = "https://github.com/RustAudio/rimd.git" }
 coremidi = "*"
 futures = "*"
 palette = "*"
@@ -18,3 +17,5 @@ derive_more = "*"
 indexmap = "*"
 itertools = "*"
 ordered-float = "*"
+num-traits = "*"
+num-derive = "*"

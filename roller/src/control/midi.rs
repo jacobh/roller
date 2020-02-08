@@ -3,6 +3,7 @@ use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use std::time::{Duration, Instant};
 
+use crate::control::midi_event::MidiEvent;
 use crate::{
     clock::Beats,
     color::Color,
@@ -14,7 +15,6 @@ use crate::{
     lighting_engine::LightingEvent,
     project::GroupId,
 };
-use crate::control::midi_event::MidiEvent;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum NoteState {
@@ -112,8 +112,7 @@ impl MidiController {
                 for packet in packet_list.iter() {
                     // multiple messages may appear in the same packet
                     for message_data in packet.data().chunks_exact(3) {
-                        let midi_message = rimd::MidiMessage::from_bytes(message_data.to_vec());
-                        let midi_event = MidiEvent::from(midi_message);
+                        let midi_event = MidiEvent::from_bytes(message_data);
                         async_std::task::block_on(input_sender.send(midi_event));
                     }
                 }
