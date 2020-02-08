@@ -1,5 +1,5 @@
 use ordered_float::OrderedFloat;
-use palette::{Hsl, Hue, Mix, RgbHue};
+use palette::{Hue, Mix, RgbHue};
 
 use crate::clock::{Beats, ClockSnapshot};
 use crate::color::Hsl64;

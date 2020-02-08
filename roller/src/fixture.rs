@@ -86,13 +86,13 @@ impl FixtureProfile {
             FixtureParameter::Green,
             FixtureParameter::Blue,
         ]
-        .into_iter()
+        .iter()
         .map(|parameter| self.parameters.get(parameter))
         .all(|channel| channel.is_some())
     }
     pub fn is_positionable(&self) -> bool {
         [FixtureParameter::Tilt, FixtureParameter::Pan]
-            .into_iter()
+            .iter()
             .map(|parameter| self.parameters.get(parameter))
             .all(|channel| channel.is_some())
     }
