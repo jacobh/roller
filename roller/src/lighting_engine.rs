@@ -13,12 +13,13 @@ use crate::{
     },
     effect::{self, ColorEffect, DimmerEffect},
     fixture::Fixture,
+    project::GroupId,
 };
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LightingEvent {
     UpdateMasterDimmer { dimmer: f64 },
-    UpdateGroupDimmer { group_id: usize, dimmer: f64 },
+    UpdateGroupDimmer { group_id: GroupId, dimmer: f64 },
     UpdateGlobalEffectIntensity(f64),
     UpdateButton(Instant, NoteState, ButtonMapping),
     TapTempo(Instant),
@@ -27,7 +28,7 @@ pub enum LightingEvent {
 pub struct EngineState {
     pub clock: Clock,
     pub master_dimmer: f64,
-    pub group_dimmers: FxHashMap<usize, f64>,
+    pub group_dimmers: FxHashMap<GroupId, f64>,
     pub effect_intensity: f64,
     pub active_color_effects: Vec<ColorEffect>,
     pub button_states: FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)>,

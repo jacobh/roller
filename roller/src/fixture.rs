@@ -2,6 +2,8 @@ use async_std::{prelude::*, sync::Arc};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
+use crate::project::GroupId;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Hash)]
 #[serde(rename_all = "snake_case")]
 enum FixtureParameter {
@@ -116,7 +118,7 @@ pub struct Fixture {
     pub profile: Arc<FixtureProfile>,
     universe: usize,
     start_channel: usize,
-    pub group_id: Option<usize>,
+    pub group_id: Option<GroupId>,
 
     dimmer: f64, // 0.0 - 1.0
     color: Option<palette::LinSrgb<f64>>,
@@ -127,7 +129,7 @@ impl Fixture {
         profile: Arc<FixtureProfile>,
         universe: usize,
         start_channel: usize,
-        group_id: Option<usize>,
+        group_id: Option<GroupId>,
     ) -> Fixture {
         Fixture {
             profile,

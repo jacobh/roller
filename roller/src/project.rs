@@ -1,11 +1,15 @@
+use derive_more::Constructor;
 use serde::Deserialize;
 
 use crate::fixture::Fixture;
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize)]
+pub struct GroupId(usize);
+
 #[derive(Debug, Clone, Deserialize)]
 struct ProjectFixture {
     start_channel: usize,
-    group_id: Option<usize>,
+    group_id: Option<GroupId>,
     #[serde(rename = "fixture_profile")]
     fixture_profile_slug: String,
 }

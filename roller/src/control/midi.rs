@@ -12,6 +12,7 @@ use crate::{
     },
     effect::{DimmerEffect, Effect},
     lighting_engine::LightingEvent,
+    project::GroupId,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -176,11 +177,11 @@ impl MidiController {
                 vec![
                     MidiFaderMapping {
                         control_channel: 48,
-                        fader_type: FaderType::GroupDimmer { group_id: 1 },
+                        fader_type: FaderType::GroupDimmer(GroupId::new(1)),
                     },
                     MidiFaderMapping {
                         control_channel: 49,
-                        fader_type: FaderType::GroupDimmer { group_id: 2 },
+                        fader_type: FaderType::GroupDimmer(GroupId::new(2)),
                     },
                     MidiFaderMapping {
                         control_channel: 55,
