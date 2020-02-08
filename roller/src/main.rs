@@ -1,6 +1,7 @@
 use async_std::prelude::*;
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
+use midi::Note;
 use rustc_hash::FxHashMap;
 use std::time::{Duration, Instant};
 
@@ -86,7 +87,7 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     for i in 0..64 {
         midi_controller
-            .set_pad_color(i, control::midi::AkaiPadState::Green)
+            .set_pad_color(Note::new(i), control::midi::AkaiPadState::Green)
             .await;
         async_std::task::sleep(Duration::from_millis(10)).await;
     }

@@ -1,4 +1,5 @@
 use crate::{lighting_engine::LightingEvent, project::FixtureGroupId};
+use midi::ControlChannel;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum FaderType {
@@ -21,6 +22,6 @@ impl FaderType {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MidiFaderMapping {
-    pub control_channel: u8,
+    pub control_channel: ControlChannel,
     pub fader_type: FaderType,
 }

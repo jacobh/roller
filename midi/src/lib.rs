@@ -1,6 +1,27 @@
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct Note(u8);
+impl Note {
+    pub fn new(note: u8) -> Note {
+        Note(note)
+    }
+}
+impl From<Note> for u8 {
+    fn from(note: Note) -> u8 {
+        note.0
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ControlChannel(u8);
+impl ControlChannel {
+    pub fn new(control_channel: u8) -> ControlChannel {
+        ControlChannel(control_channel)
+    }
+}
+
 /// Borrowed from https://github.com/RustAudio/rimd/blob/54fd9bd2bd3caaa6fe1c31fbf71c0f3c6597fd1a/src/midi.rs#L51-L77
 /// The status field of a midi message indicates what midi command it
 /// represents and what channel it is on
@@ -34,9 +55,9 @@ pub const STATUS_MASK: u8 = 0xF0;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MidiEvent {
-    NoteOn { note: u8, velocity: u8 },
-    NoteOff { note: u8, velocity: u8 },
-    ControlChange { control: u8, value: u8 },
+    NoteOn { note: Note, velocity: u8 },
+    NoteOff { note: Note, velocity: u8 },
+    ControlChange { control: ControlChannel, value: u8 },
     Other(Status),
 }
 impl MidiEvent {
@@ -45,15 +66,15 @@ impl MidiEvent {
 
         match status {
             Status::NoteOn => MidiEvent::NoteOn {
-                note: bytes[1],
+                note: Note::new(bytes[1]),
                 velocity: bytes[2],
             },
             Status::NoteOff => MidiEvent::NoteOff {
-                note: bytes[1],
+                note: Note::new(bytes[1]),
                 velocity: bytes[2],
             },
             Status::ControlChange => MidiEvent::ControlChange {
-                control: bytes[1],
+                control: ControlChannel::new(bytes[1]),
                 value: bytes[2],
             },
             _ => MidiEvent::Other(status),

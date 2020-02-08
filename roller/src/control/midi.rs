@@ -1,5 +1,5 @@
 use async_std::prelude::*;
-use midi::MidiEvent;
+use midi::{ControlChannel, MidiEvent, Note};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use std::time::{Duration, Instant};
@@ -27,9 +27,9 @@ pub enum NoteState {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MidiMapping {
-    faders: FxHashMap<u8, MidiFaderMapping>,
-    pub buttons: FxHashMap<u8, ButtonMapping>,
-    pub meta_buttons: FxHashMap<u8, MetaButtonMapping>,
+    faders: FxHashMap<ControlChannel, MidiFaderMapping>,
+    pub buttons: FxHashMap<Note, ButtonMapping>,
+    pub meta_buttons: FxHashMap<Note, MetaButtonMapping>,
 }
 impl MidiMapping {
     fn new(
@@ -83,7 +83,7 @@ impl MidiMapping {
             MidiEvent::Other(_) => Err("unknown midi event type"),
         }
     }
-    pub fn initial_pad_states(&self) -> FxHashMap<u8, AkaiPadState> {
+    pub fn initial_pad_states(&self) -> FxHashMap<Note, AkaiPadState> {
         self.buttons
             .keys()
             .map(|note| (*note, AkaiPadState::Yellow))
@@ -152,75 +152,75 @@ impl MidiController {
             midi_mapping: MidiMapping::new(
                 vec![
                     MidiFaderMapping {
-                        control_channel: 48,
+                        control_channel: ControlChannel::new(48),
                         fader_type: FaderType::GroupDimmer(FixtureGroupId::new(1)),
                     },
                     MidiFaderMapping {
-                        control_channel: 49,
+                        control_channel: ControlChannel::new(49),
                         fader_type: FaderType::GroupDimmer(FixtureGroupId::new(2)),
                     },
                     MidiFaderMapping {
-                        control_channel: 55,
+                        control_channel: ControlChannel::new(55),
                         fader_type: FaderType::GlobalEffectIntensity,
                     },
                     MidiFaderMapping {
-                        control_channel: 56,
+                        control_channel: ControlChannel::new(56),
                         fader_type: FaderType::MasterDimmer,
                     },
                 ],
                 vec![
                     // Colours
                     ButtonMapping {
-                        note: 56,
+                        note: Note::new(56),
                         button_type: ButtonType::Switch,
                         group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor(Color::White),
                     },
                     ButtonMapping {
-                        note: 48,
+                        note: Note::new(48),
                         button_type: ButtonType::Switch,
                         group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor(Color::Yellow),
                     },
                     ButtonMapping {
-                        note: 40,
+                        note: Note::new(40),
                         button_type: ButtonType::Switch,
                         group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor(Color::DeepOrange),
                     },
                     ButtonMapping {
-                        note: 32,
+                        note: Note::new(32),
                         button_type: ButtonType::Switch,
                         group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor(Color::Red),
                     },
                     ButtonMapping {
-                        note: 24,
+                        note: Note::new(24),
                         button_type: ButtonType::Switch,
                         group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor(Color::Violet),
                     },
                     ButtonMapping {
-                        note: 16,
+                        note: Note::new(16),
                         button_type: ButtonType::Switch,
                         group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor(Color::DarkBlue),
                     },
                     ButtonMapping {
-                        note: 8,
+                        note: Note::new(8),
                         button_type: ButtonType::Switch,
                         group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor(Color::Teal),
                     },
                     ButtonMapping {
-                        note: 0,
+                        note: Note::new(0),
                         button_type: ButtonType::Switch,
                         group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor(Color::Green),
                     },
                     // Dimmer Effects
                     ButtonMapping {
-                        note: 63,
+                        note: Note::new(63),
                         button_type: ButtonType::Toggle,
                         group_id: None,
                         on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
@@ -230,7 +230,7 @@ impl MidiController {
                         )),
                     },
                     ButtonMapping {
-                        note: 55,
+                        note: Note::new(55),
                         button_type: ButtonType::Toggle,
                         group_id: None,
                         on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
@@ -240,7 +240,7 @@ impl MidiController {
                         )),
                     },
                     ButtonMapping {
-                        note: 47,
+                        note: Note::new(47),
                         button_type: ButtonType::Flash,
                         group_id: None,
                         on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
@@ -251,7 +251,7 @@ impl MidiController {
                     },
                 ],
                 vec![MetaButtonMapping {
-                    note: 98,
+                    note: Note::new(98),
                     on_action: MetaButtonAction::TapTempo,
                 }],
             ),
@@ -272,13 +272,13 @@ impl MidiController {
     async fn send_packet(&self, packet: impl Into<Vec<u8>>) {
         self.output_sender.send(packet.into()).await
     }
-    pub async fn set_pad_color(&self, note: u8, pad_color: AkaiPadState) {
-        self.send_packet(vec![0x90, note, pad_color.as_byte()])
+    pub async fn set_pad_color(&self, note: Note, pad_color: AkaiPadState) {
+        self.send_packet(vec![0x90, u8::from(note), pad_color.as_byte()])
             .await
     }
     pub async fn reset_pads(&self) {
         for i in 0..64 {
-            self.set_pad_color(i, AkaiPadState::Off).await;
+            self.set_pad_color(Note::new(i), AkaiPadState::Off).await;
         }
     }
 }

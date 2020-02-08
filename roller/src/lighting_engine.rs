@@ -1,3 +1,4 @@
+use midi::Note;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 
@@ -67,18 +68,16 @@ impl EngineState {
         }
     }
     pub fn global_color(&self) -> Color {
-        let mut on_colors: Vec<(u8, Color)> = Vec::new();
-        let mut last_off: Option<(u8, Color)> = None;
+        let mut on_colors: Vec<(Note, Color)> = Vec::new();
+        let mut last_off: Option<(Note, Color)> = None;
 
         let color_buttons =
             self.button_states
                 .keys()
                 .flat_map(|(mapping, state)| match mapping.on_action {
-                    ButtonAction::UpdateGlobalColor(color) => {
-                        match mapping.button_type {
-                            ButtonType::Switch => Some((mapping.note, state, color)),
-                            _ => panic!("only switch button type implemented for colors")
-                        }
+                    ButtonAction::UpdateGlobalColor(color) => match mapping.button_type {
+                        ButtonType::Switch => Some((mapping.note, state, color)),
+                        _ => panic!("only switch button type implemented for colors"),
                     },
                     _ => None,
                 });
@@ -175,17 +174,17 @@ impl EngineState {
             fixture.set_color(color).unwrap();
         }
     }
-    pub fn pad_states(&self, midi_mapping: &MidiMapping) -> FxHashMap<u8, AkaiPadState> {
+    pub fn pad_states(&self, midi_mapping: &MidiMapping) -> FxHashMap<Note, AkaiPadState> {
         let mut state = midi_mapping.initial_pad_states();
 
-        let mut group_notes: FxHashMap<ButtonGroupId, Vec<u8>> = FxHashMap::default();
+        let mut group_notes: FxHashMap<ButtonGroupId, Vec<Note>> = FxHashMap::default();
         for button in midi_mapping.buttons.values() {
             if let Some(group_id) = button.group_id {
                 group_notes.entry(group_id).or_default().push(button.note);
             }
         }
 
-        let mut active_group_buttons: FxHashMap<ButtonGroupId, Vec<u8>> = group_notes
+        let mut active_group_buttons: FxHashMap<ButtonGroupId, Vec<Note>> = group_notes
             .keys()
             .map(|group_id| (*group_id, Vec::new()))
             .collect();

@@ -1,4 +1,5 @@
 use derive_more::Constructor;
+use midi::Note;
 use serde::Deserialize;
 use std::time::Instant;
 
@@ -42,7 +43,7 @@ pub enum ButtonType {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ButtonMapping {
-    pub note: u8,
+    pub note: Note,
     pub button_type: ButtonType,
     pub group_id: Option<ButtonGroupId>,
     pub on_action: ButtonAction,
@@ -61,7 +62,7 @@ pub enum MetaButtonAction {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MetaButtonMapping {
-    pub note: u8,
+    pub note: Note,
     pub on_action: MetaButtonAction,
 }
 impl MetaButtonMapping {
