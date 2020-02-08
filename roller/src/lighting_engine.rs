@@ -7,7 +7,7 @@ use crate::{
     clock::{Beats, Clock},
     color::Color,
     control::{
-        button::{ButtonAction, ButtonMapping, ButtonType, ToggleState, ButtonGroupId},
+        button::{ButtonAction, ButtonGroupId, ButtonMapping, ButtonType, ToggleState},
         midi::{AkaiPadState, MidiMapping, NoteState},
     },
     effect::{self, ColorEffect, DimmerEffect},
@@ -17,8 +17,13 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LightingEvent {
-    UpdateMasterDimmer { dimmer: f64 },
-    UpdateGroupDimmer { group_id: FixtureGroupId, dimmer: f64 },
+    UpdateMasterDimmer {
+        dimmer: f64,
+    },
+    UpdateGroupDimmer {
+        group_id: FixtureGroupId,
+        dimmer: f64,
+    },
     UpdateGlobalEffectIntensity(f64),
     UpdateButton(Instant, NoteState, ButtonMapping),
     TapTempo(Instant),
