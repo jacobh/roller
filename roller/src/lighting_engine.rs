@@ -74,7 +74,12 @@ impl EngineState {
             self.button_states
                 .keys()
                 .flat_map(|(mapping, state)| match mapping.on_action {
-                    ButtonAction::UpdateGlobalColor { color } => Some((mapping.note, state, color)),
+                    ButtonAction::UpdateGlobalColor(color) => {
+                        match mapping.button_type {
+                            ButtonType::Switch => Some((mapping.note, state, color)),
+                            _ => panic!("only switch button type implemented for colors")
+                        }
+                    },
                     _ => None,
                 });
 

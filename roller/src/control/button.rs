@@ -26,7 +26,7 @@ impl ToggleState {
 // Buttons are used for configurable, creative controls. activating colors, chases, etc
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ButtonAction {
-    UpdateGlobalColor { color: Color },
+    UpdateGlobalColor(Color),
     ActivateDimmerEffect(DimmerEffect),
 }
 
