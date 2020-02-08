@@ -2,6 +2,7 @@ use async_std::{
     net::{TcpStream, ToSocketAddrs},
     prelude::*,
 };
+use prost::Message;
 
 mod ola {
     include!(concat!(env!("OUT_DIR"), "/ola.proto.rs"));
@@ -23,7 +24,7 @@ fn new_header(length: usize) -> [u8; 4] {
 }
 
 fn serialize_message(message: impl prost::Message) -> Result<Vec<u8>, prost::EncodeError> {
-    let mut buf = Vec::<u8>::new();
+    let mut buf = Vec::<u8>::with_capacity(message.encoded_len());
     message.encode(&mut buf)?;
     Ok(buf)
 }
@@ -56,13 +57,12 @@ impl OlaClient {
         &mut self,
         message: ola_rpc::RpcMessage,
     ) -> Result<(), async_std::io::Error> {
-        let serialized_message = serialize_message(message)?;
+        let mut buf = Vec::with_capacity(message.encoded_len() + 4);
 
-        let mut bytes = new_header(serialized_message.len()).to_vec();
-        bytes.extend(serialized_message);
+        buf.extend(&new_header(message.encoded_len()));
+        message.encode(&mut buf)?;
 
-        self.stream.write_all(&bytes).await?;
-
+        self.stream.write_all(&buf).await?;
         Ok(())
     }
 
