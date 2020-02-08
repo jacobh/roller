@@ -55,7 +55,14 @@ struct FixtureProfileData {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FixtureProfile {
     data: FixtureProfileData,
-    parameters: FxHashMap<FixtureParameter, FixtureProfileChannel>,
+
+    dimmer_channel: Option<FixtureProfileChannel>,
+    red_channel: Option<FixtureProfileChannel>,
+    green_channel: Option<FixtureProfileChannel>,
+    blue_channel: Option<FixtureProfileChannel>,
+    cool_white_channel: Option<FixtureProfileChannel>,
+    pan_channel: Option<FixtureProfileChannel>,
+    tilt_channel: Option<FixtureProfileChannel>,
 }
 impl FixtureProfile {
     pub async fn load(
@@ -64,7 +71,7 @@ impl FixtureProfile {
         let fixture_profile_contents = async_std::fs::read(path).await?;
         let profile_data: FixtureProfileData = toml::from_slice(&fixture_profile_contents)?;
 
-        let parameters = profile_data
+        let parameters: FxHashMap<_, _> = profile_data
             .channels
             .iter()
             .map(|channel| (channel.parameter, channel.clone()))
@@ -73,27 +80,28 @@ impl FixtureProfile {
         // Ensure channel count is correct
         assert_eq!(profile_data.channel_count, profile_data.channels.len());
         Ok(FixtureProfile {
-            parameters,
+            dimmer_channel: parameters.get(&FixtureParameter::Dimmer).cloned(),
+            red_channel: parameters.get(&FixtureParameter::Red).cloned(),
+            green_channel: parameters.get(&FixtureParameter::Green).cloned(),
+            blue_channel: parameters.get(&FixtureParameter::Blue).cloned(),
+            cool_white_channel: parameters.get(&FixtureParameter::CoolWhite).cloned(),
+            pan_channel: parameters.get(&FixtureParameter::Pan).cloned(),
+            tilt_channel: parameters.get(&FixtureParameter::Tilt).cloned(),
+
             data: profile_data,
         })
     }
     pub fn is_dimmable(&self) -> bool {
-        self.parameters.get(&FixtureParameter::Dimmer).is_some()
+        self.dimmer_channel.is_some()
     }
     pub fn is_colorable(&self) -> bool {
-        [
-            FixtureParameter::Red,
-            FixtureParameter::Green,
-            FixtureParameter::Blue,
-        ]
-        .iter()
-        .map(|parameter| self.parameters.get(parameter))
-        .all(|channel| channel.is_some())
+        [&self.red_channel, &self.green_channel, &self.blue_channel]
+            .iter()
+            .all(|channel| channel.is_some())
     }
     pub fn is_positionable(&self) -> bool {
-        [FixtureParameter::Tilt, FixtureParameter::Pan]
+        [&self.pan_channel, &self.tilt_channel]
             .iter()
-            .map(|parameter| self.parameters.get(parameter))
             .all(|channel| channel.is_some())
     }
 }
@@ -164,16 +172,18 @@ impl Fixture {
         }
     }
     pub fn relative_dmx(&self) -> Vec<u8> {
-        let parameters = &self.profile.parameters;
         let mut dmx: Vec<u8> = (0..self.profile.data.channel_count).map(|_| 0).collect();
 
-        if self.profile.is_dimmable() {
-            let channel = &parameters[&FixtureParameter::Dimmer];
-
+        if let Some(channel) = &self.profile.dimmer_channel {
             dmx[channel.channel_index()] = channel.encode_value(self.dimmer);
         }
 
-        if let Some(color) = self.color {
+        if let (Some(color), Some(red_channel), Some(green_channel), Some(blue_channel)) = (
+            self.color,
+            &self.profile.red_channel,
+            &self.profile.green_channel,
+            &self.profile.blue_channel,
+        ) {
             let (mut red, mut green, mut blue) = color.into_components();
 
             // If light doesn't have dimmer control, scale the color values instead
@@ -183,19 +193,16 @@ impl Fixture {
                 blue = blue * self.dimmer;
             }
 
-            let red_channel = &parameters[&FixtureParameter::Red];
-            let green_channel = &parameters[&FixtureParameter::Green];
-            let blue_channel = &parameters[&FixtureParameter::Blue];
-
             dmx[red_channel.channel_index()] = red_channel.encode_value(red);
             dmx[green_channel.channel_index()] = green_channel.encode_value(green);
             dmx[blue_channel.channel_index()] = blue_channel.encode_value(blue);
         }
 
-        if let Some(position) = self.position {
-            let tilt_channel = &parameters[&FixtureParameter::Tilt];
-            let pan_channel = &parameters[&FixtureParameter::Pan];
-
+        if let (Some(position), Some(tilt_channel), Some(pan_channel)) = (
+            self.position,
+            &self.profile.tilt_channel,
+            &self.profile.pan_channel,
+        ) {
             dmx[tilt_channel.channel_index()] = tilt_channel.encode_value((position.1 + 1.0) / 2.0);
             dmx[pan_channel.channel_index()] = pan_channel.encode_value((position.0 + 1.0) / 2.0);
         }
