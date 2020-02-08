@@ -8,7 +8,10 @@ use crate::{
     clock::Beats,
     color::Color,
     control::{
-        button::{ButtonAction, ButtonMapping, ButtonType, MetaButtonAction, MetaButtonMapping, ButtonGroupId},
+        button::{
+            ButtonAction, ButtonGroupId, ButtonMapping, ButtonType, MetaButtonAction,
+            MetaButtonMapping,
+        },
         fader::{FaderType, MidiFaderMapping},
     },
     effect::{DimmerEffect, Effect},
