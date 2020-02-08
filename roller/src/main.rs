@@ -20,11 +20,7 @@ fn fold_fixture_dmx_data<'a>(fixtures: impl Iterator<Item = &'a fixture::Fixture
     let mut dmx_data: Vec<u8> = vec![0; 512];
 
     for fixture in fixtures {
-        for (channel, value) in fixture.absolute_dmx().into_iter().enumerate() {
-            if let Some(value) = value {
-                dmx_data[channel] = value
-            }
-        }
+        fixture.write_dmx(&mut dmx_data);
     }
 
     dmx_data

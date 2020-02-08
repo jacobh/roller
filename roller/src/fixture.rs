@@ -172,7 +172,7 @@ impl Fixture {
         }
     }
     pub fn relative_dmx(&self) -> Vec<u8> {
-        let mut dmx: Vec<u8> = (0..self.profile.data.channel_count).map(|_| 0).collect();
+        let mut dmx: Vec<u8> = vec![0; self.profile.data.channel_count];
 
         if let Some(channel) = &self.profile.dimmer_channel {
             dmx[channel.channel_index()] = channel.encode_value(self.dimmer);
@@ -209,10 +209,9 @@ impl Fixture {
 
         dmx
     }
-    pub fn absolute_dmx(&self) -> Vec<Option<u8>> {
-        (0..(self.start_channel - 1))
-            .map(|_| None)
-            .chain(self.relative_dmx().into_iter().map(Some))
-            .collect()
+    pub fn write_dmx(&self, dmx: &mut Vec<u8>) {
+        for (i, channel) in self.relative_dmx().into_iter().enumerate() {
+            dmx[i + self.start_channel - 1] = channel
+        }
     }
 }
