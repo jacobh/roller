@@ -170,7 +170,7 @@ impl MidiController {
                     ButtonMapping {
                         note: 56,
                         button_type: ButtonType::Switch,
-                        group_id: Some(1),
+                        group_id: Some(GroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::White,
                         },
@@ -178,7 +178,7 @@ impl MidiController {
                     ButtonMapping {
                         note: 48,
                         button_type: ButtonType::Switch,
-                        group_id: Some(1),
+                        group_id: Some(GroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::Yellow,
                         },
@@ -186,7 +186,7 @@ impl MidiController {
                     ButtonMapping {
                         note: 40,
                         button_type: ButtonType::Switch,
-                        group_id: Some(1),
+                        group_id: Some(GroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::DeepOrange,
                         },
@@ -194,13 +194,13 @@ impl MidiController {
                     ButtonMapping {
                         note: 32,
                         button_type: ButtonType::Switch,
-                        group_id: Some(1),
+                        group_id: Some(GroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor { color: Color::Red },
                     },
                     ButtonMapping {
                         note: 24,
                         button_type: ButtonType::Switch,
-                        group_id: Some(1),
+                        group_id: Some(GroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::Violet,
                         },
@@ -208,7 +208,7 @@ impl MidiController {
                     ButtonMapping {
                         note: 16,
                         button_type: ButtonType::Switch,
-                        group_id: Some(1),
+                        group_id: Some(GroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::DarkBlue,
                         },
@@ -216,13 +216,13 @@ impl MidiController {
                     ButtonMapping {
                         note: 8,
                         button_type: ButtonType::Switch,
-                        group_id: Some(1),
+                        group_id: Some(GroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor { color: Color::Teal },
                     },
                     ButtonMapping {
                         note: 0,
                         button_type: ButtonType::Switch,
-                        group_id: Some(1),
+                        group_id: Some(GroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::Green,
                         },

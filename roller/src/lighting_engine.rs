@@ -169,7 +169,7 @@ impl EngineState {
     pub fn pad_states(&self, midi_mapping: &MidiMapping) -> FxHashMap<u8, AkaiPadState> {
         let mut state = midi_mapping.initial_pad_states();
 
-        let group_notes: FxHashMap<usize, Vec<u8>> = midi_mapping
+        let group_notes: FxHashMap<GroupId, Vec<u8>> = midi_mapping
             .buttons
             .values()
             .group_by(|button| button.group_id)
@@ -179,7 +179,7 @@ impl EngineState {
             })
             .collect();
 
-        let mut active_group_buttons: FxHashMap<usize, Vec<u8>> = FxHashMap::default();
+        let mut active_group_buttons: FxHashMap<GroupId, Vec<u8>> = FxHashMap::default();
 
         for ((mapping, note_state), (toggle_state, _)) in self.button_states.iter() {
             match mapping.button_type {

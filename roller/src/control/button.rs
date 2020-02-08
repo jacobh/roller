@@ -1,5 +1,6 @@
 use crate::{
     color::Color, control::midi::NoteState, effect::DimmerEffect, lighting_engine::LightingEvent,
+    project::GroupId,
 };
 use std::time::Instant;
 
@@ -38,7 +39,7 @@ pub enum ButtonType {
 pub struct ButtonMapping {
     pub note: u8,
     pub button_type: ButtonType,
-    pub group_id: Option<usize>,
+    pub group_id: Option<GroupId>,
     pub on_action: ButtonAction,
 }
 impl ButtonMapping {
