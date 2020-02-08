@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 
@@ -169,17 +168,17 @@ impl EngineState {
     pub fn pad_states(&self, midi_mapping: &MidiMapping) -> FxHashMap<u8, AkaiPadState> {
         let mut state = midi_mapping.initial_pad_states();
 
-        let group_notes: FxHashMap<GroupId, Vec<u8>> = midi_mapping
-            .buttons
-            .values()
-            .group_by(|button| button.group_id)
-            .into_iter()
-            .flat_map(|(group_id, buttons)| {
-                group_id.map(|group_id| (group_id, buttons.map(|button| button.note).collect()))
-            })
-            .collect();
+        let mut group_notes: FxHashMap<GroupId, Vec<u8>> = FxHashMap::default();
+        for button in midi_mapping.buttons.values() {
+            if let Some(group_id) = button.group_id {
+                group_notes.entry(group_id).or_default().push(button.note);
+            }
+        }
 
-        let mut active_group_buttons: FxHashMap<GroupId, Vec<u8>> = FxHashMap::default();
+        let mut active_group_buttons: FxHashMap<GroupId, Vec<u8>> = group_notes
+            .keys()
+            .map(|group_id| (*group_id, Vec::new()))
+            .collect();
 
         for ((mapping, note_state), (toggle_state, _)) in self.button_states.iter() {
             match mapping.button_type {
@@ -209,58 +208,49 @@ impl EngineState {
                         },
                     );
                 }
-                ButtonType::Switch => {
-                    match note_state {
-                        NoteState::On => {
-                            state.insert(mapping.note, AkaiPadState::Green);
+                ButtonType::Switch => match note_state {
+                    NoteState::On => {
+                        state.insert(mapping.note, AkaiPadState::Green);
 
-                            if let Some(group_id) = mapping.group_id {
-                                active_group_buttons
-                                    .entry(group_id)
-                                    .or_insert_with(|| Vec::new())
-                                    .push(mapping.note);
+                        if let Some(group_id) = mapping.group_id {
+                            let active_group_buttons =
+                                active_group_buttons.get_mut(&group_id).unwrap();
+                            active_group_buttons.push(mapping.note);
 
-                                if active_group_buttons[&group_id].len() == 1 {
-                                    for note in group_notes[&group_id].iter() {
-                                        if *note != mapping.note {
-                                            state.insert(*note, AkaiPadState::Red);
-                                        }
+                            if active_group_buttons.len() == 1 {
+                                for note in group_notes[&group_id].iter() {
+                                    if *note != mapping.note {
+                                        state.insert(*note, AkaiPadState::Red);
                                     }
-                                }
-                            }
-                        }
-                        NoteState::Off => {
-                            state.insert(mapping.note, AkaiPadState::Green);
-                            if let Some(group_id) = mapping.group_id {
-                                // remove button
-                                if let Some(active_group_buttons) =
-                                    active_group_buttons.get_mut(&group_id)
-                                {
-                                    let button_idx = active_group_buttons
-                                        .iter()
-                                        .position(|note| *note == mapping.note);
-                                    if let Some(button_idx) = button_idx {
-                                        active_group_buttons.remove(button_idx);
-                                    }
-                                }
-
-                                if active_group_buttons
-                                    .get(&group_id)
-                                    .map(Vec::is_empty)
-                                    .unwrap_or(true)
-                                {
-                                    for note in group_notes[&group_id].iter() {
-                                        if *note != mapping.note {
-                                            state.insert(*note, AkaiPadState::Yellow);
-                                        }
-                                    }
-                                } else {
-                                    state.insert(mapping.note, AkaiPadState::Red);
                                 }
                             }
                         }
                     }
-                }
+                    NoteState::Off => {
+                        state.insert(mapping.note, AkaiPadState::Green);
+                        if let Some(group_id) = mapping.group_id {
+                            let active_group_buttons =
+                                active_group_buttons.get_mut(&group_id).unwrap();
+
+                            let button_idx = active_group_buttons
+                                .iter()
+                                .position(|note| *note == mapping.note);
+                            if let Some(button_idx) = button_idx {
+                                active_group_buttons.remove(button_idx);
+                            }
+
+                            if active_group_buttons.is_empty() {
+                                for note in group_notes[&group_id].iter() {
+                                    if *note != mapping.note {
+                                        state.insert(*note, AkaiPadState::Yellow);
+                                    }
+                                }
+                            } else {
+                                state.insert(mapping.note, AkaiPadState::Red);
+                            }
+                        }
+                    }
+                },
             }
         }
 
