@@ -8,12 +8,12 @@ use crate::{
     clock::Beats,
     color::Color,
     control::{
-        button::{ButtonAction, ButtonMapping, ButtonType, MetaButtonAction, MetaButtonMapping},
+        button::{ButtonAction, ButtonMapping, ButtonType, MetaButtonAction, MetaButtonMapping, ButtonGroupId},
         fader::{FaderType, MidiFaderMapping},
     },
     effect::{DimmerEffect, Effect},
     lighting_engine::LightingEvent,
-    project::GroupId,
+    project::FixtureGroupId,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -150,11 +150,11 @@ impl MidiController {
                 vec![
                     MidiFaderMapping {
                         control_channel: 48,
-                        fader_type: FaderType::GroupDimmer(GroupId::new(1)),
+                        fader_type: FaderType::GroupDimmer(FixtureGroupId::new(1)),
                     },
                     MidiFaderMapping {
                         control_channel: 49,
-                        fader_type: FaderType::GroupDimmer(GroupId::new(2)),
+                        fader_type: FaderType::GroupDimmer(FixtureGroupId::new(2)),
                     },
                     MidiFaderMapping {
                         control_channel: 55,
@@ -170,7 +170,7 @@ impl MidiController {
                     ButtonMapping {
                         note: 56,
                         button_type: ButtonType::Switch,
-                        group_id: Some(GroupId::new(1)),
+                        group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::White,
                         },
@@ -178,7 +178,7 @@ impl MidiController {
                     ButtonMapping {
                         note: 48,
                         button_type: ButtonType::Switch,
-                        group_id: Some(GroupId::new(1)),
+                        group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::Yellow,
                         },
@@ -186,7 +186,7 @@ impl MidiController {
                     ButtonMapping {
                         note: 40,
                         button_type: ButtonType::Switch,
-                        group_id: Some(GroupId::new(1)),
+                        group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::DeepOrange,
                         },
@@ -194,13 +194,13 @@ impl MidiController {
                     ButtonMapping {
                         note: 32,
                         button_type: ButtonType::Switch,
-                        group_id: Some(GroupId::new(1)),
+                        group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor { color: Color::Red },
                     },
                     ButtonMapping {
                         note: 24,
                         button_type: ButtonType::Switch,
-                        group_id: Some(GroupId::new(1)),
+                        group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::Violet,
                         },
@@ -208,7 +208,7 @@ impl MidiController {
                     ButtonMapping {
                         note: 16,
                         button_type: ButtonType::Switch,
-                        group_id: Some(GroupId::new(1)),
+                        group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::DarkBlue,
                         },
@@ -216,13 +216,13 @@ impl MidiController {
                     ButtonMapping {
                         note: 8,
                         button_type: ButtonType::Switch,
-                        group_id: Some(GroupId::new(1)),
+                        group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor { color: Color::Teal },
                     },
                     ButtonMapping {
                         note: 0,
                         button_type: ButtonType::Switch,
-                        group_id: Some(GroupId::new(1)),
+                        group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor {
                             color: Color::Green,
                         },

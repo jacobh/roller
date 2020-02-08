@@ -1,8 +1,13 @@
+use derive_more::Constructor;
+use serde::Deserialize;
+use std::time::Instant;
+
 use crate::{
     color::Color, control::midi::NoteState, effect::DimmerEffect, lighting_engine::LightingEvent,
-    project::GroupId,
 };
-use std::time::Instant;
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize)]
+pub struct ButtonGroupId(usize);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ToggleState {
@@ -39,7 +44,7 @@ pub enum ButtonType {
 pub struct ButtonMapping {
     pub note: u8,
     pub button_type: ButtonType,
-    pub group_id: Option<GroupId>,
+    pub group_id: Option<ButtonGroupId>,
     pub on_action: ButtonAction,
 }
 impl ButtonMapping {

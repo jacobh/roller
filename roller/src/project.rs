@@ -4,12 +4,12 @@ use serde::Deserialize;
 use crate::fixture::Fixture;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize)]
-pub struct GroupId(usize);
+pub struct FixtureGroupId(usize);
 
 #[derive(Debug, Clone, Deserialize)]
 struct ProjectFixture {
     start_channel: usize,
-    group_id: Option<GroupId>,
+    group_id: Option<FixtureGroupId>,
     #[serde(rename = "fixture_profile")]
     fixture_profile_slug: String,
 }

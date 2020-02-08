@@ -1,9 +1,9 @@
-use crate::{lighting_engine::LightingEvent, project::GroupId};
+use crate::{lighting_engine::LightingEvent, project::FixtureGroupId};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum FaderType {
     MasterDimmer,
-    GroupDimmer(GroupId),
+    GroupDimmer(FixtureGroupId),
     GlobalEffectIntensity,
 }
 impl FaderType {

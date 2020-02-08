@@ -7,18 +7,18 @@ use crate::{
     clock::{Beats, Clock},
     color::Color,
     control::{
-        button::{ButtonAction, ButtonMapping, ButtonType, ToggleState},
+        button::{ButtonAction, ButtonMapping, ButtonType, ToggleState, ButtonGroupId},
         midi::{AkaiPadState, MidiMapping, NoteState},
     },
     effect::{self, ColorEffect, DimmerEffect},
     fixture::Fixture,
-    project::GroupId,
+    project::FixtureGroupId,
 };
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LightingEvent {
     UpdateMasterDimmer { dimmer: f64 },
-    UpdateGroupDimmer { group_id: GroupId, dimmer: f64 },
+    UpdateGroupDimmer { group_id: FixtureGroupId, dimmer: f64 },
     UpdateGlobalEffectIntensity(f64),
     UpdateButton(Instant, NoteState, ButtonMapping),
     TapTempo(Instant),
@@ -27,7 +27,7 @@ pub enum LightingEvent {
 pub struct EngineState {
     pub clock: Clock,
     pub master_dimmer: f64,
-    pub group_dimmers: FxHashMap<GroupId, f64>,
+    pub group_dimmers: FxHashMap<FixtureGroupId, f64>,
     pub effect_intensity: f64,
     pub active_color_effects: Vec<ColorEffect>,
     pub button_states: FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)>,
@@ -168,14 +168,14 @@ impl EngineState {
     pub fn pad_states(&self, midi_mapping: &MidiMapping) -> FxHashMap<u8, AkaiPadState> {
         let mut state = midi_mapping.initial_pad_states();
 
-        let mut group_notes: FxHashMap<GroupId, Vec<u8>> = FxHashMap::default();
+        let mut group_notes: FxHashMap<ButtonGroupId, Vec<u8>> = FxHashMap::default();
         for button in midi_mapping.buttons.values() {
             if let Some(group_id) = button.group_id {
                 group_notes.entry(group_id).or_default().push(button.note);
             }
         }
 
-        let mut active_group_buttons: FxHashMap<GroupId, Vec<u8>> = group_notes
+        let mut active_group_buttons: FxHashMap<ButtonGroupId, Vec<u8>> = group_notes
             .keys()
             .map(|group_id| (*group_id, Vec::new()))
             .collect();
