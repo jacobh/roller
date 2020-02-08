@@ -30,9 +30,9 @@ impl Clock {
         }
     }
     pub fn tap(&mut self, now: Instant) {
-        // If last tap was more than 3 seconds ago, clear the taps
+        // If last tap was more than 1 second ago, clear the taps
         if let Some(last_tap) = self.taps.last() {
-            if (now - *last_tap) > Duration::from_secs(2) {
+            if (now - *last_tap) > Duration::from_secs(1) {
                 dbg!(&self.taps);
                 self.taps.clear();
                 dbg!(&self.taps);
@@ -41,13 +41,13 @@ impl Clock {
 
         self.taps.push(now);
 
-        if self.taps.len() > 4 {
+        if self.taps.len() >= 4 {
             let time_elapsed = now - *self.taps.first().unwrap();
 
             self.started_at = now;
 
             let beat_duration_secs =
-                (time_elapsed.as_millis() as f64 / 1000.0) / self.taps.len() as f64;
+                (time_elapsed.as_millis() as f64 / 1000.0) / (self.taps.len() - 1) as f64;
             self.bpm = 60.0 / beat_duration_secs;
         }
     }
