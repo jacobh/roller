@@ -6,8 +6,9 @@ use std::time::{Duration, Instant};
 use crate::{
     clock::Beats,
     color::Color,
-    control::button::{
-        ButtonAction, ButtonMapping, ButtonType, MetaButtonAction, MetaButtonMapping,
+    control::{
+        button::{ButtonAction, ButtonMapping, ButtonType, MetaButtonAction, MetaButtonMapping},
+        fader::{FaderType, MidiFaderMapping},
     },
     effect::{DimmerEffect, Effect},
     lighting_engine::LightingEvent,
@@ -19,33 +20,20 @@ pub enum NoteState {
     Off,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum MidiControl {
-    MasterDimmer,
-    GroupDimmer { group_id: usize },
-    GlobalEffectIntensity,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct MidiControlMapping {
-    control_channel: u8,
-    midi_control: MidiControl,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MidiMapping {
-    controls: FxHashMap<u8, MidiControlMapping>,
+    faders: FxHashMap<u8, MidiFaderMapping>,
     pub buttons: FxHashMap<u8, ButtonMapping>,
     pub meta_buttons: FxHashMap<u8, MetaButtonMapping>,
 }
 impl MidiMapping {
     fn new(
-        controls: Vec<MidiControlMapping>,
+        faders: Vec<MidiFaderMapping>,
         buttons: Vec<ButtonMapping>,
         meta_buttons: Vec<MetaButtonMapping>,
     ) -> MidiMapping {
         MidiMapping {
-            controls: controls
+            faders: faders
                 .into_iter()
                 .map(|mapping| (mapping.control_channel, mapping))
                 .collect(),
@@ -66,16 +54,16 @@ impl MidiMapping {
         let now = Instant::now();
 
         match dbg!(midi_event) {
-            MidiEvent::ControlChange { control, value } => match self.controls.get(control) {
-                Some(midi_control_mapping) => match midi_control_mapping.midi_control {
-                    MidiControl::MasterDimmer => Ok(LightingEvent::UpdateMasterDimmer {
+            MidiEvent::ControlChange { control, value } => match self.faders.get(control) {
+                Some(midi_fader_mapping) => match midi_fader_mapping.fader_type {
+                    FaderType::MasterDimmer => Ok(LightingEvent::UpdateMasterDimmer {
                         dimmer: 1.0 / 127.0 * (*value as f64),
                     }),
-                    MidiControl::GroupDimmer { group_id } => Ok(LightingEvent::UpdateGroupDimmer {
+                    FaderType::GroupDimmer { group_id } => Ok(LightingEvent::UpdateGroupDimmer {
                         group_id,
                         dimmer: 1.0 / 127.0 * (*value as f64),
                     }),
-                    MidiControl::GlobalEffectIntensity => Ok(
+                    FaderType::GlobalEffectIntensity => Ok(
                         LightingEvent::UpdateGlobalEffectIntensity(1.0 / 127.0 * (*value as f64)),
                     ),
                 },
@@ -86,7 +74,7 @@ impl MidiMapping {
                     .clone()
                     .into_lighting_event(NoteState::On, now)),
                 None => match self.meta_buttons.get(note) {
-                    Some(meta_button_mapping) => meta_button_mapping.lighting_event(now),
+                    Some(meta_button_mapping) => Ok(meta_button_mapping.lighting_event(now)),
                     None => Err("No mapping for this note"),
                 },
             },
@@ -195,21 +183,21 @@ impl MidiController {
             _input_port: midi_input_port,
             midi_mapping: MidiMapping::new(
                 vec![
-                    MidiControlMapping {
+                    MidiFaderMapping {
                         control_channel: 48,
-                        midi_control: MidiControl::GroupDimmer { group_id: 1 },
+                        fader_type: FaderType::GroupDimmer { group_id: 1 },
                     },
-                    MidiControlMapping {
+                    MidiFaderMapping {
                         control_channel: 49,
-                        midi_control: MidiControl::GroupDimmer { group_id: 2 },
+                        fader_type: FaderType::GroupDimmer { group_id: 2 },
                     },
-                    MidiControlMapping {
+                    MidiFaderMapping {
                         control_channel: 55,
-                        midi_control: MidiControl::GlobalEffectIntensity,
+                        fader_type: FaderType::GlobalEffectIntensity,
                     },
-                    MidiControlMapping {
+                    MidiFaderMapping {
                         control_channel: 56,
-                        midi_control: MidiControl::MasterDimmer,
+                        fader_type: FaderType::MasterDimmer,
                     },
                 ],
                 vec![
