@@ -3,29 +3,20 @@ use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use std::time::{Duration, Instant};
 
-use crate::clock::Beats;
-use crate::color::Color;
-use crate::effect::{DimmerEffect, Effect};
-use crate::lighting_engine::LightingEvent;
+use crate::{
+    clock::Beats,
+    color::Color,
+    control::button::{
+        ButtonAction, ButtonMapping, ButtonType, MetaButtonAction, MetaButtonMapping,
+    },
+    effect::{DimmerEffect, Effect},
+    lighting_engine::LightingEvent,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum NoteState {
     On,
     Off,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ToggleState {
-    On,
-    Off,
-}
-impl ToggleState {
-    pub fn toggle(self) -> ToggleState {
-        match self {
-            ToggleState::On => ToggleState::Off,
-            ToggleState::Off => ToggleState::On,
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -39,43 +30,6 @@ pub enum MidiControl {
 pub struct MidiControlMapping {
     control_channel: u8,
     midi_control: MidiControl,
-}
-
-// Buttons are used for configurable, creative controls. activating colors, chases, etc
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum ButtonAction {
-    UpdateGlobalColor { color: Color },
-    ActivateDimmerEffect(DimmerEffect),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum ButtonType {
-    // Once enabled, this button, or a button in its group, must stay on)
-    Switch,
-    // Buttons that may be enabled and disabled
-    Toggle,
-    // Buttons that will stay enabled only while the note is held down
-    Flash,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ButtonMapping {
-    pub note: u8,
-    pub button_type: ButtonType,
-    pub group_id: Option<usize>,
-    pub on_action: ButtonAction,
-}
-
-// Meta buttons are global controls for things like tap tempo, changing page, activating a bank
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum MetaButtonAction {
-    TapTempo,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct MetaButtonMapping {
-    note: u8,
-    on_action: MetaButtonAction,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

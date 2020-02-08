@@ -7,8 +7,9 @@ use crate::utils::FxIndexMap;
 use crate::{
     clock::{Beats, Clock},
     color::Color,
-    control::midi::{
-        AkaiPadState, ButtonAction, ButtonMapping, ButtonType, MidiMapping, NoteState, ToggleState,
+    control::{
+        button::{ButtonAction, ButtonMapping, ButtonType, ToggleState},
+        midi::{AkaiPadState, MidiMapping, NoteState},
     },
     effect::{self, ColorEffect, DimmerEffect},
     fixture::Fixture,
