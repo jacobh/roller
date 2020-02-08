@@ -47,13 +47,6 @@ impl EngineState {
                 self.group_dimmers.insert(group_id, dimmer);
             }
             LightingEvent::UpdateButton(now, state, mapping) => {
-                // If this is a note on event, remove any past note off events to avoid
-                // confusion of a note off event coming before any note on event
-                if state == NoteState::On {
-                    self.button_states
-                        .shift_remove(&(mapping.clone(), NoteState::Off));
-                }
-
                 let key = (mapping, state);
                 let prev_toggle_state = self
                     .button_states
@@ -89,10 +82,11 @@ impl EngineState {
                 NoteState::Off => {
                     let color_idx = on_colors
                         .iter()
-                        .position(|(color_note, _)| *color_note == note)
-                        .unwrap();
+                        .position(|(color_note, _)| *color_note == note);
 
-                    on_colors.remove(color_idx);
+                    if let Some(color_idx) = color_idx {
+                        on_colors.remove(color_idx);
+                    }
                     last_off = Some((note, color));
                 }
             }
@@ -187,47 +181,83 @@ impl EngineState {
 
         let mut active_group_buttons: FxHashMap<usize, Vec<u8>> = FxHashMap::default();
 
-        for (mapping, note_state) in self.button_states.keys() {
-            match note_state {
-                NoteState::On => {
-                    state.insert(mapping.note, AkaiPadState::Green);
+        for ((mapping, note_state), (toggle_state, _)) in self.button_states.iter() {
+            match mapping.button_type {
+                ButtonType::Flash => {
+                    // TODO groups
+                    state.insert(
+                        mapping.note,
+                        match note_state {
+                            NoteState::On => AkaiPadState::Green,
+                            NoteState::Off => AkaiPadState::Yellow,
+                        },
+                    );
+                }
+                ButtonType::Toggle => {
+                    // TODO groups
+                    state.insert(
+                        mapping.note,
+                        match note_state {
+                            NoteState::On => match toggle_state {
+                                ToggleState::On => AkaiPadState::Green,
+                                ToggleState::Off => AkaiPadState::Red,
+                            },
+                            NoteState::Off => match toggle_state {
+                                ToggleState::On => AkaiPadState::Green,
+                                ToggleState::Off => AkaiPadState::Yellow,
+                            },
+                        },
+                    );
+                }
+                ButtonType::Switch => {
+                    match note_state {
+                        NoteState::On => {
+                            state.insert(mapping.note, AkaiPadState::Green);
 
-                    if let Some(group_id) = mapping.group_id {
-                        active_group_buttons
-                            .entry(group_id)
-                            .or_insert_with(|| Vec::new())
-                            .push(mapping.note);
+                            if let Some(group_id) = mapping.group_id {
+                                active_group_buttons
+                                    .entry(group_id)
+                                    .or_insert_with(|| Vec::new())
+                                    .push(mapping.note);
 
-                        if active_group_buttons[&group_id].len() == 1 {
-                            for note in group_notes[&group_id].iter() {
-                                if *note != mapping.note {
-                                    state.insert(*note, AkaiPadState::Red);
+                                if active_group_buttons[&group_id].len() == 1 {
+                                    for note in group_notes[&group_id].iter() {
+                                        if *note != mapping.note {
+                                            state.insert(*note, AkaiPadState::Red);
+                                        }
+                                    }
                                 }
                             }
                         }
-                    }
-                }
-                NoteState::Off => {
-                    state.insert(mapping.note, AkaiPadState::Green);
-                    if let Some(group_id) = mapping.group_id {
-                        // remove button
-                        let button_idx = active_group_buttons[&group_id]
-                            .iter()
-                            .position(|note| *note == mapping.note)
-                            .unwrap();
-                        active_group_buttons
-                            .get_mut(&group_id)
-                            .unwrap()
-                            .remove(button_idx);
+                        NoteState::Off => {
+                            state.insert(mapping.note, AkaiPadState::Green);
+                            if let Some(group_id) = mapping.group_id {
+                                // remove button
+                                if let Some(active_group_buttons) =
+                                    active_group_buttons.get_mut(&group_id)
+                                {
+                                    let button_idx = active_group_buttons
+                                        .iter()
+                                        .position(|note| *note == mapping.note);
+                                    if let Some(button_idx) = button_idx {
+                                        active_group_buttons.remove(button_idx);
+                                    }
+                                }
 
-                        if active_group_buttons[&group_id].is_empty() {
-                            for note in group_notes[&group_id].iter() {
-                                if *note != mapping.note {
-                                    state.insert(*note, AkaiPadState::Yellow);
+                                if active_group_buttons
+                                    .get(&group_id)
+                                    .map(Vec::is_empty)
+                                    .unwrap_or(true)
+                                {
+                                    for note in group_notes[&group_id].iter() {
+                                        if *note != mapping.note {
+                                            state.insert(*note, AkaiPadState::Yellow);
+                                        }
+                                    }
+                                } else {
+                                    state.insert(mapping.note, AkaiPadState::Red);
                                 }
                             }
-                        } else {
-                            state.insert(mapping.note, AkaiPadState::Red);
                         }
                     }
                 }
