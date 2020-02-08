@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "midi",
     "roller",
     "ola_client"
 ]

@@ -1,9 +1,9 @@
 use async_std::prelude::*;
+use midi::MidiEvent;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use std::time::{Duration, Instant};
 
-use crate::control::midi_event::MidiEvent;
 use crate::{
     clock::Beats,
     color::Color,
