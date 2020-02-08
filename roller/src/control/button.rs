@@ -1,4 +1,7 @@
-use crate::{color::Color, effect::DimmerEffect};
+use crate::{
+    color::Color, control::midi::NoteState, effect::DimmerEffect, lighting_engine::LightingEvent,
+};
+use std::time::Instant;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ToggleState {
@@ -38,6 +41,11 @@ pub struct ButtonMapping {
     pub group_id: Option<usize>,
     pub on_action: ButtonAction,
 }
+impl ButtonMapping {
+    pub fn into_lighting_event(self, note_state: NoteState, now: Instant) -> LightingEvent {
+        LightingEvent::UpdateButton(now, note_state, self)
+    }
+}
 
 // Meta buttons are global controls for things like tap tempo, changing page, activating a bank
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -49,4 +57,11 @@ pub enum MetaButtonAction {
 pub struct MetaButtonMapping {
     pub note: u8,
     pub on_action: MetaButtonAction,
+}
+impl MetaButtonMapping {
+    pub fn lighting_event(&self, now: Instant) -> LightingEvent {
+        match self.on_action {
+            MetaButtonAction::TapTempo => LightingEvent::TapTempo(now),
+        }
+    }
 }

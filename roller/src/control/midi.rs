@@ -82,24 +82,18 @@ impl MidiMapping {
                 None => Err("unknown control channel"),
             },
             MidiEvent::NoteOn { note, .. } => match self.buttons.get(note) {
-                Some(button_mapping) => Ok(LightingEvent::UpdateButton(
-                    now,
-                    NoteState::On,
-                    button_mapping.clone(),
-                )),
+                Some(button_mapping) => Ok(button_mapping
+                    .clone()
+                    .into_lighting_event(NoteState::On, now)),
                 None => match self.meta_buttons.get(note) {
-                    Some(meta_button_mapping) => match meta_button_mapping.on_action {
-                        MetaButtonAction::TapTempo => Ok(LightingEvent::TapTempo(now)),
-                    },
+                    Some(meta_button_mapping) => meta_button_mapping.lighting_event(now),
                     None => Err("No mapping for this note"),
                 },
             },
             MidiEvent::NoteOff { note, .. } => match self.buttons.get(note) {
-                Some(button_mapping) => Ok(LightingEvent::UpdateButton(
-                    now,
-                    NoteState::Off,
-                    button_mapping.clone(),
-                )),
+                Some(button_mapping) => Ok(button_mapping
+                    .clone()
+                    .into_lighting_event(NoteState::Off, now)),
                 None => Err("No mapping for this note"),
             },
             MidiEvent::Other(_) => Err("unknown midi event type"),
