@@ -145,8 +145,13 @@ impl EngineState {
         let global_color = self.global_color();
         let active_dimmer_modifiers = self.active_dimmer_modifiers();
 
-        for (i, fixture) in fixtures.iter_mut().enumerate() {
-            let clock_snapshot = clock_snapshot.shift(Beats::new(i as f64));
+        for fixture in fixtures.iter_mut() {
+            let clock_snapshot = clock_snapshot.shift(Beats::new(
+                2.0 * fixture
+                    .group_id
+                    .map(|group_id| (usize::from(group_id) - 1) as f64)
+                    .unwrap_or(0.0),
+            ));
 
             let effect_dimmer = effect::intensity(
                 active_dimmer_modifiers

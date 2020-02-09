@@ -1,9 +1,9 @@
-use derive_more::Constructor;
+use derive_more::{Constructor, From, Into};
 use serde::Deserialize;
 
 use crate::fixture::Fixture;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize, From, Into)]
 pub struct FixtureGroupId(usize);
 
 #[derive(Debug, Clone, Deserialize)]
