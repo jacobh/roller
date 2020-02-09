@@ -33,7 +33,8 @@ pub enum Effect {
     SawUp,
     SawDown,
     TriangleDown,
-    Sine,
+    SineUp,
+    SineDown,
     ShortSquarePulse,
 }
 impl Effect {
@@ -42,7 +43,8 @@ impl Effect {
             Effect::SawUp => saw_up(x),
             Effect::SawDown => saw_down(x),
             Effect::TriangleDown => triangle_down(x),
-            Effect::Sine => sine(x),
+            Effect::SineUp => sine_up(x),
+            Effect::SineDown => sine_down(x),
             Effect::ShortSquarePulse => short_square_pulse(x),
         }
     }
@@ -65,8 +67,18 @@ pub fn triangle_down(x: f64) -> f64 {
     }
 }
 
-pub fn sine(x: f64) -> f64 {
-    (f64::sin(std::f64::consts::PI * 2.0 * x) / 2.0) + 0.5
+/// 0.0 = 0.0
+/// 0.5 = 1.0
+/// 1.0 = 0.0
+pub fn sine_up(x: f64) -> f64 {
+    (f64::sin(std::f64::consts::PI * 2.0 * x - 1.5) / 2.0) + 0.5
+}
+
+/// 0.0 = 1.0
+/// 0.5 = 0.0
+/// 1.0 = 1.0
+pub fn sine_down(x: f64) -> f64 {
+    (f64::sin(std::f64::consts::PI * 2.0 * x + 1.5) / 2.0) + 0.5
 }
 
 pub fn short_square_pulse(x: f64) -> f64 {
