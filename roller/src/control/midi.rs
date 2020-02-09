@@ -245,9 +245,10 @@ impl MidiController {
                         on_action: ButtonAction::ActivateDimmerModifier(
                             DimmerSequence::new(vec![
                                 DimmerEffect::new(Effect::ShortSquarePulse, Beats::new(1.0), 1.0),
-                                DimmerEffect::new(Effect::SineUp, Beats::new(1.0), 1.0),
+                                DimmerEffect::new(Effect::SineUp, Beats::new(1.0), (0.0, 0.7)),
                                 DimmerEffect::new(Effect::ShortSquarePulse, Beats::new(1.0), 1.0),
-                                DimmerEffect::new(Effect::Off, Beats::new(1.0), 1.0),
+                                DimmerEffect::new(Effect::Off, Beats::new(0.5), 1.0),
+                                DimmerEffect::new(Effect::SawUp, Beats::new(0.5), (0.0, 0.2)),
                             ])
                             .into(),
                         ),

@@ -30,25 +30,55 @@ impl From<DimmerSequence> for DimmerModifier {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct DimmerScale {
+    min: OrderedFloat<f64>,
+    max: OrderedFloat<f64>,
+}
+impl DimmerScale {
+    pub fn new(min: f64, max: f64) -> DimmerScale {
+        DimmerScale {
+            min: OrderedFloat::from(min),
+            max: OrderedFloat::from(max),
+        }
+    }
+    pub fn scale(&self, x: f64) -> f64 {
+        let min = self.min.into_inner();
+        let max = self.max.into_inner();
+
+        min + x * (max - min)
+    }
+}
+impl From<(f64, f64)> for DimmerScale {
+    fn from(x: (f64, f64)) -> DimmerScale {
+        DimmerScale::new(x.0, x.1)
+    }
+}
+impl From<f64> for DimmerScale {
+    fn from(x: f64) -> DimmerScale {
+        DimmerScale::new(1.0 - x, x)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DimmerEffect {
     effect: Effect,
     meter_length: Beats,
-    intensity: OrderedFloat<f64>,
+    scale: DimmerScale,
 }
 impl DimmerEffect {
     pub fn new(
         effect: Effect,
         meter_length: Beats,
-        intensity: impl Into<OrderedFloat<f64>>,
+        scale: impl Into<DimmerScale>,
     ) -> DimmerEffect {
         DimmerEffect {
             meter_length,
-            intensity: intensity.into(),
+            scale: scale.into(),
             effect: effect,
         }
     }
     fn dimmer_for_progress(&self, progress_percent: f64) -> f64 {
-        intensity(self.effect.apply(progress_percent), self.intensity.into())
+        self.scale.scale(self.effect.apply(progress_percent))
     }
     pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
         let progress_percent = clock.meter_progress_percent(self.meter_length);
@@ -76,7 +106,7 @@ impl DimmerSequence {
         let mut progress_beats = length * progress_percent;
 
         for step in self.steps.iter() {
-            if step.meter_length > progress_beats {
+            if step.meter_length >= progress_beats {
                 return step.dimmer_for_progress(
                     1.0 / f64::from(step.meter_length) * f64::from(progress_beats),
                 );
