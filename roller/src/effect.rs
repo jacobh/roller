@@ -36,6 +36,8 @@ pub enum Effect {
     SineUp,
     SineDown,
     ShortSquarePulse,
+    On,
+    Off,
 }
 impl Effect {
     fn apply(self, x: f64) -> f64 {
@@ -46,6 +48,8 @@ impl Effect {
             Effect::SineUp => sine_up(x),
             Effect::SineDown => sine_down(x),
             Effect::ShortSquarePulse => short_square_pulse(x),
+            Effect::On => 1.0,
+            Effect::Off => 0.0,
         }
     }
 }
