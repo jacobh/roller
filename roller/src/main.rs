@@ -51,7 +51,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         clock: Clock::new(128.0),
         master_dimmer: 1.0,
         group_dimmers: FxHashMap::default(),
-        effect_intensity: 0.0,
+        effect_intensity: 1.0,
         active_color_effects: vec![effect::ColorEffect::new(
             effect::hue_shift_30,
             Beats::new(5.0),
