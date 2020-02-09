@@ -1,7 +1,7 @@
 use derive_more::{From, Into};
 use ordered_float::OrderedFloat;
 use std::iter::Sum;
-use std::ops::Add;
+use std::ops::{Add, Mul, Sub};
 use std::time::{Duration, Instant};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, From, Into)]
@@ -16,6 +16,20 @@ impl Add for Beats {
     type Output = Beats;
     fn add(self, other: Beats) -> Beats {
         Beats::new(self.0.into_inner() + other.0.into_inner())
+    }
+}
+
+impl Sub for Beats {
+    type Output = Beats;
+    fn sub(self, other: Beats) -> Beats {
+        Beats::new(self.0.into_inner() - other.0.into_inner())
+    }
+}
+
+impl Mul<f64> for Beats {
+    type Output = Beats;
+    fn mul(self, other: f64) -> Beats {
+        Beats::new(self.0.into_inner() * other)
     }
 }
 

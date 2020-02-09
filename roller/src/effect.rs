@@ -22,9 +22,12 @@ impl DimmerEffect {
             effect: effect,
         }
     }
+    fn dimmer_for_progress(&self, progress_percent: f64) -> f64 {
+        intensity(self.effect.apply(progress_percent), self.intensity.into())
+    }
     pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
         let progress_percent = clock.meter_progress_percent(self.meter_length);
-        intensity(self.effect.apply(progress_percent), self.intensity.into())
+        self.dimmer_for_progress(progress_percent)
     }
 }
 
@@ -33,7 +36,7 @@ struct DimmerSequence {
     steps: Vec<DimmerEffect>,
 }
 impl DimmerSequence {
-    fn new(steps: Vec<DimmerEffect>) -> DimmerSequence {
+    pub fn new(steps: Vec<DimmerEffect>) -> DimmerSequence {
         DimmerSequence { steps }
     }
     fn total_length(&self) -> Beats {
@@ -41,6 +44,23 @@ impl DimmerSequence {
             .iter()
             .map(|dimmer_effect| dimmer_effect.meter_length)
             .sum()
+    }
+    pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
+        let length = self.total_length();
+        let progress_percent = clock.meter_progress_percent(length);
+        let mut progress_beats = length * progress_percent;
+
+        for step in self.steps.iter() {
+            if step.meter_length > progress_beats {
+                return step.dimmer_for_progress(
+                    1.0 / f64::from(step.meter_length) * f64::from(progress_beats),
+                );
+            } else {
+                progress_beats = progress_beats - step.meter_length;
+            }
+        }
+
+        unreachable!()
     }
 }
 
