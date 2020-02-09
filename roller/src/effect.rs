@@ -4,6 +4,11 @@ use palette::{Hue, Mix, RgbHue};
 use crate::clock::{Beats, ClockSnapshot};
 use crate::color::Hsl64;
 
+// TODO name subject to change
+pub trait DimmerModifier {
+    fn dimmer(&self, clock: &ClockSnapshot) -> f64;
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DimmerEffect {
     effect: Effect,
@@ -28,6 +33,11 @@ impl DimmerEffect {
     pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
         let progress_percent = clock.meter_progress_percent(self.meter_length);
         self.dimmer_for_progress(progress_percent)
+    }
+}
+impl DimmerModifier for DimmerEffect {
+    fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
+        self.dimmer(clock)
     }
 }
 
@@ -61,6 +71,11 @@ impl DimmerSequence {
         }
 
         unreachable!()
+    }
+}
+impl DimmerModifier for DimmerSequence {
+    fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
+        self.dimmer(clock)
     }
 }
 
