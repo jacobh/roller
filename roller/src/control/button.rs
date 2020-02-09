@@ -4,7 +4,7 @@ use serde::Deserialize;
 use std::time::Instant;
 
 use crate::{
-    color::Color, control::midi::NoteState, effect::DimmerEffect, lighting_engine::LightingEvent,
+    color::Color, control::midi::NoteState, effect::DimmerModifier, lighting_engine::LightingEvent,
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize)]
@@ -28,7 +28,7 @@ impl ToggleState {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ButtonAction {
     UpdateGlobalColor(Color),
-    ActivateDimmerEffect(DimmerEffect),
+    ActivateDimmerModifier(DimmerModifier),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

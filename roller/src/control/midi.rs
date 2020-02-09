@@ -216,31 +216,26 @@ impl MidiController {
                         note: Note::new(63),
                         button_type: ButtonType::Toggle,
                         group_id: None,
-                        on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
-                            Effect::TriangleDown,
-                            Beats::new(1.0),
-                            1.0,
-                        )),
+                        on_action: ButtonAction::ActivateDimmerModifier(
+                            DimmerEffect::new(Effect::TriangleDown, Beats::new(1.0), 1.0).into(),
+                        ),
                     },
                     ButtonMapping {
                         note: Note::new(55),
                         button_type: ButtonType::Toggle,
                         group_id: None,
-                        on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
-                            Effect::SawUp,
-                            Beats::new(0.5),
-                            1.0,
-                        )),
+                        on_action: ButtonAction::ActivateDimmerModifier(
+                            DimmerEffect::new(Effect::SawUp, Beats::new(0.5), 1.0).into(),
+                        ),
                     },
                     ButtonMapping {
                         note: Note::new(47),
                         button_type: ButtonType::Flash,
                         group_id: None,
-                        on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
-                            Effect::ShortSquarePulse,
-                            Beats::new(0.5),
-                            1.0,
-                        )),
+                        on_action: ButtonAction::ActivateDimmerModifier(
+                            DimmerEffect::new(Effect::ShortSquarePulse, Beats::new(0.5), 1.0)
+                                .into(),
+                        ),
                     },
                 ],
                 vec![MetaButtonMapping {

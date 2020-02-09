@@ -8,10 +8,10 @@ use crate::color::Hsl64;
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum DimmerModifier {
     Effect(DimmerEffect),
-    Sequence(DimmerSequence)
+    Sequence(DimmerSequence),
 }
 impl DimmerModifier {
-    fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
+    pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
         match self {
             DimmerModifier::Effect(effect) => effect.dimmer(clock),
             DimmerModifier::Sequence(sequence) => sequence.dimmer(clock),
