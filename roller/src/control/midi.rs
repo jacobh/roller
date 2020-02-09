@@ -52,35 +52,28 @@ impl MidiMapping {
                 .collect(),
         }
     }
-    fn try_midi_to_lighting_event(
-        &self,
-        midi_event: &MidiEvent,
-    ) -> Result<LightingEvent, &'static str> {
+    fn midi_to_lighting_event(&self, midi_event: &MidiEvent) -> Option<LightingEvent> {
         let now = Instant::now();
 
         match dbg!(midi_event) {
-            MidiEvent::ControlChange { control, value } => match self.faders.get(control) {
-                Some(midi_fader_mapping) => Ok(midi_fader_mapping
+            MidiEvent::ControlChange { control, value } => self.faders.get(control).map(|fader| {
+                fader
                     .fader_type
-                    .lighting_event(1.0 / 127.0 * (*value as f64))),
-                None => Err("unknown control channel"),
-            },
-            MidiEvent::NoteOn { note, .. } => match self.buttons.get(note) {
-                Some(button_mapping) => Ok(button_mapping
-                    .clone()
-                    .into_lighting_event(NoteState::On, now)),
-                None => match self.meta_buttons.get(note) {
-                    Some(meta_button_mapping) => Ok(meta_button_mapping.lighting_event(now)),
-                    None => Err("No mapping for this note"),
-                },
-            },
-            MidiEvent::NoteOff { note, .. } => match self.buttons.get(note) {
-                Some(button_mapping) => Ok(button_mapping
-                    .clone()
-                    .into_lighting_event(NoteState::Off, now)),
-                None => Err("No mapping for this note"),
-            },
-            MidiEvent::Other(_) => Err("unknown midi event type"),
+                    .lighting_event(1.0 / 127.0 * (*value as f64))
+            }),
+            MidiEvent::NoteOn { note, .. } => self
+                .buttons
+                .get(note)
+                .map(|button| button.clone().into_lighting_event(NoteState::On, now))
+                .or(self
+                    .meta_buttons
+                    .get(note)
+                    .map(|meta_button| meta_button.lighting_event(now))),
+            MidiEvent::NoteOff { note, .. } => self
+                .buttons
+                .get(note)
+                .map(|button| button.clone().into_lighting_event(NoteState::Off, now)),
+            MidiEvent::Other(_) => None,
         }
     }
     pub fn initial_pad_states(&self) -> FxHashMap<Note, AkaiPadState> {
@@ -265,7 +258,7 @@ impl MidiController {
     pub fn lighting_events(&self) -> impl Stream<Item = LightingEvent> {
         let mapping = self.midi_mapping.clone();
         self.midi_events()
-            .map(move |midi_event| mapping.try_midi_to_lighting_event(&midi_event).ok())
+            .map(move |midi_event| mapping.midi_to_lighting_event(&midi_event))
             .filter(|lighting_event| lighting_event.is_some())
             .map(|lighting_event| lighting_event.unwrap())
     }
