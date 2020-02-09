@@ -14,7 +14,7 @@ use crate::{
         },
         fader::{FaderType, MidiFaderMapping},
     },
-    effect::{DimmerEffect, Effect},
+    effect::{DimmerEffect, DimmerSequence, Effect},
     lighting_engine::LightingEvent,
     project::FixtureGroupId,
 };
@@ -235,6 +235,21 @@ impl MidiController {
                         on_action: ButtonAction::ActivateDimmerModifier(
                             DimmerEffect::new(Effect::ShortSquarePulse, Beats::new(0.5), 1.0)
                                 .into(),
+                        ),
+                    },
+                    // Dimmer sequences
+                    ButtonMapping {
+                        note: Note::new(61),
+                        button_type: ButtonType::Toggle,
+                        group_id: None,
+                        on_action: ButtonAction::ActivateDimmerModifier(
+                            DimmerSequence::new(vec![
+                                DimmerEffect::new(Effect::ShortSquarePulse, Beats::new(1.0), 1.0),
+                                DimmerEffect::new(Effect::SineUp, Beats::new(1.0), 1.0),
+                                DimmerEffect::new(Effect::ShortSquarePulse, Beats::new(1.0), 1.0),
+                                DimmerEffect::new(Effect::Off, Beats::new(1.0), 1.0),
+                            ])
+                            .into(),
                         ),
                     },
                 ],

@@ -57,7 +57,7 @@ impl DimmerEffect {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-struct DimmerSequence {
+pub struct DimmerSequence {
     steps: Vec<DimmerEffect>,
 }
 impl DimmerSequence {
