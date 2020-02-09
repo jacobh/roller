@@ -1,5 +1,7 @@
 use derive_more::{From, Into};
 use ordered_float::OrderedFloat;
+use std::iter::Sum;
+use std::ops::Add;
 use std::time::{Duration, Instant};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, From, Into)]
@@ -7,6 +9,22 @@ pub struct Beats(OrderedFloat<f64>);
 impl Beats {
     pub fn new(x: impl Into<OrderedFloat<f64>>) -> Beats {
         Beats(x.into())
+    }
+}
+
+impl Add for Beats {
+    type Output = Beats;
+    fn add(self, other: Beats) -> Beats {
+        Beats::new(self.0.into_inner() + other.0.into_inner())
+    }
+}
+
+impl Sum<Beats> for Beats {
+    fn sum<I>(iter: I) -> Beats
+    where
+        I: Iterator<Item = Beats>,
+    {
+        iter.fold(Beats::new(0.0), Add::add)
     }
 }
 

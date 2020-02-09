@@ -28,6 +28,22 @@ impl DimmerEffect {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct DimmerSequence {
+    steps: Vec<DimmerEffect>,
+}
+impl DimmerSequence {
+    fn new(steps: Vec<DimmerEffect>) -> DimmerSequence {
+        DimmerSequence { steps }
+    }
+    fn total_length(&self) -> Beats {
+        self.steps
+            .iter()
+            .map(|dimmer_effect| dimmer_effect.meter_length)
+            .sum()
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Effect {
     SawUp,
