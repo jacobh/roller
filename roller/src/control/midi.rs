@@ -1,4 +1,4 @@
-use async_std::prelude::*;
+use async_std::{prelude::*, sync::Arc};
 use midi::{ControlChannel, MidiEvent, Note};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
@@ -89,7 +89,7 @@ pub struct MidiController {
     _source: coremidi::Source,
     _input_port: coremidi::InputPort,
 
-    pub midi_mapping: MidiMapping,
+    pub midi_mapping: Arc<MidiMapping>,
     input_receiver: async_std::sync::Receiver<MidiEvent>,
     output_sender: async_std::sync::Sender<Vec<u8>>,
 }
@@ -142,7 +142,7 @@ impl MidiController {
             _client: midi_client,
             _source: source,
             _input_port: midi_input_port,
-            midi_mapping: MidiMapping::new(
+            midi_mapping: Arc::new(MidiMapping::new(
                 vec![
                     MidiFaderMapping {
                         control_channel: ControlChannel::new(48),
@@ -247,7 +247,7 @@ impl MidiController {
                     note: Note::new(98),
                     on_action: MetaButtonAction::TapTempo,
                 }],
-            ),
+            )),
             input_receiver: input_receiver,
             output_sender: output_sender,
         })
