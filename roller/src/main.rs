@@ -1,9 +1,8 @@
-use async_std::prelude::*;
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
 use midi::Note;
 use rustc_hash::FxHashMap;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 mod clock;
 mod color;
@@ -17,31 +16,6 @@ mod utils;
 use crate::clock::{Beats, Clock};
 use crate::control::button::pad_states;
 use crate::lighting_engine::{EngineState, LightingEvent};
-
-fn fold_fixture_dmx_data<'a>(fixtures: impl Iterator<Item = &'a fixture::Fixture>) -> [u8; 512] {
-    let mut dmx_data = [0; 512];
-
-    for fixture in fixtures {
-        fixture.write_dmx(&mut dmx_data);
-    }
-
-    dmx_data
-}
-
-fn tick_stream() -> impl Stream<Item = ()> {
-    let mut next_tick_at = Instant::now();
-
-    stream::repeat(()).then(move |()| {
-        let until = next_tick_at;
-        next_tick_at += Duration::from_millis(1000 / 40);
-        let now = Instant::now();
-        async_std::task::sleep(if now < until {
-            until - now
-        } else {
-            Duration::from_secs(0)
-        })
-    })
-}
 
 #[async_std::main]
 async fn main() -> Result<(), async_std::io::Error> {
@@ -98,7 +72,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         midi_controller.set_pad_color(*note, *pad_state).await;
     }
 
-    let ticks = tick_stream().map(|()| Event::Tick);
+    let ticks = utils::tick_stream(Duration::from_millis(1000 / 40)).map(|()| Event::Tick);
     let lighting_events = midi_controller.lighting_events().map(Event::Lighting);
     let events = stream::select(ticks, lighting_events);
     pin_mut!(events);
@@ -107,7 +81,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         match event {
             Event::Tick => {
                 state.update_fixtures(&mut fixtures);
-                let dmx_data = fold_fixture_dmx_data(fixtures.iter());
+                let dmx_data = fixture::fold_fixture_dmx_data(fixtures.iter());
                 dmx_sender.send((10, dmx_data)).await;
 
                 let new_pad_states =
