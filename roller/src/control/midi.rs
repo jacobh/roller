@@ -1,7 +1,6 @@
 use async_std::{prelude::*, sync::Arc};
 use midi::{ControlChannel, MidiEvent, Note};
 use rustc_hash::FxHashMap;
-use serde::Deserialize;
 use std::time::{Duration, Instant};
 
 use crate::{
@@ -9,7 +8,7 @@ use crate::{
     color::Color,
     control::{
         button::{
-            ButtonAction, ButtonGroupId, ButtonMapping, ButtonType, MetaButtonAction,
+            AkaiPadState, ButtonAction, ButtonGroupId, ButtonMapping, ButtonType, MetaButtonAction,
             MetaButtonMapping,
         },
         fader::{FaderType, MidiFaderMapping},
@@ -283,30 +282,6 @@ impl MidiController {
     pub async fn reset_pads(&self) {
         for i in 0..64 {
             self.set_pad_color(Note::new(i), AkaiPadState::Off).await;
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-pub enum AkaiPadState {
-    Off,
-    Green,
-    GreenBlink,
-    Red,
-    RedBlink,
-    Yellow,
-    YellowBlink,
-}
-impl AkaiPadState {
-    pub fn as_byte(self) -> u8 {
-        match self {
-            AkaiPadState::Off => 0,
-            AkaiPadState::Green => 1,
-            AkaiPadState::GreenBlink => 2,
-            AkaiPadState::Red => 3,
-            AkaiPadState::RedBlink => 4,
-            AkaiPadState::Yellow => 5,
-            AkaiPadState::YellowBlink => 6,
         }
     }
 }

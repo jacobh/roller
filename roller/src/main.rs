@@ -15,6 +15,7 @@ mod project;
 mod utils;
 
 use crate::clock::{Beats, Clock};
+use crate::control::button::pad_states;
 use crate::lighting_engine::{EngineState, LightingEvent};
 
 fn fold_fixture_dmx_data<'a>(fixtures: impl Iterator<Item = &'a fixture::Fixture>) -> [u8; 512] {
@@ -83,17 +84,17 @@ async fn main() -> Result<(), async_std::io::Error> {
     }
 
     let midi_controller = control::midi::MidiController::new_for_device_name("APC MINI").unwrap();
-    let mut pad_states = state.pad_states(&midi_controller.midi_mapping);
+    let mut current_pad_states = pad_states(&midi_controller.midi_mapping, &state.button_states);
 
     for i in 0..64 {
         midi_controller
-            .set_pad_color(Note::new(i), control::midi::AkaiPadState::Green)
+            .set_pad_color(Note::new(i), control::button::AkaiPadState::Green)
             .await;
         async_std::task::sleep(Duration::from_millis(10)).await;
     }
     async_std::task::sleep(Duration::from_millis(150)).await;
     midi_controller.reset_pads().await;
-    for (note, pad_state) in pad_states.iter() {
+    for (note, pad_state) in current_pad_states.iter() {
         midi_controller.set_pad_color(*note, *pad_state).await;
     }
 
@@ -109,11 +110,12 @@ async fn main() -> Result<(), async_std::io::Error> {
                 let dmx_data = fold_fixture_dmx_data(fixtures.iter());
                 dmx_sender.send((10, dmx_data)).await;
 
-                let new_pad_states = state.pad_states(&midi_controller.midi_mapping);
+                let new_pad_states =
+                    pad_states(&midi_controller.midi_mapping, &state.button_states);
 
                 // find the pads that have updated since the last tick
                 let pad_changeset = new_pad_states.iter().filter(|(note, state)| {
-                    pad_states
+                    current_pad_states
                         .get(note)
                         .map(|prev_state| state != &prev_state)
                         .unwrap_or(true)
@@ -124,7 +126,7 @@ async fn main() -> Result<(), async_std::io::Error> {
                     midi_controller.set_pad_color(*note, *state).await;
                 }
 
-                pad_states = new_pad_states;
+                current_pad_states = new_pad_states;
             }
             Event::Lighting(event) => {
                 state.apply_event(event);

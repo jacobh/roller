@@ -66,11 +66,7 @@ pub struct DimmerEffect {
     scale: DimmerScale,
 }
 impl DimmerEffect {
-    pub fn new(
-        effect: Effect,
-        meter_length: Beats,
-        scale: impl Into<DimmerScale>,
-    ) -> DimmerEffect {
+    pub fn new(effect: Effect, meter_length: Beats, scale: impl Into<DimmerScale>) -> DimmerEffect {
         DimmerEffect {
             meter_length,
             scale: scale.into(),

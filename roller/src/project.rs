@@ -3,7 +3,9 @@ use serde::Deserialize;
 
 use crate::fixture::Fixture;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize, From, Into)]
+#[derive(
+    Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize, From, Into,
+)]
 pub struct FixtureGroupId(usize);
 
 #[derive(Debug, Clone, Deserialize)]
