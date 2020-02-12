@@ -4,7 +4,7 @@ use rustc_hash::FxHashMap;
 use std::time::{Duration, Instant};
 
 use crate::{
-    clock::Beats,
+    clock::{Beats, ClockOffset, ClockOffsetMode},
     color::Color,
     control::{
         button::{
@@ -242,13 +242,24 @@ impl MidiController {
                         button_type: ButtonType::Toggle,
                         group_id: None,
                         on_action: ButtonAction::ActivateDimmerModifier(
-                            DimmerSequence::new(vec![
-                                DimmerEffect::new(Effect::ShortSquarePulse, Beats::new(1.0), 1.0),
-                                DimmerEffect::new(Effect::SineUp, Beats::new(1.0), (0.0, 0.7)),
-                                DimmerEffect::new(Effect::ShortSquarePulse, Beats::new(1.0), 1.0),
-                                DimmerEffect::new(Effect::Off, Beats::new(0.5), 1.0),
-                                DimmerEffect::new(Effect::SawUp, Beats::new(0.5), (0.0, 0.2)),
-                            ])
+                            DimmerSequence::new(
+                                vec![
+                                    DimmerEffect::new(
+                                        Effect::ShortSquarePulse,
+                                        Beats::new(1.0),
+                                        1.0,
+                                    ),
+                                    DimmerEffect::new(Effect::SineUp, Beats::new(1.0), (0.0, 0.7)),
+                                    DimmerEffect::new(
+                                        Effect::ShortSquarePulse,
+                                        Beats::new(1.0),
+                                        1.0,
+                                    ),
+                                    DimmerEffect::new(Effect::Off, Beats::new(0.5), 1.0),
+                                    DimmerEffect::new(Effect::SawUp, Beats::new(0.5), (0.0, 0.2)),
+                                ],
+                                Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
+                            )
                             .into(),
                         ),
                     },

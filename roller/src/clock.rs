@@ -1,14 +1,20 @@
 use derive_more::{From, Into};
 use ordered_float::OrderedFloat;
+use rand::random;
 use std::iter::Sum;
 use std::ops::{Add, Mul, Sub};
 use std::time::{Duration, Instant};
+
+use crate::fixture::Fixture;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, From, Into)]
 pub struct Beats(OrderedFloat<f64>);
 impl Beats {
     pub fn new(x: impl Into<OrderedFloat<f64>>) -> Beats {
         Beats(x.into())
+    }
+    pub fn zero() -> Beats {
+        Beats::new(0.0)
     }
 }
 
@@ -126,5 +132,48 @@ impl ClockSnapshot {
         let secs_per_meter = self.secs_per_meter(meter_length);
 
         1.0 / secs_per_meter * (secs_elapsed % secs_per_meter)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ClockOffsetMode {
+    GroupId,
+    FixtureIndex,
+    Random,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ClockOffset {
+    mode: ClockOffsetMode,
+    offset: Beats,
+    seed: usize,
+}
+impl ClockOffset {
+    pub fn new(mode: ClockOffsetMode, offset: Beats) -> ClockOffset {
+        ClockOffset {
+            mode,
+            offset,
+            seed: random(),
+        }
+    }
+    pub fn offset_for_fixture(&self, fixture: &Fixture, fixtures: &[Fixture]) -> Beats {
+        match self.mode {
+            ClockOffsetMode::GroupId => {
+                self.offset
+                    * fixture
+                        .group_id
+                        .map(|group_id| usize::from(group_id) as f64 - 1.0)
+                        .unwrap_or(0.0)
+            }
+            ClockOffsetMode::FixtureIndex => {
+                let fixture_idx = fixtures.iter().position(|x| x == fixture).unwrap();
+                self.offset * fixture_idx as f64
+            }
+            ClockOffsetMode::Random => {
+                let fixture_idx = fixtures.iter().position(|x| x == fixture).unwrap();
+                let fixture_count = fixtures.len();
+                self.offset * ((self.seed + fixture_idx) % fixture_count) as f64
+            }
+        }
     }
 }

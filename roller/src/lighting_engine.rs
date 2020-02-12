@@ -2,10 +2,8 @@ use midi::Note;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 
-use crate::utils::FxIndexMap;
-
 use crate::{
-    clock::{Beats, Clock},
+    clock::{Clock},
     color::Color,
     control::{
         button::{ButtonAction, ButtonMapping, ButtonType, ToggleState},
@@ -14,6 +12,7 @@ use crate::{
     effect::{self, ColorEffect, DimmerModifier},
     fixture::Fixture,
     project::FixtureGroupId,
+    utils::FxIndexMap,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -145,39 +144,40 @@ impl EngineState {
         let global_color = self.global_color();
         let active_dimmer_modifiers = self.active_dimmer_modifiers();
 
-        for fixture in fixtures.iter_mut() {
-            let clock_snapshot = clock_snapshot.shift(Beats::new(
-                2.0 * fixture
+        let fixture_values = fixtures
+            .iter()
+            .map(|fixture| {
+                let effect_dimmer = effect::intensity(
+                    active_dimmer_modifiers
+                        .iter()
+                        .fold(1.0, |dimmer, modifier| {
+                            dimmer * modifier.offset_dimmer(&clock_snapshot, &fixture, &fixtures)
+                        }),
+                    self.effect_intensity,
+                );
+
+                let color = effect::color_intensity(
+                    global_color.to_hsl(),
+                    self.active_color_effects
+                        .iter()
+                        .fold(global_color.to_hsl(), |color, effect| {
+                            effect.color(color, &clock_snapshot)
+                        }),
+                    self.effect_intensity,
+                );
+
+                let group_dimmer = *fixture
                     .group_id
-                    .map(|group_id| (usize::from(group_id) - 1) as f64)
-                    .unwrap_or(0.0),
-            ));
+                    .and_then(|group_id| self.group_dimmers.get(&group_id))
+                    .unwrap_or(&1.0);
 
-            let effect_dimmer = effect::intensity(
-                active_dimmer_modifiers
-                    .iter()
-                    .fold(1.0, |dimmer, modifier| {
-                        dimmer * modifier.dimmer(&clock_snapshot)
-                    }),
-                self.effect_intensity,
-            );
+                let dimmer = self.master_dimmer * group_dimmer * effect_dimmer;
+                (dimmer, color)
+            })
+            .collect::<Vec<_>>();
 
-            let color = effect::color_intensity(
-                global_color.to_hsl(),
-                self.active_color_effects
-                    .iter()
-                    .fold(global_color.to_hsl(), |color, effect| {
-                        effect.color(color, &clock_snapshot)
-                    }),
-                self.effect_intensity,
-            );
-
-            let group_dimmer = *fixture
-                .group_id
-                .and_then(|group_id| self.group_dimmers.get(&group_id))
-                .unwrap_or(&1.0);
-
-            fixture.set_dimmer(self.master_dimmer * group_dimmer * effect_dimmer);
+        for (fixture, (dimmer, color)) in fixtures.iter_mut().zip(fixture_values) {
+            fixture.set_dimmer(dimmer);
             fixture.set_color(color).unwrap();
         }
     }

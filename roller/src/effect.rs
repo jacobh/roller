@@ -1,8 +1,11 @@
 use ordered_float::OrderedFloat;
 use palette::{Hue, Mix, RgbHue};
 
-use crate::clock::{Beats, ClockSnapshot};
-use crate::color::Hsl64;
+use crate::{
+    clock::{Beats, ClockOffset, ClockSnapshot},
+    color::Hsl64,
+    fixture::Fixture,
+};
 
 // TODO name subject to change
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -11,10 +14,30 @@ pub enum DimmerModifier {
     Sequence(DimmerSequence),
 }
 impl DimmerModifier {
-    pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
+    fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
         match self {
             DimmerModifier::Effect(effect) => effect.dimmer(clock),
             DimmerModifier::Sequence(sequence) => sequence.dimmer(clock),
+        }
+    }
+    pub fn offset_dimmer(
+        &self,
+        clock: &ClockSnapshot,
+        fixture: &Fixture,
+        fixtures: &[Fixture],
+    ) -> f64 {
+        // TODO clock offsets for dimmer effects
+        let clock_offset = match self {
+            DimmerModifier::Effect(_) => None,
+            DimmerModifier::Sequence(sequence) => sequence.clock_offset.as_ref(),
+        };
+
+        match clock_offset {
+            Some(clock_offset) => {
+                let offset = clock_offset.offset_for_fixture(fixture, fixtures);
+                self.dimmer(&clock.shift(offset))
+            }
+            None => self.dimmer(clock),
         }
     }
 }
@@ -85,10 +108,14 @@ impl DimmerEffect {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DimmerSequence {
     steps: Vec<DimmerEffect>,
+    clock_offset: Option<ClockOffset>,
 }
 impl DimmerSequence {
-    pub fn new(steps: Vec<DimmerEffect>) -> DimmerSequence {
-        DimmerSequence { steps }
+    pub fn new(steps: Vec<DimmerEffect>, clock_offset: Option<ClockOffset>) -> DimmerSequence {
+        DimmerSequence {
+            steps,
+            clock_offset,
+        }
     }
     fn total_length(&self) -> Beats {
         self.steps
