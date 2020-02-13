@@ -219,13 +219,20 @@ pub struct ColorEffect {
     mode: ColorEffectMode,
     effect: Effect,
     meter_length: Beats,
+    clock_offset: Option<ClockOffset>,
 }
 impl ColorEffect {
-    pub fn new(mode: ColorEffectMode, effect: Effect, meter_length: Beats) -> ColorEffect {
+    pub fn new(
+        mode: ColorEffectMode,
+        effect: Effect,
+        meter_length: Beats,
+        clock_offset: Option<ClockOffset>,
+    ) -> ColorEffect {
         ColorEffect {
             mode,
             effect,
             meter_length,
+            clock_offset,
         }
     }
     pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
@@ -240,6 +247,21 @@ impl ColorEffect {
             ColorEffectMode::White => {
                 color.mix(&Color::White.to_hsl(), self.effect.apply(elapsed_percent))
             }
+        }
+    }
+    pub fn offset_color(
+        &self,
+        color: Hsl64,
+        clock: &ClockSnapshot,
+        fixture: &Fixture,
+        fixtures: &[Fixture],
+    ) -> Hsl64 {
+        match &self.clock_offset {
+            Some(clock_offset) => self.color(
+                color,
+                &clock.shift(clock_offset.offset_for_fixture(fixture, fixtures)),
+            ),
+            None => self.color(color, clock),
         }
     }
 }

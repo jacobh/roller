@@ -31,6 +31,10 @@ async fn main() -> Result<(), async_std::io::Error> {
             effect::ColorEffectMode::HueShift(120.0.into()),
             effect::Effect::SawUp,
             Beats::new(1.0),
+            Some(clock::ClockOffset::new(
+                clock::ClockOffsetMode::Random,
+                Beats::new(0.25),
+            )),
         )],
         button_states: utils::FxIndexMap::default(),
     };
