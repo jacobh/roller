@@ -29,11 +29,11 @@ async fn main() -> Result<(), async_std::io::Error> {
         effect_intensity: 1.0,
         active_color_effects: vec![effect::ColorEffect::new(
             effect::ColorEffectMode::HueShift(120.0.into()),
-            effect::Effect::SawUp,
-            Beats::new(1.0),
+            effect::Effect::HalfSineUp,
+            Beats::new(2.0),
             Some(clock::ClockOffset::new(
-                clock::ClockOffsetMode::Random,
-                Beats::new(0.25),
+                clock::ClockOffsetMode::GroupId,
+                Beats::new(1.0),
             )),
         )],
         button_states: utils::FxIndexMap::default(),

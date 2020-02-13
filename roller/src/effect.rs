@@ -1,5 +1,6 @@
 use ordered_float::OrderedFloat;
 use palette::{Hue, Mix, RgbHue};
+use std::f64::consts::PI;
 
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
@@ -149,6 +150,8 @@ pub enum Effect {
     TriangleDown,
     SineUp,
     SineDown,
+    HalfSineUp,
+    HalfSineDown,
     ShortSquarePulse,
     On,
     Off,
@@ -161,6 +164,8 @@ impl Effect {
             Effect::TriangleDown => triangle_down(x),
             Effect::SineUp => sine_up(x),
             Effect::SineDown => sine_down(x),
+            Effect::HalfSineUp => half_sine_up(x),
+            Effect::HalfSineDown => half_sine_down(x),
             Effect::ShortSquarePulse => short_square_pulse(x),
             Effect::On => 1.0,
             Effect::Off => 0.0,
@@ -189,14 +194,22 @@ pub fn triangle_down(x: f64) -> f64 {
 /// 0.5 = 1.0
 /// 1.0 = 0.0
 pub fn sine_up(x: f64) -> f64 {
-    (f64::sin(std::f64::consts::PI * 2.0 * x - 1.5) / 2.0) + 0.5
+    (f64::sin(PI * 2.0 * x - 1.5) / 2.0) + 0.5
 }
 
 /// 0.0 = 1.0
 /// 0.5 = 0.0
 /// 1.0 = 1.0
 pub fn sine_down(x: f64) -> f64 {
-    (f64::sin(std::f64::consts::PI * 2.0 * x + 1.5) / 2.0) + 0.5
+    (f64::sin(PI * 2.0 * x + 1.5) / 2.0) + 0.5
+}
+
+pub fn half_sine_up(x: f64) -> f64 {
+    (f64::sin(((PI * 2.0 * x) / 2.0) - 1.5) / 2.0) + 0.5
+}
+
+pub fn half_sine_down(x: f64) -> f64 {
+    (f64::sin(((PI * 2.0 * x) / 2.0) + 1.5) / 2.0) + 0.5
 }
 
 pub fn short_square_pulse(x: f64) -> f64 {
