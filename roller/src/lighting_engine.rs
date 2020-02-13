@@ -3,7 +3,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 
 use crate::{
-    clock::{Clock},
+    clock::Clock,
     color::Color,
     control::{
         button::{ButtonAction, ButtonMapping, ButtonType, ToggleState},
