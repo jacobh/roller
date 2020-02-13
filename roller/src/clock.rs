@@ -1,6 +1,6 @@
 use derive_more::{From, Into};
 use ordered_float::OrderedFloat;
-use rand::random;
+use rand::{seq::SliceRandom, thread_rng};
 use std::iter::Sum;
 use std::ops::{Add, Mul, Sub};
 use std::time::{Duration, Instant};
@@ -146,15 +146,19 @@ pub enum ClockOffsetMode {
 pub struct ClockOffset {
     mode: ClockOffsetMode,
     offset: Beats,
-    seed: usize,
+    seed: [u8; 32],
 }
 impl ClockOffset {
     pub fn new(mode: ClockOffsetMode, offset: Beats) -> ClockOffset {
-        ClockOffset {
-            mode,
-            offset,
-            seed: random(),
+        // create a seed array of the numbers 0 - 31
+        let mut rng = thread_rng();
+        let mut seed = [0u8; 32];
+        for i in 0..32 {
+            seed[i] = i as u8
         }
+        seed.shuffle(&mut rng);
+
+        ClockOffset { mode, offset, seed }
     }
     pub fn offset_for_fixture(&self, fixture: &Fixture, fixtures: &[Fixture]) -> Beats {
         match self.mode {
@@ -171,8 +175,7 @@ impl ClockOffset {
             }
             ClockOffsetMode::Random => {
                 let fixture_idx = fixtures.iter().position(|x| x == fixture).unwrap();
-                let fixture_count = fixtures.len();
-                self.offset * ((self.seed + fixture_idx) % fixture_count) as f64
+                self.offset * self.seed[fixture_idx % 32] as f64
             }
         }
     }
