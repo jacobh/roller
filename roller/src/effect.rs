@@ -96,12 +96,12 @@ impl DimmerEffect {
             effect: effect,
         }
     }
-    fn dimmer_for_progress(&self, progress_percent: f64) -> f64 {
-        self.scale.scale(self.effect.apply(progress_percent))
+    fn dimmer_for_elapsed_percent(&self, elapsed_percent: f64) -> f64 {
+        self.scale.scale(self.effect.apply(elapsed_percent))
     }
     pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
-        let progress_percent = clock.meter_progress_percent(self.meter_length);
-        self.dimmer_for_progress(progress_percent)
+        let elapsed_percent = clock.meter_elapsed_percent(self.meter_length);
+        self.dimmer_for_elapsed_percent(elapsed_percent)
     }
 }
 
@@ -125,16 +125,16 @@ impl DimmerSequence {
     }
     pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
         let length = self.total_length();
-        let progress_percent = clock.meter_progress_percent(length);
-        let mut progress_beats = length * progress_percent;
+        let elapsed_percent = clock.meter_elapsed_percent(length);
+        let mut elapsed_beats = length * elapsed_percent;
 
         for step in self.steps.iter() {
-            if step.meter_length >= progress_beats {
-                return step.dimmer_for_progress(
-                    1.0 / f64::from(step.meter_length) * f64::from(progress_beats),
+            if step.meter_length >= elapsed_beats {
+                return step.dimmer_for_elapsed_percent(
+                    1.0 / f64::from(step.meter_length) * f64::from(elapsed_beats),
                 );
             } else {
-                progress_beats = progress_beats - step.meter_length;
+                elapsed_beats = elapsed_beats - step.meter_length;
             }
         }
 
@@ -220,14 +220,14 @@ impl ColorEffect {
         }
     }
     pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
-        let progress_percent = clock.meter_progress_percent(self.meter_length);
-        (self.effect)(color, progress_percent)
+        let elapsed_percent = clock.meter_elapsed_percent(self.meter_length);
+        (self.effect)(color, elapsed_percent)
     }
 }
 
-pub fn hue_shift_30(color: Hsl64, progress_percent: f64) -> Hsl64 {
+pub fn hue_shift_30(color: Hsl64, elapsed_percent: f64) -> Hsl64 {
     color.shift_hue(RgbHue::<f64>::from_degrees(
-        triangle_down(progress_percent) * 30.0,
+        triangle_down(elapsed_percent) * 30.0,
     ))
 }
 
