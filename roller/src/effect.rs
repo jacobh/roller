@@ -3,7 +3,7 @@ use palette::{Hue, Mix, RgbHue};
 
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
-    color::Hsl64,
+    color::{Color, Hsl64},
     fixture::Fixture,
 };
 
@@ -208,27 +208,40 @@ pub fn short_square_pulse(x: f64) -> f64 {
 }
 
 // color effects
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ColorEffectMode {
+    HueShift(OrderedFloat<f64>),
+    White,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ColorEffect {
-    effect: Box<dyn Fn(Hsl64, f64) -> Hsl64>,
+    mode: ColorEffectMode,
+    effect: Effect,
     meter_length: Beats,
 }
 impl ColorEffect {
-    pub fn new(effect: impl Fn(Hsl64, f64) -> Hsl64 + 'static, meter_length: Beats) -> ColorEffect {
+    pub fn new(mode: ColorEffectMode, effect: Effect, meter_length: Beats) -> ColorEffect {
         ColorEffect {
+            mode,
+            effect,
             meter_length,
-            effect: Box::new(effect),
         }
     }
     pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
         let elapsed_percent = clock.meter_elapsed_percent(self.meter_length);
-        (self.effect)(color, elapsed_percent)
-    }
-}
 
-pub fn hue_shift_30(color: Hsl64, elapsed_percent: f64) -> Hsl64 {
-    color.shift_hue(RgbHue::<f64>::from_degrees(
-        triangle_down(elapsed_percent) * 30.0,
-    ))
+        match self.mode {
+            ColorEffectMode::HueShift(shift_degrees) => {
+                color.shift_hue(RgbHue::<f64>::from_degrees(
+                    self.effect.apply(elapsed_percent) * shift_degrees.into_inner(),
+                ))
+            }
+            ColorEffectMode::White => {
+                color.mix(&Color::White.to_hsl(), self.effect.apply(elapsed_percent))
+            }
+        }
+    }
 }
 
 // Utilities

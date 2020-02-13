@@ -28,8 +28,9 @@ async fn main() -> Result<(), async_std::io::Error> {
         group_dimmers: FxHashMap::default(),
         effect_intensity: 1.0,
         active_color_effects: vec![effect::ColorEffect::new(
-            effect::hue_shift_30,
-            Beats::new(5.0),
+            effect::ColorEffectMode::HueShift(120.0.into()),
+            effect::Effect::SawUp,
+            Beats::new(1.0),
         )],
         button_states: utils::FxIndexMap::default(),
     };
