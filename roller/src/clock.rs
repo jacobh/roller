@@ -118,9 +118,6 @@ impl ClockSnapshot {
             bpm: self.bpm,
         }
     }
-    pub fn bpm(&self) -> f64 {
-        self.bpm
-    }
     pub fn secs_elapsed(&self) -> f64 {
         self.secs_elapsed
     }
@@ -136,6 +133,7 @@ impl ClockSnapshot {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[allow(dead_code)]
 pub enum ClockOffsetMode {
     GroupId,
     FixtureIndex,
