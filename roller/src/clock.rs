@@ -85,7 +85,7 @@ impl Clock {
             self.started_at = now;
 
             let beat_duration_secs =
-                (time_elapsed.as_millis() as f64 / 1000.0) / (self.taps.len() - 1) as f64;
+                (time_elapsed.as_micros() as f64 / 1000000.0) / (self.taps.len() - 1) as f64;
             self.bpm = 60.0 / beat_duration_secs;
         }
     }
@@ -94,7 +94,7 @@ impl Clock {
     }
     fn secs_elapsed(&self) -> f64 {
         let elapsed_duration = Instant::now() - self.started_at;
-        elapsed_duration.as_millis() as f64 / 1000.0
+        elapsed_duration.as_micros() as f64 / 1000000.0
     }
     pub fn snapshot(&self) -> ClockSnapshot {
         ClockSnapshot {
