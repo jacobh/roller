@@ -14,7 +14,7 @@ use crate::{
         fader::{FaderType, MidiFaderMapping},
     },
     effect::{
-        ColorModulation, ColorModulator, ColorSequence, DimmerEffect, DimmerModulator, Waveform,
+        ColorEffect, ColorModulation, ColorModulator, DimmerEffect, DimmerModulator, Waveform,
     },
     lighting_engine::LightingEvent,
     project::FixtureGroupId,
@@ -268,7 +268,7 @@ impl MidiController {
                         note: Note::new(58),
                         button_type: ButtonType::Toggle,
                         group_id: None,
-                        on_action: ButtonAction::ActivateColorModifier(
+                        on_action: ButtonAction::ActivateColorEffect(
                             ColorModulator::new(
                                 ColorModulation::HueShift(120.0.into()),
                                 Waveform::HalfSineUp,
@@ -282,7 +282,7 @@ impl MidiController {
                         note: Note::new(50),
                         button_type: ButtonType::Toggle,
                         group_id: None,
-                        on_action: ButtonAction::ActivateColorModifier(
+                        on_action: ButtonAction::ActivateColorEffect(
                             ColorModulator::new(
                                 ColorModulation::HueShift((-90.0).into()),
                                 Waveform::HalfSineDown,
@@ -297,45 +297,35 @@ impl MidiController {
                         note: Note::new(34),
                         button_type: ButtonType::Toggle,
                         group_id: None,
-                        on_action: ButtonAction::ActivateColorModifier(
-                            ColorSequence::new(
-                                vec![
-                                    (ColorModulation::NoOp, Beats::new(1.0)).into(),
-                                    (ColorModulation::HueShift(30.0.into()), Beats::new(1.0))
-                                        .into(),
-                                    (ColorModulation::HueShift((45.0).into()), Beats::new(1.0))
-                                        .into(),
-                                    (ColorModulation::NoOp, Beats::new(1.0)).into(),
-                                    (ColorModulation::HueShift(30.0.into()), Beats::new(1.0))
-                                        .into(),
-                                    (ColorModulation::HueShift(60.0.into()), Beats::new(1.0))
-                                        .into(),
-                                ],
-                                Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(4.0))),
-                            )
-                            .into(),
-                        ),
+                        on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
+                            vec![
+                                (ColorModulation::NoOp, Beats::new(1.0)).into(),
+                                (ColorModulation::HueShift(30.0.into()), Beats::new(1.0)).into(),
+                                (ColorModulation::HueShift((45.0).into()), Beats::new(1.0)).into(),
+                                (ColorModulation::NoOp, Beats::new(1.0)).into(),
+                                (ColorModulation::HueShift(30.0.into()), Beats::new(1.0)).into(),
+                                (ColorModulation::HueShift(60.0.into()), Beats::new(1.0)).into(),
+                            ],
+                            Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(4.0))),
+                        )),
                     },
                     ButtonMapping {
                         note: Note::new(26),
                         button_type: ButtonType::Toggle,
                         group_id: None,
-                        on_action: ButtonAction::ActivateColorModifier(
-                            ColorSequence::new(
-                                vec![
-                                    ColorModulator::new(
-                                        ColorModulation::White,
-                                        Waveform::ShortSquarePulse,
-                                        Beats::new(1.0),
-                                        None,
-                                    )
-                                    .into(),
-                                    (ColorModulation::NoOp, Beats::new(3.0)).into(),
-                                ],
-                                Some(ClockOffset::new(ClockOffsetMode::Random, Beats::new(0.5))),
-                            )
-                            .into(),
-                        ),
+                        on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
+                            vec![
+                                ColorModulator::new(
+                                    ColorModulation::White,
+                                    Waveform::ShortSquarePulse,
+                                    Beats::new(1.0),
+                                    None,
+                                )
+                                .into(),
+                                (ColorModulation::NoOp, Beats::new(3.0)).into(),
+                            ],
+                            Some(ClockOffset::new(ClockOffsetMode::Random, Beats::new(0.5))),
+                        )),
                     },
                 ],
                 vec![MetaButtonMapping {

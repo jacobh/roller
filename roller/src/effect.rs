@@ -201,23 +201,42 @@ pub fn short_square_pulse(x: f64) -> f64 {
 
 // color effects
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum ColorModifier {
-    Modulator(ColorModulator),
-    Sequence(ColorSequence),
+pub struct ColorEffect {
+    steps: Vec<ColorModulator>,
+    clock_offset: Option<ClockOffset>,
 }
-impl ColorModifier {
+impl ColorEffect {
+    pub fn new(steps: Vec<ColorModulator>, clock_offset: Option<ClockOffset>) -> ColorEffect {
+        ColorEffect {
+            steps,
+            clock_offset,
+        }
+    }
+    fn total_length(&self) -> Beats {
+        self.steps
+            .iter()
+            .map(|modulator| modulator.meter_length)
+            .sum()
+    }
     pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
-        match self {
-            ColorModifier::Modulator(modulator) => modulator.color(color, clock),
-            ColorModifier::Sequence(sequence) => sequence.color(color, clock),
+        let length = self.total_length();
+        let elapsed_percent = clock.meter_elapsed_percent(length);
+        let mut elapsed_beats = length * elapsed_percent;
+
+        for step in self.steps.iter() {
+            if step.meter_length >= elapsed_beats {
+                return step.color_for_elapsed_percent(
+                    color,
+                    1.0 / f64::from(step.meter_length) * f64::from(elapsed_beats),
+                );
+            } else {
+                elapsed_beats = elapsed_beats - step.meter_length;
+            }
         }
+
+        unreachable!()
     }
-    fn clock_offset(&self) -> Option<&ClockOffset> {
-        match self {
-            ColorModifier::Modulator(modulator) => modulator.clock_offset.as_ref(),
-            ColorModifier::Sequence(sequence) => sequence.clock_offset.as_ref(),
-        }
-    }
+
     pub fn offset_color(
         &self,
         color: Hsl64,
@@ -225,7 +244,7 @@ impl ColorModifier {
         fixture: &Fixture,
         fixtures: &[Fixture],
     ) -> Hsl64 {
-        match self.clock_offset() {
+        match &self.clock_offset {
             Some(clock_offset) => self.color(
                 color,
                 &clock.shift(clock_offset.offset_for_fixture(fixture, fixtures)),
@@ -234,14 +253,10 @@ impl ColorModifier {
         }
     }
 }
-impl From<ColorModulator> for ColorModifier {
-    fn from(modulator: ColorModulator) -> ColorModifier {
-        ColorModifier::Modulator(modulator)
-    }
-}
-impl From<ColorSequence> for ColorModifier {
-    fn from(sequence: ColorSequence) -> ColorModifier {
-        ColorModifier::Sequence(sequence)
+
+impl From<ColorModulator> for ColorEffect {
+    fn from(modulator: ColorModulator) -> ColorEffect {
+        ColorEffect::new(vec![modulator], None)
     }
 }
 
@@ -303,44 +318,6 @@ impl ColorModulator {
 impl From<(ColorModulation, Beats)> for ColorModulator {
     fn from((modulation, meter_length): (ColorModulation, Beats)) -> ColorModulator {
         ColorModulator::new_static(modulation, meter_length)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ColorSequence {
-    steps: Vec<ColorModulator>,
-    clock_offset: Option<ClockOffset>,
-}
-impl ColorSequence {
-    pub fn new(steps: Vec<ColorModulator>, clock_offset: Option<ClockOffset>) -> ColorSequence {
-        ColorSequence {
-            steps,
-            clock_offset,
-        }
-    }
-    fn total_length(&self) -> Beats {
-        self.steps
-            .iter()
-            .map(|modulator| modulator.meter_length)
-            .sum()
-    }
-    pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
-        let length = self.total_length();
-        let elapsed_percent = clock.meter_elapsed_percent(length);
-        let mut elapsed_beats = length * elapsed_percent;
-
-        for step in self.steps.iter() {
-            if step.meter_length >= elapsed_beats {
-                return step.color_for_elapsed_percent(
-                    color,
-                    1.0 / f64::from(step.meter_length) * f64::from(elapsed_beats),
-                );
-            } else {
-                elapsed_beats = elapsed_beats - step.meter_length;
-            }
-        }
-
-        unreachable!()
     }
 }
 
