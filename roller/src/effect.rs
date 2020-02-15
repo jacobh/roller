@@ -11,20 +11,20 @@ use crate::{
 // TODO name subject to change
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum DimmerModifier {
-    Effect(DimmerEffect),
+    Modulator(DimmerModulator),
     Sequence(DimmerSequence),
 }
 impl DimmerModifier {
     fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
         match self {
-            DimmerModifier::Effect(effect) => effect.dimmer(clock),
+            DimmerModifier::Modulator(modulator) => modulator.dimmer(clock),
             DimmerModifier::Sequence(sequence) => sequence.dimmer(clock),
         }
     }
     fn clock_offset(&self) -> Option<&ClockOffset> {
         // TODO clock offsets for dimmer effects
         match self {
-            DimmerModifier::Effect(_) => None,
+            DimmerModifier::Modulator(_) => None,
             DimmerModifier::Sequence(sequence) => sequence.clock_offset.as_ref(),
         }
     }
@@ -43,9 +43,9 @@ impl DimmerModifier {
         }
     }
 }
-impl From<DimmerEffect> for DimmerModifier {
-    fn from(effect: DimmerEffect) -> DimmerModifier {
-        DimmerModifier::Effect(effect)
+impl From<DimmerModulator> for DimmerModifier {
+    fn from(modulator: DimmerModulator) -> DimmerModifier {
+        DimmerModifier::Modulator(modulator)
     }
 }
 impl From<DimmerSequence> for DimmerModifier {
@@ -85,18 +85,18 @@ impl From<f64> for DimmerScale {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct DimmerEffect {
+pub struct DimmerModulator {
     waveform: Waveform,
     meter_length: Beats,
     scale: DimmerScale,
 }
-impl DimmerEffect {
+impl DimmerModulator {
     pub fn new(
         waveform: Waveform,
         meter_length: Beats,
         scale: impl Into<DimmerScale>,
-    ) -> DimmerEffect {
-        DimmerEffect {
+    ) -> DimmerModulator {
+        DimmerModulator {
             meter_length,
             waveform,
             scale: scale.into(),
@@ -113,11 +113,11 @@ impl DimmerEffect {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DimmerSequence {
-    steps: Vec<DimmerEffect>,
+    steps: Vec<DimmerModulator>,
     clock_offset: Option<ClockOffset>,
 }
 impl DimmerSequence {
-    pub fn new(steps: Vec<DimmerEffect>, clock_offset: Option<ClockOffset>) -> DimmerSequence {
+    pub fn new(steps: Vec<DimmerModulator>, clock_offset: Option<ClockOffset>) -> DimmerSequence {
         DimmerSequence {
             steps,
             clock_offset,
@@ -178,7 +178,7 @@ impl Waveform {
     }
 }
 
-// Effects for `x` in the range 0.0 - 1.0
+// Waveforms for `x` in the range 0.0 - 1.0
 pub fn saw_up(x: f64) -> f64 {
     x
 }

@@ -13,7 +13,9 @@ use crate::{
         },
         fader::{FaderType, MidiFaderMapping},
     },
-    effect::{ColorEffect, ColorEffectMode, ColorSequence, DimmerEffect, DimmerSequence, Waveform},
+    effect::{
+        ColorEffect, ColorEffectMode, ColorSequence, DimmerModulator, DimmerSequence, Waveform,
+    },
     lighting_engine::LightingEvent,
     project::FixtureGroupId,
 };
@@ -216,7 +218,8 @@ impl MidiController {
                         button_type: ButtonType::Toggle,
                         group_id: None,
                         on_action: ButtonAction::ActivateDimmerModifier(
-                            DimmerEffect::new(Waveform::TriangleDown, Beats::new(1.0), 1.0).into(),
+                            DimmerModulator::new(Waveform::TriangleDown, Beats::new(1.0), 1.0)
+                                .into(),
                         ),
                     },
                     ButtonMapping {
@@ -224,7 +227,7 @@ impl MidiController {
                         button_type: ButtonType::Toggle,
                         group_id: None,
                         on_action: ButtonAction::ActivateDimmerModifier(
-                            DimmerEffect::new(Waveform::HalfSineUp, Beats::new(0.5), 1.0).into(),
+                            DimmerModulator::new(Waveform::HalfSineUp, Beats::new(0.5), 1.0).into(),
                         ),
                     },
                     ButtonMapping {
@@ -232,7 +235,7 @@ impl MidiController {
                         button_type: ButtonType::Flash,
                         group_id: None,
                         on_action: ButtonAction::ActivateDimmerModifier(
-                            DimmerEffect::new(Waveform::ShortSquarePulse, Beats::new(0.5), 1.0)
+                            DimmerModulator::new(Waveform::ShortSquarePulse, Beats::new(0.5), 1.0)
                                 .into(),
                         ),
                     },
@@ -244,23 +247,27 @@ impl MidiController {
                         on_action: ButtonAction::ActivateDimmerModifier(
                             DimmerSequence::new(
                                 vec![
-                                    DimmerEffect::new(
+                                    DimmerModulator::new(
                                         Waveform::ShortSquarePulse,
                                         Beats::new(1.0),
                                         1.0,
                                     ),
-                                    DimmerEffect::new(
+                                    DimmerModulator::new(
                                         Waveform::SineUp,
                                         Beats::new(1.0),
                                         (0.0, 0.7),
                                     ),
-                                    DimmerEffect::new(
+                                    DimmerModulator::new(
                                         Waveform::ShortSquarePulse,
                                         Beats::new(1.0),
                                         1.0,
                                     ),
-                                    DimmerEffect::new(Waveform::Off, Beats::new(0.5), 1.0),
-                                    DimmerEffect::new(Waveform::SawUp, Beats::new(0.5), (0.0, 0.2)),
+                                    DimmerModulator::new(Waveform::Off, Beats::new(0.5), 1.0),
+                                    DimmerModulator::new(
+                                        Waveform::SawUp,
+                                        Beats::new(0.5),
+                                        (0.0, 0.2),
+                                    ),
                                 ],
                                 Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
                             )
