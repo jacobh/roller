@@ -278,6 +278,20 @@ impl MidiController {
                             .into(),
                         ),
                     },
+                    ButtonMapping {
+                        note: Note::new(50),
+                        button_type: ButtonType::Toggle,
+                        group_id: None,
+                        on_action: ButtonAction::ActivateColorModifier(
+                            ColorEffect::new(
+                                ColorEffectMode::HueShift((-90.0).into()),
+                                Effect::HalfSineDown,
+                                Beats::new(1.0),
+                                Some(ClockOffset::new(ClockOffsetMode::Random, Beats::new(0.5))),
+                            )
+                            .into(),
+                        ),
+                    },
                 ],
                 vec![MetaButtonMapping {
                     note: Note::new(98),
