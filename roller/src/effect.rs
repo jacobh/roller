@@ -222,6 +222,43 @@ pub fn short_square_pulse(x: f64) -> f64 {
 
 // color effects
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ColorModifier {
+    Effect(ColorEffect),
+}
+impl ColorModifier {
+    pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
+        match self {
+            ColorModifier::Effect(effect) => effect.color(color, clock),
+        }
+    }
+    fn clock_offset(&self) -> Option<&ClockOffset> {
+        match self {
+            ColorModifier::Effect(effect) => effect.clock_offset.as_ref(),
+        }
+    }
+    pub fn offset_color(
+        &self,
+        color: Hsl64,
+        clock: &ClockSnapshot,
+        fixture: &Fixture,
+        fixtures: &[Fixture],
+    ) -> Hsl64 {
+        match self.clock_offset() {
+            Some(clock_offset) => self.color(
+                color,
+                &clock.shift(clock_offset.offset_for_fixture(fixture, fixtures)),
+            ),
+            None => self.color(color, clock),
+        }
+    }
+}
+impl From<ColorEffect> for ColorModifier {
+    fn from(effect: ColorEffect) -> ColorModifier {
+        ColorModifier::Effect(effect)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ColorEffectMode {
     HueShift(OrderedFloat<f64>),
     White,
@@ -260,21 +297,6 @@ impl ColorEffect {
             ColorEffectMode::White => {
                 color.mix(&Color::White.to_hsl(), self.effect.apply(elapsed_percent))
             }
-        }
-    }
-    pub fn offset_color(
-        &self,
-        color: Hsl64,
-        clock: &ClockSnapshot,
-        fixture: &Fixture,
-        fixtures: &[Fixture],
-    ) -> Hsl64 {
-        match &self.clock_offset {
-            Some(clock_offset) => self.color(
-                color,
-                &clock.shift(clock_offset.offset_for_fixture(fixture, fixtures)),
-            ),
-            None => self.color(color, clock),
         }
     }
 }

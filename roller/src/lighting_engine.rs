@@ -9,7 +9,7 @@ use crate::{
         button::{ButtonAction, ButtonMapping, ButtonType, ToggleState},
         midi::NoteState,
     },
-    effect::{self, ColorEffect, DimmerModifier},
+    effect::{self, ColorModifier, DimmerModifier},
     fixture::Fixture,
     project::FixtureGroupId,
     utils::FxIndexMap,
@@ -34,7 +34,7 @@ pub struct EngineState {
     pub master_dimmer: f64,
     pub group_dimmers: FxHashMap<FixtureGroupId, f64>,
     pub effect_intensity: f64,
-    pub active_color_effects: Vec<ColorEffect>,
+    pub active_color_modifiers: Vec<ColorModifier>,
     pub button_states: FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)>,
 }
 impl EngineState {
@@ -158,10 +158,10 @@ impl EngineState {
 
                 let color = effect::color_intensity(
                     global_color.to_hsl(),
-                    self.active_color_effects.iter().fold(
+                    self.active_color_modifiers.iter().fold(
                         global_color.to_hsl(),
-                        |color, effect| {
-                            effect.offset_color(color, &clock_snapshot, &fixture, &fixtures)
+                        |color, modifier| {
+                            modifier.offset_color(color, &clock_snapshot, &fixture, &fixtures)
                         },
                     ),
                     self.effect_intensity,
