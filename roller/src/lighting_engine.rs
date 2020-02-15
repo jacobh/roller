@@ -9,7 +9,7 @@ use crate::{
         button::{ButtonAction, ButtonMapping, ButtonType, ToggleState},
         midi::NoteState,
     },
-    effect::{self, ColorModifier, DimmerModifier},
+    effect::{self, ColorModifier, DimmerEffect},
     fixture::Fixture,
     project::FixtureGroupId,
     utils::FxIndexMap,
@@ -104,30 +104,30 @@ impl EngineState {
             .map(|(_, color)| *color)
             .unwrap_or_else(|| Color::Violet)
     }
-    fn active_dimmer_modifiers(&self) -> FxHashSet<&DimmerModifier> {
-        let mut modifiers = FxHashSet::default();
+    fn active_dimmer_effects(&self) -> FxHashSet<&DimmerEffect> {
+        let mut effects = FxHashSet::default();
 
         // TODO button groups
         for ((mapping, state), (toggle_state, _)) in self.button_states.iter() {
-            if let ButtonAction::ActivateDimmerModifier(modifier) = &mapping.on_action {
+            if let ButtonAction::ActivateDimmerEffect(effect) = &mapping.on_action {
                 match mapping.button_type {
                     ButtonType::Flash => {
                         match state {
-                            NoteState::On => modifiers.insert(modifier),
-                            NoteState::Off => modifiers.remove(&modifier),
+                            NoteState::On => effects.insert(effect),
+                            NoteState::Off => effects.remove(&effect),
                         };
                     }
                     ButtonType::Switch => match state {
                         NoteState::On => {
-                            modifiers.insert(modifier);
+                            effects.insert(effect);
                         }
                         NoteState::Off => {}
                     },
                     ButtonType::Toggle => match state {
                         NoteState::On => {
                             match toggle_state {
-                                ToggleState::On => modifiers.insert(modifier),
-                                ToggleState::Off => modifiers.remove(&modifier),
+                                ToggleState::On => effects.insert(effect),
+                                ToggleState::Off => effects.remove(&effect),
                             };
                         }
                         NoteState::Off => {}
@@ -136,7 +136,7 @@ impl EngineState {
             }
         }
 
-        modifiers
+        effects
     }
     fn active_color_modifiers(&self) -> FxHashSet<&ColorModifier> {
         let mut modifiers = FxHashSet::default();
@@ -175,17 +175,15 @@ impl EngineState {
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
         let clock_snapshot = self.clock.snapshot();
         let global_color = self.global_color();
-        let active_dimmer_modifiers = self.active_dimmer_modifiers();
+        let active_dimmer_effects = self.active_dimmer_effects();
 
         let fixture_values = fixtures
             .iter()
             .map(|fixture| {
                 let effect_dimmer = effect::intensity(
-                    active_dimmer_modifiers
-                        .iter()
-                        .fold(1.0, |dimmer, modifier| {
-                            dimmer * modifier.offset_dimmer(&clock_snapshot, &fixture, &fixtures)
-                        }),
+                    active_dimmer_effects.iter().fold(1.0, |dimmer, effect| {
+                        dimmer * effect.offset_dimmer(&clock_snapshot, &fixture, &fixtures)
+                    }),
                     self.effect_intensity,
                 );
 

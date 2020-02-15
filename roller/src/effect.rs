@@ -8,25 +8,40 @@ use crate::{
     fixture::Fixture,
 };
 
-// TODO name subject to change
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum DimmerModifier {
-    Modulator(DimmerModulator),
-    Sequence(DimmerSequence),
+pub struct DimmerEffect {
+    steps: Vec<DimmerModulator>,
+    clock_offset: Option<ClockOffset>,
 }
-impl DimmerModifier {
-    fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
-        match self {
-            DimmerModifier::Modulator(modulator) => modulator.dimmer(clock),
-            DimmerModifier::Sequence(sequence) => sequence.dimmer(clock),
+impl DimmerEffect {
+    pub fn new(steps: Vec<DimmerModulator>, clock_offset: Option<ClockOffset>) -> DimmerEffect {
+        DimmerEffect {
+            steps,
+            clock_offset,
         }
     }
-    fn clock_offset(&self) -> Option<&ClockOffset> {
-        // TODO clock offsets for dimmer modulators
-        match self {
-            DimmerModifier::Modulator(_) => None,
-            DimmerModifier::Sequence(sequence) => sequence.clock_offset.as_ref(),
+    fn total_length(&self) -> Beats {
+        self.steps
+            .iter()
+            .map(|modulator| modulator.meter_length)
+            .sum()
+    }
+    pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
+        let length = self.total_length();
+        let elapsed_percent = clock.meter_elapsed_percent(length);
+        let mut elapsed_beats = length * elapsed_percent;
+
+        for step in self.steps.iter() {
+            if step.meter_length >= elapsed_beats {
+                return step.dimmer_for_elapsed_percent(
+                    1.0 / f64::from(step.meter_length) * f64::from(elapsed_beats),
+                );
+            } else {
+                elapsed_beats = elapsed_beats - step.meter_length;
+            }
         }
+
+        unreachable!()
     }
     pub fn offset_dimmer(
         &self,
@@ -34,7 +49,7 @@ impl DimmerModifier {
         fixture: &Fixture,
         fixtures: &[Fixture],
     ) -> f64 {
-        match self.clock_offset() {
+        match &self.clock_offset {
             Some(clock_offset) => {
                 let offset = clock_offset.offset_for_fixture(fixture, fixtures);
                 self.dimmer(&clock.shift(offset))
@@ -43,14 +58,10 @@ impl DimmerModifier {
         }
     }
 }
-impl From<DimmerModulator> for DimmerModifier {
-    fn from(modulator: DimmerModulator) -> DimmerModifier {
-        DimmerModifier::Modulator(modulator)
-    }
-}
-impl From<DimmerSequence> for DimmerModifier {
-    fn from(sequence: DimmerSequence) -> DimmerModifier {
-        DimmerModifier::Sequence(sequence)
+
+impl From<DimmerModulator> for DimmerEffect {
+    fn from(modulator: DimmerModulator) -> DimmerEffect {
+        DimmerEffect::new(vec![modulator], None)
     }
 }
 
@@ -108,43 +119,6 @@ impl DimmerModulator {
     pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
         let elapsed_percent = clock.meter_elapsed_percent(self.meter_length);
         self.dimmer_for_elapsed_percent(elapsed_percent)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct DimmerSequence {
-    steps: Vec<DimmerModulator>,
-    clock_offset: Option<ClockOffset>,
-}
-impl DimmerSequence {
-    pub fn new(steps: Vec<DimmerModulator>, clock_offset: Option<ClockOffset>) -> DimmerSequence {
-        DimmerSequence {
-            steps,
-            clock_offset,
-        }
-    }
-    fn total_length(&self) -> Beats {
-        self.steps
-            .iter()
-            .map(|modulator| modulator.meter_length)
-            .sum()
-    }
-    pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
-        let length = self.total_length();
-        let elapsed_percent = clock.meter_elapsed_percent(length);
-        let mut elapsed_beats = length * elapsed_percent;
-
-        for step in self.steps.iter() {
-            if step.meter_length >= elapsed_beats {
-                return step.dimmer_for_elapsed_percent(
-                    1.0 / f64::from(step.meter_length) * f64::from(elapsed_beats),
-                );
-            } else {
-                elapsed_beats = elapsed_beats - step.meter_length;
-            }
-        }
-
-        unreachable!()
     }
 }
 

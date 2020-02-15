@@ -7,7 +7,7 @@ use std::time::Instant;
 use crate::{
     color::Color,
     control::midi::{MidiMapping, NoteState},
-    effect::{ColorModifier, DimmerModifier},
+    effect::{ColorModifier, DimmerEffect},
     lighting_engine::LightingEvent,
     utils::FxIndexMap,
 };
@@ -33,7 +33,7 @@ impl ToggleState {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ButtonAction {
     UpdateGlobalColor(Color),
-    ActivateDimmerModifier(DimmerModifier),
+    ActivateDimmerEffect(DimmerEffect),
     ActivateColorModifier(ColorModifier),
 }
 

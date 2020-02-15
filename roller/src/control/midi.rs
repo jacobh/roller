@@ -14,8 +14,7 @@ use crate::{
         fader::{FaderType, MidiFaderMapping},
     },
     effect::{
-        ColorModulator, ColorModulatorMode, ColorSequence, DimmerModulator, DimmerSequence,
-        Waveform,
+        ColorModulation, ColorModulator, ColorSequence, DimmerEffect, DimmerModulator, Waveform,
     },
     lighting_engine::LightingEvent,
     project::FixtureGroupId,
@@ -218,7 +217,7 @@ impl MidiController {
                         note: Note::new(63),
                         button_type: ButtonType::Toggle,
                         group_id: None,
-                        on_action: ButtonAction::ActivateDimmerModifier(
+                        on_action: ButtonAction::ActivateDimmerEffect(
                             DimmerModulator::new(Waveform::TriangleDown, Beats::new(1.0), 1.0)
                                 .into(),
                         ),
@@ -227,7 +226,7 @@ impl MidiController {
                         note: Note::new(55),
                         button_type: ButtonType::Toggle,
                         group_id: None,
-                        on_action: ButtonAction::ActivateDimmerModifier(
+                        on_action: ButtonAction::ActivateDimmerEffect(
                             DimmerModulator::new(Waveform::HalfSineUp, Beats::new(0.5), 1.0).into(),
                         ),
                     },
@@ -235,7 +234,7 @@ impl MidiController {
                         note: Note::new(47),
                         button_type: ButtonType::Flash,
                         group_id: None,
-                        on_action: ButtonAction::ActivateDimmerModifier(
+                        on_action: ButtonAction::ActivateDimmerEffect(
                             DimmerModulator::new(Waveform::ShortSquarePulse, Beats::new(0.5), 1.0)
                                 .into(),
                         ),
@@ -245,35 +244,24 @@ impl MidiController {
                         note: Note::new(61),
                         button_type: ButtonType::Toggle,
                         group_id: None,
-                        on_action: ButtonAction::ActivateDimmerModifier(
-                            DimmerSequence::new(
-                                vec![
-                                    DimmerModulator::new(
-                                        Waveform::ShortSquarePulse,
-                                        Beats::new(1.0),
-                                        1.0,
-                                    ),
-                                    DimmerModulator::new(
-                                        Waveform::SineUp,
-                                        Beats::new(1.0),
-                                        (0.0, 0.7),
-                                    ),
-                                    DimmerModulator::new(
-                                        Waveform::ShortSquarePulse,
-                                        Beats::new(1.0),
-                                        1.0,
-                                    ),
-                                    DimmerModulator::new(Waveform::Off, Beats::new(0.5), 1.0),
-                                    DimmerModulator::new(
-                                        Waveform::SawUp,
-                                        Beats::new(0.5),
-                                        (0.0, 0.2),
-                                    ),
-                                ],
-                                Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
-                            )
-                            .into(),
-                        ),
+                        on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
+                            vec![
+                                DimmerModulator::new(
+                                    Waveform::ShortSquarePulse,
+                                    Beats::new(1.0),
+                                    1.0,
+                                ),
+                                DimmerModulator::new(Waveform::SineUp, Beats::new(1.0), (0.0, 0.7)),
+                                DimmerModulator::new(
+                                    Waveform::ShortSquarePulse,
+                                    Beats::new(1.0),
+                                    1.0,
+                                ),
+                                DimmerModulator::new(Waveform::Off, Beats::new(0.5), 1.0),
+                                DimmerModulator::new(Waveform::SawUp, Beats::new(0.5), (0.0, 0.2)),
+                            ],
+                            Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
+                        )),
                     },
                     // Color effects
                     ButtonMapping {
@@ -282,7 +270,7 @@ impl MidiController {
                         group_id: None,
                         on_action: ButtonAction::ActivateColorModifier(
                             ColorModulator::new(
-                                ColorModulatorMode::HueShift(120.0.into()),
+                                ColorModulation::HueShift(120.0.into()),
                                 Waveform::HalfSineUp,
                                 Beats::new(2.0),
                                 Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
@@ -296,7 +284,7 @@ impl MidiController {
                         group_id: None,
                         on_action: ButtonAction::ActivateColorModifier(
                             ColorModulator::new(
-                                ColorModulatorMode::HueShift((-90.0).into()),
+                                ColorModulation::HueShift((-90.0).into()),
                                 Waveform::HalfSineDown,
                                 Beats::new(1.0),
                                 Some(ClockOffset::new(ClockOffsetMode::Random, Beats::new(0.5))),
@@ -312,15 +300,15 @@ impl MidiController {
                         on_action: ButtonAction::ActivateColorModifier(
                             ColorSequence::new(
                                 vec![
-                                    (ColorModulatorMode::NoOp, Beats::new(1.0)).into(),
-                                    (ColorModulatorMode::HueShift(30.0.into()), Beats::new(1.0))
+                                    (ColorModulation::NoOp, Beats::new(1.0)).into(),
+                                    (ColorModulation::HueShift(30.0.into()), Beats::new(1.0))
                                         .into(),
-                                    (ColorModulatorMode::HueShift((45.0).into()), Beats::new(1.0))
+                                    (ColorModulation::HueShift((45.0).into()), Beats::new(1.0))
                                         .into(),
-                                    (ColorModulatorMode::NoOp, Beats::new(1.0)).into(),
-                                    (ColorModulatorMode::HueShift(30.0.into()), Beats::new(1.0))
+                                    (ColorModulation::NoOp, Beats::new(1.0)).into(),
+                                    (ColorModulation::HueShift(30.0.into()), Beats::new(1.0))
                                         .into(),
-                                    (ColorModulatorMode::HueShift(60.0.into()), Beats::new(1.0))
+                                    (ColorModulation::HueShift(60.0.into()), Beats::new(1.0))
                                         .into(),
                                 ],
                                 Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(4.0))),
@@ -336,13 +324,13 @@ impl MidiController {
                             ColorSequence::new(
                                 vec![
                                     ColorModulator::new(
-                                        ColorModulatorMode::White,
+                                        ColorModulation::White,
                                         Waveform::ShortSquarePulse,
                                         Beats::new(1.0),
                                         None,
                                     )
                                     .into(),
-                                    (ColorModulatorMode::NoOp, Beats::new(3.0)).into(),
+                                    (ColorModulation::NoOp, Beats::new(3.0)).into(),
                                 ],
                                 Some(ClockOffset::new(ClockOffsetMode::Random, Beats::new(0.5))),
                             )
