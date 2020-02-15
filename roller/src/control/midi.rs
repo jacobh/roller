@@ -13,7 +13,7 @@ use crate::{
         },
         fader::{FaderType, MidiFaderMapping},
     },
-    effect::{DimmerEffect, DimmerSequence, Effect},
+    effect::{ColorEffect, ColorEffectMode, DimmerEffect, DimmerSequence, Effect},
     lighting_engine::LightingEvent,
     project::FixtureGroupId,
 };
@@ -258,6 +258,21 @@ impl MidiController {
                                     DimmerEffect::new(Effect::Off, Beats::new(0.5), 1.0),
                                     DimmerEffect::new(Effect::SawUp, Beats::new(0.5), (0.0, 0.2)),
                                 ],
+                                Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
+                            )
+                            .into(),
+                        ),
+                    },
+                    // Color effects
+                    ButtonMapping {
+                        note: Note::new(58),
+                        button_type: ButtonType::Toggle,
+                        group_id: None,
+                        on_action: ButtonAction::ActivateColorModifier(
+                            ColorEffect::new(
+                                ColorEffectMode::HueShift(120.0.into()),
+                                Effect::HalfSineUp,
+                                Beats::new(2.0),
                                 Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
                             )
                             .into(),

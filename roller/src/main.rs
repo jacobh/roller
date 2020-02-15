@@ -13,7 +13,7 @@ mod lighting_engine;
 mod project;
 mod utils;
 
-use crate::clock::{Beats, Clock};
+use crate::clock::Clock;
 use crate::control::button::pad_states;
 use crate::lighting_engine::{EngineState, LightingEvent};
 
@@ -27,16 +27,6 @@ async fn main() -> Result<(), async_std::io::Error> {
         master_dimmer: 1.0,
         group_dimmers: FxHashMap::default(),
         effect_intensity: 1.0,
-        active_color_modifiers: vec![effect::ColorEffect::new(
-            effect::ColorEffectMode::HueShift(120.0.into()),
-            effect::Effect::HalfSineUp,
-            Beats::new(2.0),
-            Some(clock::ClockOffset::new(
-                clock::ClockOffsetMode::GroupId,
-                Beats::new(1.0),
-            )),
-        )
-        .into()],
         button_states: utils::FxIndexMap::default(),
     };
 

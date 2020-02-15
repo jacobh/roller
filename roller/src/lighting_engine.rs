@@ -34,7 +34,6 @@ pub struct EngineState {
     pub master_dimmer: f64,
     pub group_dimmers: FxHashMap<FixtureGroupId, f64>,
     pub effect_intensity: f64,
-    pub active_color_modifiers: Vec<ColorModifier>,
     pub button_states: FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)>,
 }
 impl EngineState {
@@ -139,6 +138,40 @@ impl EngineState {
 
         modifiers
     }
+    fn active_color_modifiers(&self) -> FxHashSet<&ColorModifier> {
+        let mut modifiers = FxHashSet::default();
+
+        // TODO button groups
+        for ((mapping, state), (toggle_state, _)) in self.button_states.iter() {
+            if let ButtonAction::ActivateColorModifier(modifier) = &mapping.on_action {
+                match mapping.button_type {
+                    ButtonType::Flash => {
+                        match state {
+                            NoteState::On => modifiers.insert(modifier),
+                            NoteState::Off => modifiers.remove(&modifier),
+                        };
+                    }
+                    ButtonType::Switch => match state {
+                        NoteState::On => {
+                            modifiers.insert(modifier);
+                        }
+                        NoteState::Off => {}
+                    },
+                    ButtonType::Toggle => match state {
+                        NoteState::On => {
+                            match toggle_state {
+                                ToggleState::On => modifiers.insert(modifier),
+                                ToggleState::Off => modifiers.remove(&modifier),
+                            };
+                        }
+                        NoteState::Off => {}
+                    },
+                }
+            }
+        }
+
+        modifiers
+    }
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
         let clock_snapshot = self.clock.snapshot();
         let global_color = self.global_color();
@@ -158,7 +191,7 @@ impl EngineState {
 
                 let color = effect::color_intensity(
                     global_color.to_hsl(),
-                    self.active_color_modifiers.iter().fold(
+                    self.active_color_modifiers().iter().fold(
                         global_color.to_hsl(),
                         |color, modifier| {
                             modifier.offset_color(color, &clock_snapshot, &fixture, &fixtures)
