@@ -21,19 +21,20 @@ impl DimmerModifier {
             DimmerModifier::Sequence(sequence) => sequence.dimmer(clock),
         }
     }
+    fn clock_offset(&self) -> Option<&ClockOffset> {
+        // TODO clock offsets for dimmer effects
+        match self {
+            DimmerModifier::Effect(_) => None,
+            DimmerModifier::Sequence(sequence) => sequence.clock_offset.as_ref(),
+        }
+    }
     pub fn offset_dimmer(
         &self,
         clock: &ClockSnapshot,
         fixture: &Fixture,
         fixtures: &[Fixture],
     ) -> f64 {
-        // TODO clock offsets for dimmer effects
-        let clock_offset = match self {
-            DimmerModifier::Effect(_) => None,
-            DimmerModifier::Sequence(sequence) => sequence.clock_offset.as_ref(),
-        };
-
-        match clock_offset {
+        match self.clock_offset() {
             Some(clock_offset) => {
                 let offset = clock_offset.offset_for_fixture(fixture, fixtures);
                 self.dimmer(&clock.shift(offset))
