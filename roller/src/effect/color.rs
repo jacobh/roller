@@ -4,8 +4,8 @@ use palette::{Hue, Mix, RgbHue};
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
     color::{Color, Hsl64},
-    fixture::Fixture,
     effect::Waveform,
+    fixture::Fixture,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

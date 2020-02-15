@@ -2,8 +2,8 @@ use ordered_float::OrderedFloat;
 
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
-    fixture::Fixture,
     effect::Waveform,
+    fixture::Fixture,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
