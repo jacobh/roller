@@ -86,20 +86,24 @@ impl From<f64> for DimmerScale {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DimmerEffect {
-    effect: Effect,
+    waveform: Waveform,
     meter_length: Beats,
     scale: DimmerScale,
 }
 impl DimmerEffect {
-    pub fn new(effect: Effect, meter_length: Beats, scale: impl Into<DimmerScale>) -> DimmerEffect {
+    pub fn new(
+        waveform: Waveform,
+        meter_length: Beats,
+        scale: impl Into<DimmerScale>,
+    ) -> DimmerEffect {
         DimmerEffect {
             meter_length,
+            waveform,
             scale: scale.into(),
-            effect: effect,
         }
     }
     fn dimmer_for_elapsed_percent(&self, elapsed_percent: f64) -> f64 {
-        self.scale.scale(self.effect.apply(elapsed_percent))
+        self.scale.scale(self.waveform.apply(elapsed_percent))
     }
     pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
         let elapsed_percent = clock.meter_elapsed_percent(self.meter_length);
@@ -145,7 +149,7 @@ impl DimmerSequence {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Effect {
+pub enum Waveform {
     SawUp,
     SawDown,
     TriangleDown,
@@ -157,19 +161,19 @@ pub enum Effect {
     On,
     Off,
 }
-impl Effect {
+impl Waveform {
     fn apply(self, x: f64) -> f64 {
         match self {
-            Effect::SawUp => saw_up(x),
-            Effect::SawDown => saw_down(x),
-            Effect::TriangleDown => triangle_down(x),
-            Effect::SineUp => sine_up(x),
-            Effect::SineDown => sine_down(x),
-            Effect::HalfSineUp => half_sine_up(x),
-            Effect::HalfSineDown => half_sine_down(x),
-            Effect::ShortSquarePulse => short_square_pulse(x),
-            Effect::On => 1.0,
-            Effect::Off => 0.0,
+            Waveform::SawUp => saw_up(x),
+            Waveform::SawDown => saw_down(x),
+            Waveform::TriangleDown => triangle_down(x),
+            Waveform::SineUp => sine_up(x),
+            Waveform::SineDown => sine_down(x),
+            Waveform::HalfSineUp => half_sine_up(x),
+            Waveform::HalfSineDown => half_sine_down(x),
+            Waveform::ShortSquarePulse => short_square_pulse(x),
+            Waveform::On => 1.0,
+            Waveform::Off => 0.0,
         }
     }
 }
@@ -277,20 +281,20 @@ pub enum ColorEffectMode {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ColorEffect {
     mode: ColorEffectMode,
-    effect: Effect,
+    waveform: Waveform,
     meter_length: Beats,
     clock_offset: Option<ClockOffset>,
 }
 impl ColorEffect {
     pub fn new(
         mode: ColorEffectMode,
-        effect: Effect,
+        waveform: Waveform,
         meter_length: Beats,
         clock_offset: Option<ClockOffset>,
     ) -> ColorEffect {
         ColorEffect {
             mode,
-            effect,
+            waveform,
             meter_length,
             clock_offset,
         }
@@ -299,7 +303,7 @@ impl ColorEffect {
         ColorEffect {
             mode,
             meter_length,
-            effect: Effect::On,
+            waveform: Waveform::On,
             clock_offset: None,
         }
     }
@@ -307,11 +311,11 @@ impl ColorEffect {
         match self.mode {
             ColorEffectMode::HueShift(shift_degrees) => {
                 color.shift_hue(RgbHue::<f64>::from_degrees(
-                    self.effect.apply(elapsed_percent) * shift_degrees.into_inner(),
+                    self.waveform.apply(elapsed_percent) * shift_degrees.into_inner(),
                 ))
             }
             ColorEffectMode::White => {
-                color.mix(&Color::White.to_hsl(), self.effect.apply(elapsed_percent))
+                color.mix(&Color::White.to_hsl(), self.waveform.apply(elapsed_percent))
             }
             ColorEffectMode::NoOp => color,
         }

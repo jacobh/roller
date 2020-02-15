@@ -13,7 +13,7 @@ use crate::{
         },
         fader::{FaderType, MidiFaderMapping},
     },
-    effect::{ColorEffect, ColorEffectMode, ColorSequence, DimmerEffect, DimmerSequence, Effect},
+    effect::{ColorEffect, ColorEffectMode, ColorSequence, DimmerEffect, DimmerSequence, Waveform},
     lighting_engine::LightingEvent,
     project::FixtureGroupId,
 };
@@ -216,7 +216,7 @@ impl MidiController {
                         button_type: ButtonType::Toggle,
                         group_id: None,
                         on_action: ButtonAction::ActivateDimmerModifier(
-                            DimmerEffect::new(Effect::TriangleDown, Beats::new(1.0), 1.0).into(),
+                            DimmerEffect::new(Waveform::TriangleDown, Beats::new(1.0), 1.0).into(),
                         ),
                     },
                     ButtonMapping {
@@ -224,7 +224,7 @@ impl MidiController {
                         button_type: ButtonType::Toggle,
                         group_id: None,
                         on_action: ButtonAction::ActivateDimmerModifier(
-                            DimmerEffect::new(Effect::SawUp, Beats::new(0.5), 1.0).into(),
+                            DimmerEffect::new(Waveform::SawUp, Beats::new(0.5), 1.0).into(),
                         ),
                     },
                     ButtonMapping {
@@ -232,7 +232,7 @@ impl MidiController {
                         button_type: ButtonType::Flash,
                         group_id: None,
                         on_action: ButtonAction::ActivateDimmerModifier(
-                            DimmerEffect::new(Effect::ShortSquarePulse, Beats::new(0.5), 1.0)
+                            DimmerEffect::new(Waveform::ShortSquarePulse, Beats::new(0.5), 1.0)
                                 .into(),
                         ),
                     },
@@ -245,18 +245,22 @@ impl MidiController {
                             DimmerSequence::new(
                                 vec![
                                     DimmerEffect::new(
-                                        Effect::ShortSquarePulse,
+                                        Waveform::ShortSquarePulse,
                                         Beats::new(1.0),
                                         1.0,
                                     ),
-                                    DimmerEffect::new(Effect::SineUp, Beats::new(1.0), (0.0, 0.7)),
                                     DimmerEffect::new(
-                                        Effect::ShortSquarePulse,
+                                        Waveform::SineUp,
+                                        Beats::new(1.0),
+                                        (0.0, 0.7),
+                                    ),
+                                    DimmerEffect::new(
+                                        Waveform::ShortSquarePulse,
                                         Beats::new(1.0),
                                         1.0,
                                     ),
-                                    DimmerEffect::new(Effect::Off, Beats::new(0.5), 1.0),
-                                    DimmerEffect::new(Effect::SawUp, Beats::new(0.5), (0.0, 0.2)),
+                                    DimmerEffect::new(Waveform::Off, Beats::new(0.5), 1.0),
+                                    DimmerEffect::new(Waveform::SawUp, Beats::new(0.5), (0.0, 0.2)),
                                 ],
                                 Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
                             )
@@ -271,7 +275,7 @@ impl MidiController {
                         on_action: ButtonAction::ActivateColorModifier(
                             ColorEffect::new(
                                 ColorEffectMode::HueShift(120.0.into()),
-                                Effect::HalfSineUp,
+                                Waveform::HalfSineUp,
                                 Beats::new(2.0),
                                 Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
                             )
@@ -285,7 +289,7 @@ impl MidiController {
                         on_action: ButtonAction::ActivateColorModifier(
                             ColorEffect::new(
                                 ColorEffectMode::HueShift((-90.0).into()),
-                                Effect::HalfSineDown,
+                                Waveform::HalfSineDown,
                                 Beats::new(1.0),
                                 Some(ClockOffset::new(ClockOffsetMode::Random, Beats::new(0.5))),
                             )
@@ -325,7 +329,7 @@ impl MidiController {
                                 vec![
                                     ColorEffect::new(
                                         ColorEffectMode::White,
-                                        Effect::ShortSquarePulse,
+                                        Waveform::ShortSquarePulse,
                                         Beats::new(1.0),
                                         None,
                                     )
