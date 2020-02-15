@@ -224,7 +224,7 @@ impl MidiController {
                         button_type: ButtonType::Toggle,
                         group_id: None,
                         on_action: ButtonAction::ActivateDimmerModifier(
-                            DimmerEffect::new(Waveform::SawUp, Beats::new(0.5), 1.0).into(),
+                            DimmerEffect::new(Waveform::HalfSineUp, Beats::new(0.5), 1.0).into(),
                         ),
                     },
                     ButtonMapping {
