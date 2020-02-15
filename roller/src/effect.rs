@@ -22,7 +22,7 @@ impl DimmerModifier {
         }
     }
     fn clock_offset(&self) -> Option<&ClockOffset> {
-        // TODO clock offsets for dimmer effects
+        // TODO clock offsets for dimmer modulators
         match self {
             DimmerModifier::Modulator(_) => None,
             DimmerModifier::Sequence(sequence) => sequence.clock_offset.as_ref(),
@@ -126,7 +126,7 @@ impl DimmerSequence {
     fn total_length(&self) -> Beats {
         self.steps
             .iter()
-            .map(|dimmer_effect| dimmer_effect.meter_length)
+            .map(|modulator| modulator.meter_length)
             .sum()
     }
     pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
@@ -228,19 +228,19 @@ pub fn short_square_pulse(x: f64) -> f64 {
 // color effects
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ColorModifier {
-    Effect(ColorEffect),
+    Modulator(ColorModulator),
     Sequence(ColorSequence),
 }
 impl ColorModifier {
     pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
         match self {
-            ColorModifier::Effect(effect) => effect.color(color, clock),
+            ColorModifier::Modulator(modulator) => modulator.color(color, clock),
             ColorModifier::Sequence(sequence) => sequence.color(color, clock),
         }
     }
     fn clock_offset(&self) -> Option<&ClockOffset> {
         match self {
-            ColorModifier::Effect(effect) => effect.clock_offset.as_ref(),
+            ColorModifier::Modulator(modulator) => modulator.clock_offset.as_ref(),
             ColorModifier::Sequence(sequence) => sequence.clock_offset.as_ref(),
         }
     }
@@ -260,9 +260,9 @@ impl ColorModifier {
         }
     }
 }
-impl From<ColorEffect> for ColorModifier {
-    fn from(effect: ColorEffect) -> ColorModifier {
-        ColorModifier::Effect(effect)
+impl From<ColorModulator> for ColorModifier {
+    fn from(modulator: ColorModulator) -> ColorModifier {
+        ColorModifier::Modulator(modulator)
     }
 }
 impl From<ColorSequence> for ColorModifier {
@@ -272,52 +272,52 @@ impl From<ColorSequence> for ColorModifier {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum ColorEffectMode {
+pub enum ColorModulation {
     HueShift(OrderedFloat<f64>),
     White,
     NoOp,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ColorEffect {
-    mode: ColorEffectMode,
+pub struct ColorModulator {
+    modulation: ColorModulation,
     waveform: Waveform,
     meter_length: Beats,
     clock_offset: Option<ClockOffset>,
 }
-impl ColorEffect {
+impl ColorModulator {
     pub fn new(
-        mode: ColorEffectMode,
+        modulation: ColorModulation,
         waveform: Waveform,
         meter_length: Beats,
         clock_offset: Option<ClockOffset>,
-    ) -> ColorEffect {
-        ColorEffect {
-            mode,
+    ) -> ColorModulator {
+        ColorModulator {
+            modulation,
             waveform,
             meter_length,
             clock_offset,
         }
     }
-    pub fn new_static(mode: ColorEffectMode, meter_length: Beats) -> ColorEffect {
-        ColorEffect {
-            mode,
+    pub fn new_static(modulation: ColorModulation, meter_length: Beats) -> ColorModulator {
+        ColorModulator {
+            modulation,
             meter_length,
             waveform: Waveform::On,
             clock_offset: None,
         }
     }
     fn color_for_elapsed_percent(&self, color: Hsl64, elapsed_percent: f64) -> Hsl64 {
-        match self.mode {
-            ColorEffectMode::HueShift(shift_degrees) => {
+        match self.modulation {
+            ColorModulation::HueShift(shift_degrees) => {
                 color.shift_hue(RgbHue::<f64>::from_degrees(
                     self.waveform.apply(elapsed_percent) * shift_degrees.into_inner(),
                 ))
             }
-            ColorEffectMode::White => {
+            ColorModulation::White => {
                 color.mix(&Color::White.to_hsl(), self.waveform.apply(elapsed_percent))
             }
-            ColorEffectMode::NoOp => color,
+            ColorModulation::NoOp => color,
         }
     }
     pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
@@ -326,19 +326,19 @@ impl ColorEffect {
     }
 }
 
-impl From<(ColorEffectMode, Beats)> for ColorEffect {
-    fn from((mode, meter_length): (ColorEffectMode, Beats)) -> ColorEffect {
-        ColorEffect::new_static(mode, meter_length)
+impl From<(ColorModulation, Beats)> for ColorModulator {
+    fn from((modulation, meter_length): (ColorModulation, Beats)) -> ColorModulator {
+        ColorModulator::new_static(modulation, meter_length)
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ColorSequence {
-    steps: Vec<ColorEffect>,
+    steps: Vec<ColorModulator>,
     clock_offset: Option<ClockOffset>,
 }
 impl ColorSequence {
-    pub fn new(steps: Vec<ColorEffect>, clock_offset: Option<ClockOffset>) -> ColorSequence {
+    pub fn new(steps: Vec<ColorModulator>, clock_offset: Option<ClockOffset>) -> ColorSequence {
         ColorSequence {
             steps,
             clock_offset,
@@ -347,7 +347,7 @@ impl ColorSequence {
     fn total_length(&self) -> Beats {
         self.steps
             .iter()
-            .map(|color_effect| color_effect.meter_length)
+            .map(|modulator| modulator.meter_length)
             .sum()
     }
     pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
