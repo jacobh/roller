@@ -272,20 +272,17 @@ pub struct ColorModulator {
     modulation: ColorModulation,
     waveform: Waveform,
     meter_length: Beats,
-    clock_offset: Option<ClockOffset>,
 }
 impl ColorModulator {
     pub fn new(
         modulation: ColorModulation,
         waveform: Waveform,
         meter_length: Beats,
-        clock_offset: Option<ClockOffset>,
     ) -> ColorModulator {
         ColorModulator {
             modulation,
             waveform,
             meter_length,
-            clock_offset,
         }
     }
     pub fn new_static(modulation: ColorModulation, meter_length: Beats) -> ColorModulator {
@@ -293,7 +290,6 @@ impl ColorModulator {
             modulation,
             meter_length,
             waveform: Waveform::On,
-            clock_offset: None,
         }
     }
     fn color_for_elapsed_percent(&self, color: Hsl64, elapsed_percent: f64) -> Hsl64 {

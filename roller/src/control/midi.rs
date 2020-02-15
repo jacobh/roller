@@ -268,29 +268,27 @@ impl MidiController {
                         note: Note::new(58),
                         button_type: ButtonType::Toggle,
                         group_id: None,
-                        on_action: ButtonAction::ActivateColorEffect(
-                            ColorModulator::new(
+                        on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
+                            vec![ColorModulator::new(
                                 ColorModulation::HueShift(120.0.into()),
                                 Waveform::HalfSineUp,
                                 Beats::new(2.0),
-                                Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
-                            )
-                            .into(),
-                        ),
+                            )],
+                            Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
+                        )),
                     },
                     ButtonMapping {
                         note: Note::new(50),
                         button_type: ButtonType::Toggle,
                         group_id: None,
-                        on_action: ButtonAction::ActivateColorEffect(
-                            ColorModulator::new(
+                        on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
+                            vec![ColorModulator::new(
                                 ColorModulation::HueShift((-90.0).into()),
                                 Waveform::HalfSineDown,
                                 Beats::new(1.0),
-                                Some(ClockOffset::new(ClockOffsetMode::Random, Beats::new(0.5))),
-                            )
-                            .into(),
-                        ),
+                            )],
+                            Some(ClockOffset::new(ClockOffsetMode::Random, Beats::new(0.5))),
+                        )),
                     },
                     // Color sequences
                     ButtonMapping {
@@ -319,9 +317,7 @@ impl MidiController {
                                     ColorModulation::White,
                                     Waveform::ShortSquarePulse,
                                     Beats::new(1.0),
-                                    None,
-                                )
-                                .into(),
+                                ),
                                 (ColorModulation::NoOp, Beats::new(3.0)).into(),
                             ],
                             Some(ClockOffset::new(ClockOffsetMode::Random, Beats::new(0.5))),
