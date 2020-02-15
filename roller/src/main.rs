@@ -26,7 +26,8 @@ async fn main() -> Result<(), async_std::io::Error> {
         clock: Clock::new(128.0),
         master_dimmer: 1.0,
         group_dimmers: FxHashMap::default(),
-        effect_intensity: 1.0,
+        dimmer_effect_intensity: 1.0,
+        color_effect_intensity: 1.0,
         button_states: utils::FxIndexMap::default(),
     };
 

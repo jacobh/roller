@@ -24,7 +24,8 @@ pub enum LightingEvent {
         group_id: FixtureGroupId,
         dimmer: f64,
     },
-    UpdateGlobalEffectIntensity(f64),
+    UpdateDimmerEffectIntensity(f64),
+    UpdateColorEffectIntensity(f64),
     UpdateButton(Instant, NoteState, ButtonMapping),
     TapTempo(Instant),
 }
@@ -33,7 +34,8 @@ pub struct EngineState {
     pub clock: Clock,
     pub master_dimmer: f64,
     pub group_dimmers: FxHashMap<FixtureGroupId, f64>,
-    pub effect_intensity: f64,
+    pub dimmer_effect_intensity: f64,
+    pub color_effect_intensity: f64,
     pub button_states: FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)>,
 }
 impl EngineState {
@@ -43,8 +45,11 @@ impl EngineState {
             LightingEvent::UpdateMasterDimmer { dimmer } => {
                 self.master_dimmer = dimmer;
             }
-            LightingEvent::UpdateGlobalEffectIntensity(intensity) => {
-                self.effect_intensity = intensity;
+            LightingEvent::UpdateDimmerEffectIntensity(intensity) => {
+                self.dimmer_effect_intensity = intensity;
+            }
+            LightingEvent::UpdateColorEffectIntensity(intensity) => {
+                self.color_effect_intensity = intensity;
             }
             LightingEvent::UpdateGroupDimmer { group_id, dimmer } => {
                 self.group_dimmers.insert(group_id, dimmer);
@@ -185,7 +190,7 @@ impl EngineState {
                     active_dimmer_effects.iter().fold(1.0, |dimmer, effect| {
                         dimmer * effect.offset_dimmer(&clock_snapshot, &fixture, &fixtures)
                     }),
-                    self.effect_intensity,
+                    self.dimmer_effect_intensity,
                 );
 
                 let color = effect::color_intensity(
@@ -195,7 +200,7 @@ impl EngineState {
                         .fold(global_color.to_hsl(), |color, effect| {
                             effect.offset_color(color, &clock_snapshot, &fixture, &fixtures)
                         }),
-                    self.effect_intensity,
+                    self.color_effect_intensity,
                 );
 
                 let group_dimmer = *fixture

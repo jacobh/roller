@@ -5,7 +5,8 @@ use midi::ControlChannel;
 pub enum FaderType {
     MasterDimmer,
     GroupDimmer(FixtureGroupId),
-    GlobalEffectIntensity,
+    DimmerEffectIntensity,
+    ColorEffectIntensity,
 }
 impl FaderType {
     pub fn lighting_event(&self, value: f64) -> LightingEvent {
@@ -15,7 +16,8 @@ impl FaderType {
                 group_id,
                 dimmer: value,
             },
-            FaderType::GlobalEffectIntensity => LightingEvent::UpdateGlobalEffectIntensity(value),
+            FaderType::DimmerEffectIntensity => LightingEvent::UpdateDimmerEffectIntensity(value),
+            FaderType::ColorEffectIntensity => LightingEvent::UpdateColorEffectIntensity(value),
         }
     }
 }

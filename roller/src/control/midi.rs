@@ -154,8 +154,12 @@ impl MidiController {
                         fader_type: FaderType::GroupDimmer(FixtureGroupId::new(2)),
                     },
                     MidiFaderMapping {
+                        control_channel: ControlChannel::new(54),
+                        fader_type: FaderType::ColorEffectIntensity,
+                    },
+                    MidiFaderMapping {
                         control_channel: ControlChannel::new(55),
-                        fader_type: FaderType::GlobalEffectIntensity,
+                        fader_type: FaderType::DimmerEffectIntensity,
                     },
                     MidiFaderMapping {
                         control_channel: ControlChannel::new(56),
