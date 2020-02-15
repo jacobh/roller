@@ -243,6 +243,15 @@ impl MidiController {
                                 .into(),
                         ),
                     },
+                    ButtonMapping {
+                        note: Note::new(39),
+                        button_type: ButtonType::Toggle,
+                        group_id: None,
+                        on_action: ButtonAction::ActivateDimmerEffect(
+                            DimmerModulator::new(Waveform::ShortSquarePulse, Beats::new(1.0), 1.0)
+                                .into(),
+                        ),
+                    },
                     // Dimmer sequences
                     ButtonMapping {
                         note: Note::new(61),
