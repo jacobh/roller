@@ -260,11 +260,17 @@ impl From<ColorEffect> for ColorModifier {
         ColorModifier::Effect(effect)
     }
 }
+impl From<ColorSequence> for ColorModifier {
+    fn from(sequence: ColorSequence) -> ColorModifier {
+        ColorModifier::Sequence(sequence)
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ColorEffectMode {
     HueShift(OrderedFloat<f64>),
     White,
+    NoOp,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -288,6 +294,14 @@ impl ColorEffect {
             clock_offset,
         }
     }
+    pub fn new_static(mode: ColorEffectMode, meter_length: Beats) -> ColorEffect {
+        ColorEffect {
+            mode,
+            meter_length,
+            effect: Effect::On,
+            clock_offset: None,
+        }
+    }
     fn color_for_elapsed_percent(&self, color: Hsl64, elapsed_percent: f64) -> Hsl64 {
         match self.mode {
             ColorEffectMode::HueShift(shift_degrees) => {
@@ -298,11 +312,18 @@ impl ColorEffect {
             ColorEffectMode::White => {
                 color.mix(&Color::White.to_hsl(), self.effect.apply(elapsed_percent))
             }
+            ColorEffectMode::NoOp => color,
         }
     }
     pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
         let elapsed_percent = clock.meter_elapsed_percent(self.meter_length);
         self.color_for_elapsed_percent(color, elapsed_percent)
+    }
+}
+
+impl From<(ColorEffectMode, Beats)> for ColorEffect {
+    fn from((mode, meter_length): (ColorEffectMode, Beats)) -> ColorEffect {
+        ColorEffect::new_static(mode, meter_length)
     }
 }
 

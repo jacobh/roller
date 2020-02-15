@@ -13,7 +13,7 @@ use crate::{
         },
         fader::{FaderType, MidiFaderMapping},
     },
-    effect::{ColorEffect, ColorEffectMode, DimmerEffect, DimmerSequence, Effect},
+    effect::{ColorEffect, ColorEffectMode, ColorSequence, DimmerEffect, DimmerSequence, Effect},
     lighting_engine::LightingEvent,
     project::FixtureGroupId,
 };
@@ -288,6 +288,30 @@ impl MidiController {
                                 Effect::HalfSineDown,
                                 Beats::new(1.0),
                                 Some(ClockOffset::new(ClockOffsetMode::Random, Beats::new(0.5))),
+                            )
+                            .into(),
+                        ),
+                    },
+                    // Color sequences
+                    ButtonMapping {
+                        note: Note::new(34),
+                        button_type: ButtonType::Toggle,
+                        group_id: None,
+                        on_action: ButtonAction::ActivateColorModifier(
+                            ColorSequence::new(
+                                vec![
+                                    (ColorEffectMode::NoOp, Beats::new(1.0)).into(),
+                                    (ColorEffectMode::HueShift(30.0.into()), Beats::new(1.0))
+                                        .into(),
+                                    (ColorEffectMode::HueShift((45.0).into()), Beats::new(1.0))
+                                        .into(),
+                                    (ColorEffectMode::NoOp, Beats::new(1.0)).into(),
+                                    (ColorEffectMode::HueShift(30.0.into()), Beats::new(1.0))
+                                        .into(),
+                                    (ColorEffectMode::HueShift(60.0.into()), Beats::new(1.0))
+                                        .into(),
+                                ],
+                                Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(4.0))),
                             )
                             .into(),
                         ),
