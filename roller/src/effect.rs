@@ -224,16 +224,19 @@ pub fn short_square_pulse(x: f64) -> f64 {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ColorModifier {
     Effect(ColorEffect),
+    Sequence(ColorSequence),
 }
 impl ColorModifier {
     pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
         match self {
             ColorModifier::Effect(effect) => effect.color(color, clock),
+            ColorModifier::Sequence(sequence) => sequence.color(color, clock),
         }
     }
     fn clock_offset(&self) -> Option<&ClockOffset> {
         match self {
             ColorModifier::Effect(effect) => effect.clock_offset.as_ref(),
+            ColorModifier::Sequence(sequence) => sequence.clock_offset.as_ref(),
         }
     }
     pub fn offset_color(
@@ -285,9 +288,7 @@ impl ColorEffect {
             clock_offset,
         }
     }
-    pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
-        let elapsed_percent = clock.meter_elapsed_percent(self.meter_length);
-
+    fn color_for_elapsed_percent(&self, color: Hsl64, elapsed_percent: f64) -> Hsl64 {
         match self.mode {
             ColorEffectMode::HueShift(shift_degrees) => {
                 color.shift_hue(RgbHue::<f64>::from_degrees(
@@ -298,6 +299,48 @@ impl ColorEffect {
                 color.mix(&Color::White.to_hsl(), self.effect.apply(elapsed_percent))
             }
         }
+    }
+    pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
+        let elapsed_percent = clock.meter_elapsed_percent(self.meter_length);
+        self.color_for_elapsed_percent(color, elapsed_percent)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ColorSequence {
+    steps: Vec<ColorEffect>,
+    clock_offset: Option<ClockOffset>,
+}
+impl ColorSequence {
+    pub fn new(steps: Vec<ColorEffect>, clock_offset: Option<ClockOffset>) -> ColorSequence {
+        ColorSequence {
+            steps,
+            clock_offset,
+        }
+    }
+    fn total_length(&self) -> Beats {
+        self.steps
+            .iter()
+            .map(|color_effect| color_effect.meter_length)
+            .sum()
+    }
+    pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
+        let length = self.total_length();
+        let elapsed_percent = clock.meter_elapsed_percent(length);
+        let mut elapsed_beats = length * elapsed_percent;
+
+        for step in self.steps.iter() {
+            if step.meter_length >= elapsed_beats {
+                return step.color_for_elapsed_percent(
+                    color,
+                    1.0 / f64::from(step.meter_length) * f64::from(elapsed_beats),
+                );
+            } else {
+                elapsed_beats = elapsed_beats - step.meter_length;
+            }
+        }
+
+        unreachable!()
     }
 }
 
