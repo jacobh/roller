@@ -186,12 +186,13 @@ impl EngineState {
         let fixture_values = fixtures
             .iter()
             .map(|fixture| {
-                let effect_dimmer = effect::intensity(
-                    active_dimmer_effects.iter().fold(1.0, |dimmer, effect| {
-                        dimmer * effect.offset_dimmer(&clock_snapshot, &fixture, &fixtures)
-                    }),
-                    self.dimmer_effect_intensity,
-                );
+                let effect_dimmer = active_dimmer_effects.iter().fold(1.0, |dimmer, effect| {
+                    dimmer
+                        * effect::compress(
+                            effect.offset_dimmer(&clock_snapshot, &fixture, &fixtures),
+                            self.dimmer_effect_intensity,
+                        )
+                });
 
                 let color = effect::color_intensity(
                     global_color.to_hsl(),
