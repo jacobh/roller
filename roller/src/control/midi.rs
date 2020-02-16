@@ -11,7 +11,7 @@ use crate::{
             AkaiPadState, ButtonAction, ButtonGroupId, ButtonMapping, ButtonType, MetaButtonAction,
             MetaButtonMapping,
         },
-        fader::{FaderType, MidiFaderMapping},
+        fader::{FaderCurve, FaderType, MidiFaderMapping},
     },
     effect::{
         ColorEffect, ColorModulation, ColorModulator, DimmerEffect, DimmerModulator, Waveform,
@@ -57,11 +57,10 @@ impl MidiMapping {
         let now = Instant::now();
 
         match dbg!(midi_event) {
-            MidiEvent::ControlChange { control, value } => self.faders.get(control).map(|fader| {
-                fader
-                    .fader_type
-                    .lighting_event(1.0 / 127.0 * (*value as f64))
-            }),
+            MidiEvent::ControlChange { control, value } => self
+                .faders
+                .get(control)
+                .map(|fader| fader.lighting_event(1.0 / 127.0 * (*value as f64))),
             MidiEvent::NoteOn { note, .. } => self
                 .buttons
                 .get(note)
@@ -148,22 +147,27 @@ impl MidiController {
                     MidiFaderMapping {
                         control_channel: ControlChannel::new(48),
                         fader_type: FaderType::GroupDimmer(FixtureGroupId::new(1)),
+                        fader_curve: FaderCurve::root(1.25),
                     },
                     MidiFaderMapping {
                         control_channel: ControlChannel::new(49),
                         fader_type: FaderType::GroupDimmer(FixtureGroupId::new(2)),
+                        fader_curve: FaderCurve::root(1.25),
                     },
                     MidiFaderMapping {
                         control_channel: ControlChannel::new(54),
                         fader_type: FaderType::ColorEffectIntensity,
+                        fader_curve: FaderCurve::linear(),
                     },
                     MidiFaderMapping {
                         control_channel: ControlChannel::new(55),
                         fader_type: FaderType::DimmerEffectIntensity,
+                        fader_curve: FaderCurve::sigmoid(0.75),
                     },
                     MidiFaderMapping {
                         control_channel: ControlChannel::new(56),
                         fader_type: FaderType::MasterDimmer,
+                        fader_curve: FaderCurve::root(1.25),
                     },
                 ],
                 vec![
