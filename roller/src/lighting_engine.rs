@@ -26,6 +26,7 @@ pub enum LightingEvent {
     },
     UpdateDimmerEffectIntensity(f64),
     UpdateColorEffectIntensity(f64),
+    UpdateGlobalSpeedMultiplier(f64),
     UpdateButton(Instant, NoteState, ButtonMapping),
     TapTempo(Instant),
 }
@@ -36,6 +37,7 @@ pub struct EngineState {
     pub group_dimmers: FxHashMap<FixtureGroupId, f64>,
     pub dimmer_effect_intensity: f64,
     pub color_effect_intensity: f64,
+    pub global_speed_multiplier: f64,
     pub button_states: FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)>,
 }
 impl EngineState {
@@ -50,6 +52,9 @@ impl EngineState {
             }
             LightingEvent::UpdateColorEffectIntensity(intensity) => {
                 self.color_effect_intensity = intensity;
+            }
+            LightingEvent::UpdateGlobalSpeedMultiplier(multiplier) => {
+                self.global_speed_multiplier = multiplier;
             }
             LightingEvent::UpdateGroupDimmer { group_id, dimmer } => {
                 self.group_dimmers.insert(group_id, dimmer);
@@ -178,7 +183,10 @@ impl EngineState {
         effects
     }
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
-        let clock_snapshot = self.clock.snapshot();
+        let clock_snapshot = self
+            .clock
+            .snapshot()
+            .multiply_speed(self.global_speed_multiplier);
         let global_color = self.global_color();
         let active_dimmer_effects = self.active_dimmer_effects();
         let active_color_effects = self.active_color_effects();

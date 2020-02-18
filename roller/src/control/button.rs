@@ -1,5 +1,6 @@
 use derive_more::Constructor;
 use midi::Note;
+use ordered_float::OrderedFloat;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use std::time::Instant;
@@ -64,6 +65,7 @@ impl ButtonMapping {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum MetaButtonAction {
     TapTempo,
+    UpdateGlobalSpeedMultiplier(OrderedFloat<f64>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -75,6 +77,9 @@ impl MetaButtonMapping {
     pub fn lighting_event(&self, now: Instant) -> LightingEvent {
         match self.on_action {
             MetaButtonAction::TapTempo => LightingEvent::TapTempo(now),
+            MetaButtonAction::UpdateGlobalSpeedMultiplier(multiplier) => {
+                LightingEvent::UpdateGlobalSpeedMultiplier(multiplier.into_inner())
+            }
         }
     }
 }

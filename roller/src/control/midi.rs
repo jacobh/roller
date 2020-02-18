@@ -341,10 +341,44 @@ impl MidiController {
                         )),
                     },
                 ],
-                vec![MetaButtonMapping {
-                    note: Note::new(98),
-                    on_action: MetaButtonAction::TapTempo,
-                }],
+                vec![
+                    MetaButtonMapping {
+                        note: Note::new(98),
+                        on_action: MetaButtonAction::TapTempo,
+                    },
+                    MetaButtonMapping {
+                        note: Note::new(82),
+                        on_action: MetaButtonAction::UpdateGlobalSpeedMultiplier(0.333333.into()),
+                    },
+                    MetaButtonMapping {
+                        note: Note::new(83),
+                        on_action: MetaButtonAction::UpdateGlobalSpeedMultiplier(0.5.into()),
+                    },
+                    MetaButtonMapping {
+                        note: Note::new(84),
+                        on_action: MetaButtonAction::UpdateGlobalSpeedMultiplier(0.6666667.into()),
+                    },
+                    MetaButtonMapping {
+                        note: Note::new(85),
+                        on_action: MetaButtonAction::UpdateGlobalSpeedMultiplier(0.75.into()),
+                    },
+                    MetaButtonMapping {
+                        note: Note::new(86),
+                        on_action: MetaButtonAction::UpdateGlobalSpeedMultiplier(1.0.into()),
+                    },
+                    MetaButtonMapping {
+                        note: Note::new(87),
+                        on_action: MetaButtonAction::UpdateGlobalSpeedMultiplier(1.5.into()),
+                    },
+                    MetaButtonMapping {
+                        note: Note::new(88),
+                        on_action: MetaButtonAction::UpdateGlobalSpeedMultiplier(2.0.into()),
+                    },
+                    MetaButtonMapping {
+                        note: Note::new(89),
+                        on_action: MetaButtonAction::UpdateGlobalSpeedMultiplier(3.0.into()),
+                    },
+                ],
             )),
             input_receiver: input_receiver,
             output_sender: output_sender,

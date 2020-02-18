@@ -28,6 +28,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         group_dimmers: FxHashMap::default(),
         dimmer_effect_intensity: 0.5,
         color_effect_intensity: 1.0,
+        global_speed_multiplier: 1.0,
         button_states: utils::FxIndexMap::default(),
     };
 
