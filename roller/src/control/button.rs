@@ -9,7 +9,7 @@ use crate::{
     color::Color,
     control::midi::{MidiMapping, NoteState},
     effect::{ColorEffect, DimmerEffect},
-    lighting_engine::LightingEvent,
+    lighting_engine::{LightingEvent, SceneId},
     utils::FxIndexMap,
 };
 
@@ -66,7 +66,7 @@ impl ButtonMapping {
 pub enum MetaButtonAction {
     TapTempo,
     UpdateGlobalSpeedMultiplier(OrderedFloat<f64>),
-    ActivateScene(usize),
+    ActivateScene(SceneId),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

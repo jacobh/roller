@@ -1,3 +1,4 @@
+use derive_more::Constructor;
 use midi::Note;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
@@ -15,6 +16,9 @@ use crate::{
     utils::FxIndexMap,
 };
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor)]
+pub struct SceneId(usize);
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum LightingEvent {
     UpdateMasterDimmer {
@@ -27,7 +31,7 @@ pub enum LightingEvent {
     UpdateDimmerEffectIntensity(f64),
     UpdateColorEffectIntensity(f64),
     UpdateGlobalSpeedMultiplier(f64),
-    ActivateScene(usize),
+    ActivateScene(SceneId),
     UpdateButton(Instant, NoteState, ButtonMapping),
     TapTempo(Instant),
 }
@@ -39,9 +43,9 @@ pub struct EngineState {
     pub dimmer_effect_intensity: f64,
     pub color_effect_intensity: f64,
     pub global_speed_multiplier: f64,
-    pub active_scene_id: usize,
+    pub active_scene_id: SceneId,
     pub scene_button_states:
-        FxHashMap<usize, FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)>>,
+        FxHashMap<SceneId, FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)>>,
 }
 impl EngineState {
     pub fn button_states(&self) -> &FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)> {

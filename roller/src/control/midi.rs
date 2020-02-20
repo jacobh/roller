@@ -16,7 +16,7 @@ use crate::{
     effect::{
         ColorEffect, ColorModulation, ColorModulator, DimmerEffect, DimmerModulator, Waveform,
     },
-    lighting_engine::LightingEvent,
+    lighting_engine::{LightingEvent, SceneId},
     project::FixtureGroupId,
 };
 
@@ -348,19 +348,19 @@ impl MidiController {
                     },
                     MetaButtonMapping {
                         note: Note::new(64),
-                        on_action: MetaButtonAction::ActivateScene(1),
+                        on_action: MetaButtonAction::ActivateScene(SceneId::new(1)),
                     },
                     MetaButtonMapping {
                         note: Note::new(65),
-                        on_action: MetaButtonAction::ActivateScene(2),
+                        on_action: MetaButtonAction::ActivateScene(SceneId::new(2)),
                     },
                     MetaButtonMapping {
                         note: Note::new(66),
-                        on_action: MetaButtonAction::ActivateScene(3),
+                        on_action: MetaButtonAction::ActivateScene(SceneId::new(3)),
                     },
                     MetaButtonMapping {
                         note: Note::new(67),
-                        on_action: MetaButtonAction::ActivateScene(4),
+                        on_action: MetaButtonAction::ActivateScene(SceneId::new(4)),
                     },
                     MetaButtonMapping {
                         note: Note::new(82),

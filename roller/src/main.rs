@@ -15,7 +15,7 @@ mod utils;
 
 use crate::clock::Clock;
 use crate::control::button::pad_states;
-use crate::lighting_engine::{EngineState, LightingEvent};
+use crate::lighting_engine::{EngineState, LightingEvent, SceneId};
 use crate::utils::FxIndexMap;
 
 #[async_std::main]
@@ -30,8 +30,10 @@ async fn main() -> Result<(), async_std::io::Error> {
         dimmer_effect_intensity: 0.5,
         color_effect_intensity: 1.0,
         global_speed_multiplier: 1.0,
-        active_scene_id: 1,
-        scene_button_states: vec![(1, FxIndexMap::default())].into_iter().collect(),
+        active_scene_id: SceneId::new(1),
+        scene_button_states: vec![(SceneId::new(1), FxIndexMap::default())]
+            .into_iter()
+            .collect(),
     };
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
