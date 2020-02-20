@@ -31,9 +31,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         color_effect_intensity: 1.0,
         global_speed_multiplier: 1.0,
         active_scene_id: SceneId::new(1),
-        scene_button_states: vec![(SceneId::new(1), FxIndexMap::default())]
-            .into_iter()
-            .collect(),
+        scene_button_states: FxHashMap::default(),
     };
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;

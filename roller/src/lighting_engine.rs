@@ -16,6 +16,15 @@ use crate::{
     utils::FxIndexMap,
 };
 
+type ButtonStateMap = FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)>;
+
+// This is just for the case where no buttons have been activated yet
+lazy_static::lazy_static! {
+    static ref EMPTY_BUTTON_STATES: ButtonStateMap = {
+        FxIndexMap::default()
+    };
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor)]
 pub struct SceneId(usize);
 
@@ -44,18 +53,15 @@ pub struct EngineState {
     pub color_effect_intensity: f64,
     pub global_speed_multiplier: f64,
     pub active_scene_id: SceneId,
-    pub scene_button_states:
-        FxHashMap<SceneId, FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)>>,
+    pub scene_button_states: FxHashMap<SceneId, ButtonStateMap>,
 }
 impl EngineState {
-    pub fn button_states(&self) -> &FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)> {
+    pub fn button_states(&self) -> &ButtonStateMap {
         self.scene_button_states
             .get(&self.active_scene_id)
-            .expect("active_scene_id must be key in scene_button_states")
+            .unwrap_or_else(|| &*EMPTY_BUTTON_STATES)
     }
-    pub fn button_states_mut(
-        &mut self,
-    ) -> &mut FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)> {
+    pub fn button_states_mut(&mut self) -> &mut ButtonStateMap {
         self.scene_button_states
             .entry(self.active_scene_id)
             .or_default()
@@ -77,7 +83,6 @@ impl EngineState {
             }
             LightingEvent::ActivateScene(scene_id) => {
                 self.active_scene_id = scene_id;
-                self.scene_button_states.entry(scene_id).or_default();
             }
             LightingEvent::UpdateGroupDimmer { group_id, dimmer } => {
                 self.group_dimmers.insert(group_id, dimmer);
