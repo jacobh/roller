@@ -38,9 +38,23 @@ pub struct EngineState {
     pub dimmer_effect_intensity: f64,
     pub color_effect_intensity: f64,
     pub global_speed_multiplier: f64,
-    pub button_states: FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)>,
+    pub active_scene_id: usize,
+    pub scene_button_states:
+        FxHashMap<usize, FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)>>,
 }
 impl EngineState {
+    pub fn button_states(&self) -> &FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)> {
+        self.scene_button_states
+            .get(&self.active_scene_id)
+            .expect("active_scene_id must be key in scene_button_states")
+    }
+    pub fn button_states_mut(
+        &mut self,
+    ) -> &mut FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)> {
+        self.scene_button_states
+            .entry(self.active_scene_id)
+            .or_insert_with(|| FxIndexMap::default())
+    }
     pub fn apply_event(&mut self, event: LightingEvent) {
         // dbg!(&event);
         match event {
@@ -62,11 +76,11 @@ impl EngineState {
             LightingEvent::UpdateButton(now, state, mapping) => {
                 let key = (mapping, state);
                 let prev_toggle_state = self
-                    .button_states
+                    .button_states_mut()
                     .shift_remove(&key)
                     .map(|(toggle_state, _)| toggle_state)
                     .unwrap_or(ToggleState::Off);
-                self.button_states
+                self.button_states_mut()
                     .insert(key, (prev_toggle_state.toggle(), now));
             }
             LightingEvent::TapTempo(now) => {
@@ -79,16 +93,16 @@ impl EngineState {
         let mut on_colors: Vec<(Note, Color)> = Vec::new();
         let mut last_off: Option<(Note, Color)> = None;
 
-        let color_buttons =
-            self.button_states
-                .keys()
-                .flat_map(|(mapping, state)| match mapping.on_action {
-                    ButtonAction::UpdateGlobalColor(color) => match mapping.button_type {
-                        ButtonType::Switch => Some((mapping.note, state, color)),
-                        _ => panic!("only switch button type implemented for colors"),
-                    },
-                    _ => None,
-                });
+        let color_buttons = self
+            .button_states()
+            .keys()
+            .flat_map(|(mapping, state)| match mapping.on_action {
+                ButtonAction::UpdateGlobalColor(color) => match mapping.button_type {
+                    ButtonType::Switch => Some((mapping.note, state, color)),
+                    _ => panic!("only switch button type implemented for colors"),
+                },
+                _ => None,
+            });
 
         for (note, state, color) in color_buttons {
             match state {
@@ -118,7 +132,7 @@ impl EngineState {
         let mut effects = FxHashSet::default();
 
         // TODO button groups
-        for ((mapping, state), (toggle_state, _)) in self.button_states.iter() {
+        for ((mapping, state), (toggle_state, _)) in self.button_states().iter() {
             if let ButtonAction::ActivateDimmerEffect(effect) = &mapping.on_action {
                 match mapping.button_type {
                     ButtonType::Flash => {
@@ -152,7 +166,7 @@ impl EngineState {
         let mut effects = FxHashSet::default();
 
         // TODO button groups
-        for ((mapping, state), (toggle_state, _)) in self.button_states.iter() {
+        for ((mapping, state), (toggle_state, _)) in self.button_states().iter() {
             if let ButtonAction::ActivateColorEffect(effect) = &mapping.on_action {
                 match mapping.button_type {
                     ButtonType::Flash => {

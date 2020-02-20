@@ -16,6 +16,7 @@ mod utils;
 use crate::clock::Clock;
 use crate::control::button::pad_states;
 use crate::lighting_engine::{EngineState, LightingEvent};
+use crate::utils::FxIndexMap;
 
 #[async_std::main]
 async fn main() -> Result<(), async_std::io::Error> {
@@ -29,7 +30,8 @@ async fn main() -> Result<(), async_std::io::Error> {
         dimmer_effect_intensity: 0.5,
         color_effect_intensity: 1.0,
         global_speed_multiplier: 1.0,
-        button_states: utils::FxIndexMap::default(),
+        active_scene_id: 1,
+        scene_button_states: vec![(1, FxIndexMap::default())].into_iter().collect(),
     };
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
@@ -56,7 +58,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     }
 
     let midi_controller = control::midi::MidiController::new_for_device_name("APC MINI").unwrap();
-    let mut current_pad_states = pad_states(&midi_controller.midi_mapping, &state.button_states);
+    let mut current_pad_states = pad_states(&midi_controller.midi_mapping, state.button_states());
 
     for i in 0..64 {
         midi_controller
@@ -83,7 +85,7 @@ async fn main() -> Result<(), async_std::io::Error> {
                 dmx_sender.send((10, dmx_data)).await;
 
                 let new_pad_states =
-                    pad_states(&midi_controller.midi_mapping, &state.button_states);
+                    pad_states(&midi_controller.midi_mapping, state.button_states());
 
                 // find the pads that have updated since the last tick
                 let pad_changeset = new_pad_states.iter().filter(|(note, state)| {
