@@ -27,6 +27,7 @@ pub enum LightingEvent {
     UpdateDimmerEffectIntensity(f64),
     UpdateColorEffectIntensity(f64),
     UpdateGlobalSpeedMultiplier(f64),
+    ActivateScene(usize),
     UpdateButton(Instant, NoteState, ButtonMapping),
     TapTempo(Instant),
 }
@@ -53,7 +54,7 @@ impl EngineState {
     ) -> &mut FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)> {
         self.scene_button_states
             .entry(self.active_scene_id)
-            .or_insert_with(|| FxIndexMap::default())
+            .or_default()
     }
     pub fn apply_event(&mut self, event: LightingEvent) {
         // dbg!(&event);
@@ -69,6 +70,10 @@ impl EngineState {
             }
             LightingEvent::UpdateGlobalSpeedMultiplier(multiplier) => {
                 self.global_speed_multiplier = multiplier;
+            }
+            LightingEvent::ActivateScene(scene_id) => {
+                self.active_scene_id = scene_id;
+                self.scene_button_states.entry(scene_id).or_default();
             }
             LightingEvent::UpdateGroupDimmer { group_id, dimmer } => {
                 self.group_dimmers.insert(group_id, dimmer);

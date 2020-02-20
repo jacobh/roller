@@ -347,6 +347,22 @@ impl MidiController {
                         on_action: MetaButtonAction::TapTempo,
                     },
                     MetaButtonMapping {
+                        note: Note::new(64),
+                        on_action: MetaButtonAction::ActivateScene(1),
+                    },
+                    MetaButtonMapping {
+                        note: Note::new(65),
+                        on_action: MetaButtonAction::ActivateScene(2),
+                    },
+                    MetaButtonMapping {
+                        note: Note::new(66),
+                        on_action: MetaButtonAction::ActivateScene(3),
+                    },
+                    MetaButtonMapping {
+                        note: Note::new(67),
+                        on_action: MetaButtonAction::ActivateScene(4),
+                    },
+                    MetaButtonMapping {
                         note: Note::new(82),
                         on_action: MetaButtonAction::UpdateGlobalSpeedMultiplier(0.333333.into()),
                     },

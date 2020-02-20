@@ -66,6 +66,7 @@ impl ButtonMapping {
 pub enum MetaButtonAction {
     TapTempo,
     UpdateGlobalSpeedMultiplier(OrderedFloat<f64>),
+    ActivateScene(usize),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -80,6 +81,7 @@ impl MetaButtonMapping {
             MetaButtonAction::UpdateGlobalSpeedMultiplier(multiplier) => {
                 LightingEvent::UpdateGlobalSpeedMultiplier(multiplier.into_inner())
             }
+            MetaButtonAction::ActivateScene(scene_id) => LightingEvent::ActivateScene(scene_id),
         }
     }
 }
