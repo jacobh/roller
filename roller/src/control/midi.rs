@@ -65,10 +65,11 @@ impl MidiMapping {
                 .buttons
                 .get(note)
                 .map(|button| button.clone().into_lighting_event(NoteState::On, now))
-                .or(self
-                    .meta_buttons
-                    .get(note)
-                    .map(|meta_button| meta_button.lighting_event(now))),
+                .or_else(|| {
+                    self.meta_buttons
+                        .get(note)
+                        .map(|meta_button| meta_button.lighting_event(now))
+                }),
             MidiEvent::NoteOff { note, .. } => self
                 .buttons
                 .get(note)
@@ -76,7 +77,7 @@ impl MidiMapping {
             MidiEvent::Other(_) => None,
         }
     }
-    pub fn pad_mappings<'a>(&'a self) -> impl Iterator<Item = PadMapping<'a>> {
+    pub fn pad_mappings(&self) -> impl Iterator<Item = PadMapping<'_>> {
         self.buttons
             .values()
             .map(PadMapping::from)
@@ -364,7 +365,7 @@ impl MidiController {
                     },
                     MetaButtonMapping {
                         note: Note::new(82),
-                        on_action: MetaButtonAction::UpdateGlobalSpeedMultiplier(0.333333.into()),
+                        on_action: MetaButtonAction::UpdateGlobalSpeedMultiplier(0.333_333.into()),
                     },
                     MetaButtonMapping {
                         note: Note::new(83),
@@ -372,7 +373,7 @@ impl MidiController {
                     },
                     MetaButtonMapping {
                         note: Note::new(84),
-                        on_action: MetaButtonAction::UpdateGlobalSpeedMultiplier(0.6666667.into()),
+                        on_action: MetaButtonAction::UpdateGlobalSpeedMultiplier(0.666_667.into()),
                     },
                     MetaButtonMapping {
                         note: Note::new(85),
@@ -396,8 +397,8 @@ impl MidiController {
                     },
                 ],
             )),
-            input_receiver: input_receiver,
-            output_sender: output_sender,
+            input_receiver,
+            output_sender,
         })
     }
     fn midi_events(&self) -> impl Stream<Item = MidiEvent> {

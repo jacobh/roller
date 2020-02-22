@@ -13,8 +13,8 @@ mod ola_rpc {
 }
 
 const PROTOCOL_VERSION: u32 = 1;
-const VERSION_MASK: u32 = 0xf0000000;
-const SIZE_MASK: u32 = 0x0fffffff;
+const VERSION_MASK: u32 = 0xf000_0000;
+const SIZE_MASK: u32 = 0x0fff_ffff;
 
 fn new_header(length: usize) -> [u8; 4] {
     let length = length as u32;
@@ -39,7 +39,7 @@ impl OlaClient {
         stream.set_nodelay(true)?;
 
         Ok(OlaClient {
-            stream: stream,
+            stream,
             sequence: 0,
         })
     }
@@ -48,7 +48,7 @@ impl OlaClient {
     }
 
     fn iterate_sequence(&mut self) -> usize {
-        let out = self.sequence.clone();
+        let out = self.sequence;
         self.sequence += 1;
         out
     }
@@ -90,7 +90,7 @@ impl OlaClient {
         dmx_data: impl Into<Vec<u8>>,
     ) -> Result<(), async_std::io::Error> {
         let message = ola::DmxData {
-            universe: universe,
+            universe,
             data: dmx_data.into(),
             priority: Some(1),
         };

@@ -14,9 +14,8 @@ mod project;
 mod utils;
 
 use crate::clock::Clock;
-use crate::control::button::{pad_states, PadEvent};
+use crate::control::button::pad_states;
 use crate::lighting_engine::{EngineState, LightingEvent, SceneId};
-use crate::utils::FxIndexMap;
 
 #[async_std::main]
 async fn main() -> Result<(), async_std::io::Error> {

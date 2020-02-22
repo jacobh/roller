@@ -10,7 +10,6 @@ use crate::{
     control::midi::NoteState,
     effect::{ColorEffect, DimmerEffect},
     lighting_engine::{LightingEvent, SceneId},
-    utils::FxIndexMap,
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize)]
@@ -246,9 +245,9 @@ impl<'a> PadMapping<'a> {
             PadMapping::Meta(mapping) => match mapping.on_action {
                 MetaButtonAction::TapTempo => None,
                 MetaButtonAction::UpdateGlobalSpeedMultiplier(_) => {
-                    Some(ButtonGroupId::new(100001))
+                    Some(ButtonGroupId::new(100_001))
                 }
-                MetaButtonAction::ActivateScene(_) => Some(ButtonGroupId::new(100002)),
+                MetaButtonAction::ActivateScene(_) => Some(ButtonGroupId::new(100_002)),
             },
         }
     }
@@ -301,10 +300,7 @@ pub fn pad_states<'a>(
     all_pads: Vec<PadMapping<'a>>,
     pad_events: impl Iterator<Item = PadEvent<'a>>,
 ) -> FxHashMap<Note, AkaiPadState> {
-    let mut state: Vec<_> = all_pads
-        .into_iter()
-        .map(|mapping| Pad::new(mapping))
-        .collect();
+    let mut state: Vec<_> = all_pads.into_iter().map(Pad::new).collect();
 
     for event in pad_events {
         for pad in state.iter_mut() {

@@ -242,7 +242,7 @@ impl EngineState {
 
                 let group_dimmer = fixture
                     .group_id
-                    .and_then(|group_id| self.group_dimmers.get(&group_id).map(|x| *x))
+                    .and_then(|group_id| self.group_dimmers.get(&group_id).copied())
                     .unwrap_or(1.0);
 
                 let dimmer = self.master_dimmer * group_dimmer * effect_dimmer;
@@ -255,7 +255,7 @@ impl EngineState {
             fixture.set_color(color).unwrap();
         }
     }
-    pub fn pad_events<'a>(&'a self) -> impl Iterator<Item = PadEvent<'a>> {
+    pub fn pad_events(&self) -> impl Iterator<Item = PadEvent<'_>> {
         self.button_states().iter().map(PadEvent::from)
     }
 }

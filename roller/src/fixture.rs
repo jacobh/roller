@@ -188,9 +188,9 @@ impl Fixture {
 
             // If light doesn't have dimmer control, scale the color values instead
             if !self.profile.is_dimmable() {
-                red = red * self.dimmer;
-                green = green * self.dimmer;
-                blue = blue * self.dimmer;
+                red *= self.dimmer;
+                green *= self.dimmer;
+                blue *= self.dimmer;
             }
 
             dmx[red_channel.channel_index()] = red_channel.encode_value(red);

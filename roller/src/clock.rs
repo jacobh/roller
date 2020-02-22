@@ -85,7 +85,7 @@ impl Clock {
             self.started_at = now;
 
             let beat_duration_secs =
-                (time_elapsed.as_micros() as f64 / 1000000.0) / (self.taps.len() - 1) as f64;
+                (time_elapsed.as_micros() as f64 / 1_000_000.0) / (self.taps.len() - 1) as f64;
             self.bpm = 60.0 / beat_duration_secs;
         }
     }
@@ -94,7 +94,7 @@ impl Clock {
     }
     fn secs_elapsed(&self) -> f64 {
         let elapsed_duration = Instant::now() - self.started_at;
-        elapsed_duration.as_micros() as f64 / 1000000.0
+        elapsed_duration.as_micros() as f64 / 1_000_000.0
     }
     pub fn snapshot(&self) -> ClockSnapshot {
         ClockSnapshot {
@@ -157,8 +157,8 @@ impl ClockOffset {
         // create a seed array of the numbers 0 - 31
         let mut rng = thread_rng();
         let mut seed = [0u8; 32];
-        for i in 0..32 {
-            seed[i] = i as u8
+        for (i, x) in seed.iter_mut().enumerate() {
+            *x = i as u8;
         }
         seed.shuffle(&mut rng);
 
