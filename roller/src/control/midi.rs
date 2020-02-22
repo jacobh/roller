@@ -292,11 +292,7 @@ impl MidiController {
                                     Beats::new(1.0),
                                     1.0,
                                 ),
-                                DimmerModulator::new(
-                                    Waveform::SineUp,
-                                    Beats::new(1.0),
-                                    1.0,
-                                ),
+                                DimmerModulator::new(Waveform::SineUp, Beats::new(1.0), 1.0),
                             ],
                             Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
                         )),
