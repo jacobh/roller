@@ -79,6 +79,9 @@ impl MidiMapping {
     pub fn buttons(&self) -> impl Iterator<Item = &ButtonMapping> {
         self.buttons.values()
     }
+    pub fn meta_buttons(&self) -> impl Iterator<Item = &MetaButtonMapping> {
+        self.meta_buttons.values()
+    }
 }
 
 pub struct MidiController {

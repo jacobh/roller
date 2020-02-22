@@ -62,6 +62,10 @@ async fn main() -> Result<(), async_std::io::Error> {
         midi_controller.midi_mapping.buttons().collect(),
         state.button_states(),
     );
+    current_pad_states.extend(pad_states(
+        midi_controller.midi_mapping.meta_buttons().collect(),
+        &FxIndexMap::default(),
+    ));
 
     for i in 0..64 {
         midi_controller
@@ -87,10 +91,14 @@ async fn main() -> Result<(), async_std::io::Error> {
                 let dmx_data = fixture::fold_fixture_dmx_data(fixtures.iter());
                 dmx_sender.send((10, dmx_data)).await;
 
-                let new_pad_states = pad_states(
+                let mut new_pad_states = pad_states(
                     midi_controller.midi_mapping.buttons().collect(),
                     state.button_states(),
                 );
+                new_pad_states.extend(pad_states(
+                    midi_controller.midi_mapping.meta_buttons().collect(),
+                    &FxIndexMap::default(),
+                ));
 
                 // find the pads that have updated since the last tick
                 let pad_changeset = new_pad_states.iter().filter(|(note, state)| {
