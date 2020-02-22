@@ -117,10 +117,15 @@ pub struct Pad<'a> {
 }
 impl<'a> Pad<'a> {
     fn new(mapping: PadMapping<'a>) -> Pad<'a> {
+        let active_group_notes = if mapping.group_id().is_some() {
+            Vec::with_capacity(8)
+        } else {
+            Vec::new()
+        };
         Pad {
             mapping,
+            active_group_notes,
             state: AkaiPadState::Yellow,
-            active_group_notes: Vec::new(),
         }
     }
     fn apply_event(&mut self, event: &PadEvent<'a>) {
