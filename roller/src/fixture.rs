@@ -216,7 +216,7 @@ impl Fixture {
     }
 }
 
-pub fn fold_fixture_dmx_data<'a>(fixtures: impl Iterator<Item = &'a Fixture>) -> [u8; 512] {
+pub fn fold_fixture_dmx_data<'a>(fixtures: impl IntoIterator<Item = &'a Fixture>) -> [u8; 512] {
     let mut dmx_data = [0; 512];
 
     for fixture in fixtures {

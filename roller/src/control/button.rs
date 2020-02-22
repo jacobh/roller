@@ -298,7 +298,7 @@ impl<'a> From<(&'a (ButtonMapping, NoteState), &'a (ToggleState, Instant))> for 
 
 pub fn pad_states<'a>(
     all_pads: Vec<PadMapping<'a>>,
-    pad_events: impl Iterator<Item = PadEvent<'a>>,
+    pad_events: impl IntoIterator<Item = PadEvent<'a>>,
 ) -> FxHashMap<Note, AkaiPadState> {
     let mut state: Vec<_> = all_pads.into_iter().map(Pad::new).collect();
 

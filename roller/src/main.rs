@@ -63,7 +63,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         state.pad_events(),
     );
     midi_controller
-        .set_pad_colors(current_pad_states.clone().into_iter())
+        .set_pad_colors(current_pad_states.clone())
         .await;
 
     let ticks = utils::tick_stream(Duration::from_millis(1000 / 40)).map(|()| Event::Tick);
@@ -75,7 +75,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         match event {
             Event::Tick => {
                 state.update_fixtures(&mut fixtures);
-                let dmx_data = fixture::fold_fixture_dmx_data(fixtures.iter());
+                let dmx_data = fixture::fold_fixture_dmx_data(&fixtures);
                 dmx_sender.send((10, dmx_data)).await;
 
                 let new_pad_states = pad_states(

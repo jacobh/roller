@@ -418,7 +418,7 @@ impl MidiController {
         self.send_packet(vec![0x90, u8::from(note), pad_color.as_byte()])
             .await
     }
-    pub async fn set_pad_colors(&self, pad_colors: impl Iterator<Item = (Note, AkaiPadState)>) {
+    pub async fn set_pad_colors(&self, pad_colors: impl IntoIterator<Item = (Note, AkaiPadState)>) {
         for (note, pad_color) in pad_colors {
             self.set_pad_color(note, pad_color).await
         }
