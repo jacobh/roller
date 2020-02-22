@@ -8,7 +8,7 @@ use crate::{
     color::Color,
     control::{
         button::{ButtonAction, ButtonMapping, ButtonType, PadEvent, ToggleState},
-        midi::NoteState,
+        midi::{NoteState, MidiMapping},
     },
     effect::{self, ColorEffect, DimmerEffect},
     fixture::Fixture,
@@ -45,7 +45,8 @@ pub enum LightingEvent {
     TapTempo(Instant),
 }
 
-pub struct EngineState {
+pub struct EngineState<'a> {
+    pub midi_mapping: &'a MidiMapping,
     pub clock: Clock,
     pub master_dimmer: f64,
     pub group_dimmers: FxHashMap<FixtureGroupId, f64>,
@@ -55,7 +56,7 @@ pub struct EngineState {
     pub active_scene_id: SceneId,
     pub scene_button_states: FxHashMap<SceneId, ButtonStateMap>,
 }
-impl EngineState {
+impl<'a> EngineState<'a> {
     pub fn button_states(&self) -> &ButtonStateMap {
         self.scene_button_states
             .get(&self.active_scene_id)

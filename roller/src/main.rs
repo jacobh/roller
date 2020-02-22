@@ -21,7 +21,10 @@ async fn main() -> Result<(), async_std::io::Error> {
     let project = project::Project::load("./roller_project.toml").await?;
     let mut fixtures = project.fixtures().await?;
 
+    let midi_controller = control::midi::MidiController::new_for_device_name("APC MINI").unwrap();
+
     let mut state = EngineState {
+        midi_mapping: &midi_controller.midi_mapping,
         clock: Clock::new(128.0),
         master_dimmer: 1.0,
         group_dimmers: FxHashMap::default(),
@@ -55,9 +58,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         Lighting(LightingEvent),
     }
 
-    let midi_controller = control::midi::MidiController::new_for_device_name("APC MINI").unwrap();
     midi_controller.run_pad_startup().await;
-
     let mut current_pad_states = pad_states(
         midi_controller.midi_mapping.pad_mappings().collect(),
         state.pad_events(),
