@@ -14,7 +14,7 @@ mod project;
 mod utils;
 
 use crate::clock::Clock;
-use crate::control::button::pad_states;
+use crate::control::button::{pad_states, PadEvent};
 use crate::lighting_engine::{EngineState, LightingEvent, SceneId};
 use crate::utils::FxIndexMap;
 
@@ -60,11 +60,11 @@ async fn main() -> Result<(), async_std::io::Error> {
     let midi_controller = control::midi::MidiController::new_for_device_name("APC MINI").unwrap();
     let mut current_pad_states = pad_states(
         midi_controller.midi_mapping.buttons().collect(),
-        state.button_states(),
+        state.button_states().iter().map(PadEvent::from),
     );
     current_pad_states.extend(pad_states(
         midi_controller.midi_mapping.meta_buttons().collect(),
-        &FxIndexMap::default(),
+        std::iter::empty(),
     ));
 
     for i in 0..64 {
@@ -93,11 +93,11 @@ async fn main() -> Result<(), async_std::io::Error> {
 
                 let mut new_pad_states = pad_states(
                     midi_controller.midi_mapping.buttons().collect(),
-                    state.button_states(),
+                    state.button_states().iter().map(PadEvent::from),
                 );
                 new_pad_states.extend(pad_states(
                     midi_controller.midi_mapping.meta_buttons().collect(),
-                    &FxIndexMap::default(),
+                    std::iter::empty(),
                 ));
 
                 // find the pads that have updated since the last tick

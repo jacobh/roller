@@ -110,7 +110,7 @@ impl AkaiPadState {
     }
 }
 
-pub trait PadMapping {
+pub trait PadMapping: std::hash::Hash + Eq {
     fn note(&self) -> Note;
     fn group_id(&self) -> Option<ButtonGroupId>;
     fn button_type(&self) -> ButtonType;
@@ -148,12 +148,39 @@ impl PadMapping for MetaButtonMapping {
     }
 }
 
-pub fn pad_states<T>(
+pub struct PadEvent<'a, T>
+where
+    T: PadMapping,
+{
+    mapping: &'a T,
+    note_state: NoteState,
+    toggle_state: ToggleState,
+}
+
+// convert from an item in the `ButtonStateMap` hashmap
+impl<'a> From<(&'a (ButtonMapping, NoteState), &'a (ToggleState, Instant))>
+    for PadEvent<'a, ButtonMapping>
+{
+    fn from(
+        ((mapping, note_state), (toggle_state, _)): (
+            &'a (ButtonMapping, NoteState),
+            &'a (ToggleState, Instant),
+        ),
+    ) -> PadEvent<'a, ButtonMapping> {
+        PadEvent {
+            mapping,
+            note_state: *note_state,
+            toggle_state: *toggle_state,
+        }
+    }
+}
+
+pub fn pad_states<'a, T>(
     all_pads: Vec<&T>,
-    pad_states: &FxIndexMap<(T, NoteState), (ToggleState, Instant)>,
+    pad_events: impl Iterator<Item = PadEvent<'a, T>>,
 ) -> FxHashMap<Note, AkaiPadState>
 where
-    T: PadMapping + std::hash::Hash + Eq,
+    T: 'a + PadMapping,
 {
     let mut state: FxHashMap<_, _> = all_pads
         .iter()
@@ -172,7 +199,12 @@ where
         .map(|group_id| (*group_id, Vec::new()))
         .collect();
 
-    for ((mapping, note_state), (toggle_state, _)) in pad_states.iter() {
+    for PadEvent {
+        mapping,
+        note_state,
+        toggle_state,
+    } in pad_events
+    {
         match mapping.button_type() {
             ButtonType::Flash => {
                 // TODO groups
