@@ -60,7 +60,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     let midi_controller = control::midi::MidiController::new_for_device_name("APC MINI").unwrap();
     let mut current_pad_states = pad_states(
         midi_controller.midi_mapping.pad_mappings().collect(),
-        state.button_states().iter().map(PadEvent::from),
+        state.pad_events(),
     );
 
     for i in 0..64 {
@@ -89,7 +89,7 @@ async fn main() -> Result<(), async_std::io::Error> {
 
                 let new_pad_states = pad_states(
                     midi_controller.midi_mapping.pad_mappings().collect(),
-                    state.button_states().iter().map(PadEvent::from),
+                    state.pad_events(),
                 );
 
                 // find the pads that have updated since the last tick
