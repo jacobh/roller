@@ -110,26 +110,20 @@ impl AkaiPadState {
     }
 }
 
-pub struct Pad<'a, T>
-where
-    T: PadMapping,
-{
-    mapping: &'a T,
+pub struct Pad<'a> {
+    mapping: PadMapping<'a>,
     state: AkaiPadState,
     active_group_notes: Vec<Note>,
 }
-impl<'a, T> Pad<'a, T>
-where
-    T: PadMapping,
-{
-    fn new(mapping: &'a T) -> Pad<'a, T> {
+impl<'a> Pad<'a> {
+    fn new(mapping: PadMapping<'a>) -> Pad<'a> {
         Pad {
             mapping,
             state: AkaiPadState::Yellow,
             active_group_notes: Vec::new(),
         }
     }
-    fn apply_event(&mut self, event: &PadEvent<'a, T>) {
+    fn apply_event(&mut self, event: &PadEvent<'a>) {
         let group_id_match =
             ButtonGroupIdMatch::match_(event.mapping.group_id(), self.mapping.group_id());
         // If this event isn't for the current mapping or a mapping in this group, short circuit
@@ -228,79 +222,83 @@ impl ButtonGroupIdMatch {
     }
 }
 
-pub trait PadMapping: std::hash::Hash + Eq {
-    fn note(&self) -> Note;
-    fn group_id(&self) -> Option<ButtonGroupId>;
-    fn button_type(&self) -> ButtonType;
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum PadMapping<'a> {
+    Standard(&'a ButtonMapping),
+    Meta(&'a MetaButtonMapping),
 }
-
-impl PadMapping for ButtonMapping {
+impl<'a> PadMapping<'a> {
     fn note(&self) -> Note {
-        self.note
+        match self {
+            PadMapping::Standard(mapping) => mapping.note,
+            PadMapping::Meta(mapping) => mapping.note,
+        }
     }
     fn group_id(&self) -> Option<ButtonGroupId> {
-        self.group_id
-    }
-    fn button_type(&self) -> ButtonType {
-        self.button_type
-    }
-}
-
-impl PadMapping for MetaButtonMapping {
-    fn note(&self) -> Note {
-        self.note
-    }
-    fn group_id(&self) -> Option<ButtonGroupId> {
-        match self.on_action {
-            MetaButtonAction::TapTempo => None,
-            MetaButtonAction::UpdateGlobalSpeedMultiplier(_) => Some(ButtonGroupId::new(1)),
-            MetaButtonAction::ActivateScene(_) => Some(ButtonGroupId::new(2)),
+        match self {
+            PadMapping::Standard(mapping) => mapping.group_id,
+            PadMapping::Meta(mapping) => match mapping.on_action {
+                MetaButtonAction::TapTempo => None,
+                MetaButtonAction::UpdateGlobalSpeedMultiplier(_) => {
+                    Some(ButtonGroupId::new(100001))
+                }
+                MetaButtonAction::ActivateScene(_) => Some(ButtonGroupId::new(100002)),
+            },
         }
     }
     fn button_type(&self) -> ButtonType {
-        match self.on_action {
-            MetaButtonAction::TapTempo => ButtonType::Flash,
-            MetaButtonAction::UpdateGlobalSpeedMultiplier(_) => ButtonType::Switch,
-            MetaButtonAction::ActivateScene(_) => ButtonType::Switch,
+        match self {
+            PadMapping::Standard(mapping) => mapping.button_type,
+            PadMapping::Meta(mapping) => match mapping.on_action {
+                MetaButtonAction::TapTempo => ButtonType::Flash,
+                MetaButtonAction::UpdateGlobalSpeedMultiplier(_) => ButtonType::Switch,
+                MetaButtonAction::ActivateScene(_) => ButtonType::Switch,
+            },
         }
     }
 }
 
-pub struct PadEvent<'a, T>
-where
-    T: PadMapping,
-{
-    mapping: &'a T,
+impl<'a> From<&'a ButtonMapping> for PadMapping<'a> {
+    fn from(mapping: &'a ButtonMapping) -> PadMapping<'a> {
+        PadMapping::Standard(mapping)
+    }
+}
+impl<'a> From<&'a MetaButtonMapping> for PadMapping<'a> {
+    fn from(mapping: &'a MetaButtonMapping) -> PadMapping<'a> {
+        PadMapping::Meta(mapping)
+    }
+}
+
+pub struct PadEvent<'a> {
+    mapping: PadMapping<'a>,
     note_state: NoteState,
     toggle_state: ToggleState,
 }
 
 // convert from an item in the `ButtonStateMap` hashmap
-impl<'a> From<(&'a (ButtonMapping, NoteState), &'a (ToggleState, Instant))>
-    for PadEvent<'a, ButtonMapping>
-{
+impl<'a> From<(&'a (ButtonMapping, NoteState), &'a (ToggleState, Instant))> for PadEvent<'a> {
     fn from(
         ((mapping, note_state), (toggle_state, _)): (
             &'a (ButtonMapping, NoteState),
             &'a (ToggleState, Instant),
         ),
-    ) -> PadEvent<'a, ButtonMapping> {
+    ) -> PadEvent<'a> {
         PadEvent {
-            mapping,
+            mapping: PadMapping::Standard(mapping),
             note_state: *note_state,
             toggle_state: *toggle_state,
         }
     }
 }
 
-pub fn pad_states<'a, T>(
-    all_pads: Vec<&T>,
-    pad_events: impl Iterator<Item = PadEvent<'a, T>>,
-) -> FxHashMap<Note, AkaiPadState>
-where
-    T: 'a + PadMapping,
-{
-    let mut state: Vec<_> = all_pads.iter().map(|mapping| Pad::new(*mapping)).collect();
+pub fn pad_states<'a>(
+    all_pads: Vec<PadMapping<'a>>,
+    pad_events: impl Iterator<Item = PadEvent<'a>>,
+) -> FxHashMap<Note, AkaiPadState> {
+    let mut state: Vec<_> = all_pads
+        .into_iter()
+        .map(|mapping| Pad::new(mapping))
+        .collect();
 
     for event in pad_events {
         for pad in state.iter_mut() {

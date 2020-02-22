@@ -9,7 +9,7 @@ use crate::{
     control::{
         button::{
             AkaiPadState, ButtonAction, ButtonGroupId, ButtonMapping, ButtonType, MetaButtonAction,
-            MetaButtonMapping,
+            MetaButtonMapping, PadMapping,
         },
         fader::{FaderCurve, FaderType, MidiFaderMapping},
     },
@@ -76,11 +76,11 @@ impl MidiMapping {
             MidiEvent::Other(_) => None,
         }
     }
-    pub fn buttons(&self) -> impl Iterator<Item = &ButtonMapping> {
-        self.buttons.values()
-    }
-    pub fn meta_buttons(&self) -> impl Iterator<Item = &MetaButtonMapping> {
-        self.meta_buttons.values()
+    pub fn pad_mappings<'a>(&'a self) -> impl Iterator<Item = PadMapping<'a>> {
+        self.buttons
+            .values()
+            .map(PadMapping::from)
+            .chain(self.meta_buttons.values().map(PadMapping::from))
     }
 }
 
