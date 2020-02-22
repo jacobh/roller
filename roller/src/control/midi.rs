@@ -418,9 +418,22 @@ impl MidiController {
         self.send_packet(vec![0x90, u8::from(note), pad_color.as_byte()])
             .await
     }
+    pub async fn set_pad_colors(&self, pad_colors: impl Iterator<Item = (Note, AkaiPadState)>) {
+        for (note, pad_color) in pad_colors {
+            self.set_pad_color(note, pad_color).await
+        }
+    }
     pub async fn reset_pads(&self) {
         for i in 0..64 {
             self.set_pad_color(Note::new(i), AkaiPadState::Off).await;
         }
+    }
+    pub async fn run_pad_startup(&self) {
+        for i in 0..64 {
+            self.set_pad_color(Note::new(i), AkaiPadState::Green).await;
+            async_std::task::sleep(Duration::from_millis(10)).await;
+        }
+        async_std::task::sleep(Duration::from_millis(150)).await;
+        self.reset_pads().await;
     }
 }

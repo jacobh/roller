@@ -1,6 +1,5 @@
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
-use midi::Note;
 use rustc_hash::FxHashMap;
 use std::time::Duration;
 
@@ -57,22 +56,15 @@ async fn main() -> Result<(), async_std::io::Error> {
     }
 
     let midi_controller = control::midi::MidiController::new_for_device_name("APC MINI").unwrap();
+    midi_controller.run_pad_startup().await;
+
     let mut current_pad_states = pad_states(
         midi_controller.midi_mapping.pad_mappings().collect(),
         state.pad_events(),
     );
-
-    for i in 0..64 {
-        midi_controller
-            .set_pad_color(Note::new(i), control::button::AkaiPadState::Green)
-            .await;
-        async_std::task::sleep(Duration::from_millis(10)).await;
-    }
-    async_std::task::sleep(Duration::from_millis(150)).await;
-    midi_controller.reset_pads().await;
-    for (note, pad_state) in current_pad_states.iter() {
-        midi_controller.set_pad_color(*note, *pad_state).await;
-    }
+    midi_controller
+        .set_pad_colors(current_pad_states.clone().into_iter())
+        .await;
 
     let ticks = utils::tick_stream(Duration::from_millis(1000 / 40)).map(|()| Event::Tick);
     let lighting_events = midi_controller.lighting_events().map(Event::Lighting);
@@ -91,18 +83,20 @@ async fn main() -> Result<(), async_std::io::Error> {
                     state.pad_events(),
                 );
 
-                // find the pads that have updated since the last tick
-                let pad_changeset = new_pad_states.iter().filter(|(note, state)| {
-                    current_pad_states
-                        .get(note)
-                        .map(|prev_state| state != &prev_state)
-                        .unwrap_or(true)
-                });
-
-                for (note, state) in pad_changeset {
-                    // dbg!("SETTING PAD COLOR", note, state);
-                    midi_controller.set_pad_color(*note, *state).await;
-                }
+                midi_controller
+                    .set_pad_colors(
+                        // find the pads that have updated since the last tick
+                        new_pad_states
+                            .iter()
+                            .filter(|(note, state)| {
+                                current_pad_states
+                                    .get(note)
+                                    .map(|prev_state| state != &prev_state)
+                                    .unwrap_or(true)
+                            })
+                            .map(|(note, state)| (*note, *state)),
+                    )
+                    .await;
 
                 current_pad_states = new_pad_states;
             }
