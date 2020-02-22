@@ -139,8 +139,8 @@ impl<'a> Pad<'a> {
             ButtonType::Flash => {
                 if event.mapping == self.mapping {
                     self.state = match event.note_state {
-                        NoteState::On => AkaiPadState::Green,
-                        NoteState::Off => AkaiPadState::Yellow,
+                        NoteState::On => self.mapping.active_color(),
+                        NoteState::Off => self.mapping.inactive_color(),
                     }
                 }
             }
@@ -149,11 +149,11 @@ impl<'a> Pad<'a> {
                 if event.mapping == self.mapping {
                     self.state = match event.note_state {
                         NoteState::On => match event.toggle_state {
-                            ToggleState::On => AkaiPadState::Green,
-                            ToggleState::Off => AkaiPadState::Red,
+                            ToggleState::On => self.mapping.active_color(),
+                            ToggleState::Off => self.mapping.deactivated_color(),
                         },
                         NoteState::Off => match event.toggle_state {
-                            ToggleState::On => AkaiPadState::Green,
+                            ToggleState::On => self.mapping.active_color(),
                             ToggleState::Off => AkaiPadState::Yellow,
                         },
                     }
@@ -162,14 +162,14 @@ impl<'a> Pad<'a> {
             ButtonType::Switch => match event.note_state {
                 NoteState::On => {
                     if event.mapping == self.mapping {
-                        self.state = AkaiPadState::Green;
+                        self.state = self.mapping.active_color();
                     }
 
                     if group_id_match.is_match() {
                         self.active_group_notes.push(event.mapping.note());
 
                         if !self.active_group_notes.contains(&self.mapping.note()) {
-                            self.state = AkaiPadState::Red;
+                            self.state = self.mapping.deactivated_color();
                         }
                     }
                 }
@@ -188,10 +188,10 @@ impl<'a> Pad<'a> {
                             if self.active_group_notes.is_empty() {
                                 // leave as green
                             } else {
-                                self.state = AkaiPadState::Red;
+                                self.state = self.mapping.deactivated_color();
                             }
                         } else if self.active_group_notes.is_empty() {
-                            self.state = AkaiPadState::Yellow;
+                            self.state = self.mapping.inactive_color();
                         }
                     }
                 }
@@ -259,6 +259,24 @@ impl<'a> PadMapping<'a> {
                 MetaButtonAction::UpdateGlobalSpeedMultiplier(_) => ButtonType::Switch,
                 MetaButtonAction::ActivateScene(_) => ButtonType::Switch,
             },
+        }
+    }
+    fn active_color(&self) -> AkaiPadState {
+        match self {
+            PadMapping::Standard(_) => AkaiPadState::Green,
+            PadMapping::Meta(_) => AkaiPadState::GreenBlink,
+        }
+    }
+    fn inactive_color(&self) -> AkaiPadState {
+        match self {
+            PadMapping::Standard(_) => AkaiPadState::Yellow,
+            PadMapping::Meta(_) => AkaiPadState::Yellow,
+        }
+    }
+    fn deactivated_color(&self) -> AkaiPadState {
+        match self {
+            PadMapping::Standard(_) => AkaiPadState::Red,
+            PadMapping::Meta(_) => AkaiPadState::Red,
         }
     }
 }
