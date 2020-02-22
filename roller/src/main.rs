@@ -58,7 +58,10 @@ async fn main() -> Result<(), async_std::io::Error> {
     }
 
     let midi_controller = control::midi::MidiController::new_for_device_name("APC MINI").unwrap();
-    let mut current_pad_states = pad_states(&midi_controller.midi_mapping, state.button_states());
+    let mut current_pad_states = pad_states(
+        midi_controller.midi_mapping.buttons().collect(),
+        state.button_states(),
+    );
 
     for i in 0..64 {
         midi_controller
@@ -84,8 +87,10 @@ async fn main() -> Result<(), async_std::io::Error> {
                 let dmx_data = fixture::fold_fixture_dmx_data(fixtures.iter());
                 dmx_sender.send((10, dmx_data)).await;
 
-                let new_pad_states =
-                    pad_states(&midi_controller.midi_mapping, state.button_states());
+                let new_pad_states = pad_states(
+                    midi_controller.midi_mapping.buttons().collect(),
+                    state.button_states(),
+                );
 
                 // find the pads that have updated since the last tick
                 let pad_changeset = new_pad_states.iter().filter(|(note, state)| {

@@ -76,11 +76,8 @@ impl MidiMapping {
             MidiEvent::Other(_) => None,
         }
     }
-    pub fn initial_pad_states(&self) -> FxHashMap<Note, AkaiPadState> {
-        self.buttons
-            .keys()
-            .map(|note| (*note, AkaiPadState::Yellow))
-            .collect()
+    pub fn buttons(&self) -> impl Iterator<Item = &ButtonMapping> {
+        self.buttons.values()
     }
 }
 

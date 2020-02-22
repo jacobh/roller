@@ -111,13 +111,16 @@ impl AkaiPadState {
 }
 
 pub fn pad_states(
-    midi_mapping: &MidiMapping,
+    all_buttons: Vec<&ButtonMapping>,
     button_states: &FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)>,
 ) -> FxHashMap<Note, AkaiPadState> {
-    let mut state = midi_mapping.initial_pad_states();
+    let mut state: FxHashMap<_, _> = all_buttons
+        .iter()
+        .map(|mapping| (mapping.note, AkaiPadState::Yellow))
+        .collect();
 
     let mut group_notes: FxHashMap<ButtonGroupId, Vec<Note>> = FxHashMap::default();
-    for button in midi_mapping.buttons.values() {
+    for button in all_buttons.iter() {
         if let Some(group_id) = button.group_id {
             group_notes.entry(group_id).or_default().push(button.note);
         }
