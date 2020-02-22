@@ -281,6 +281,26 @@ impl MidiController {
                             Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
                         )),
                     },
+                    ButtonMapping {
+                        note: Note::new(53),
+                        button_type: ButtonType::Toggle,
+                        group_id: None,
+                        on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
+                            vec![
+                                DimmerModulator::new(
+                                    Waveform::ShortSquarePulse,
+                                    Beats::new(1.0),
+                                    1.0,
+                                ),
+                                DimmerModulator::new(
+                                    Waveform::SineUp,
+                                    Beats::new(1.0),
+                                    1.0,
+                                ),
+                            ],
+                            Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
+                        )),
+                    },
                     // Color effects
                     ButtonMapping {
                         note: Note::new(58),
