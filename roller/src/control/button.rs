@@ -279,6 +279,24 @@ pub struct PadEvent<'a> {
     note_state: NoteState,
     toggle_state: ToggleState,
 }
+impl<'a> PadEvent<'a> {
+    pub fn new<T>(mapping: &'a T, note_state: NoteState, toggle_state: ToggleState) -> PadEvent<'a>
+    where
+        &'a T: Into<PadMapping<'a>>,
+    {
+        PadEvent {
+            mapping: mapping.into(),
+            note_state,
+            toggle_state,
+        }
+    }
+    pub fn new_on<T>(mapping: &'a T) -> PadEvent<'a>
+    where
+        &'a T: Into<PadMapping<'a>>,
+    {
+        PadEvent::new(mapping, NoteState::On, ToggleState::On)
+    }
+}
 
 // convert from an item in the `ButtonStateMap` hashmap
 impl<'a> From<(&'a (ButtonMapping, NoteState), &'a (ToggleState, Instant))> for PadEvent<'a> {

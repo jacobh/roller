@@ -1,5 +1,6 @@
 use derive_more::Constructor;
 use midi::Note;
+use ordered_float::OrderedFloat;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 
@@ -7,8 +8,10 @@ use crate::{
     clock::Clock,
     color::Color,
     control::{
-        button::{ButtonAction, ButtonMapping, ButtonType, PadEvent, ToggleState},
-        midi::{NoteState, MidiMapping},
+        button::{
+            ButtonAction, ButtonMapping, ButtonType, MetaButtonAction, PadEvent, ToggleState,
+        },
+        midi::{MidiMapping, NoteState},
     },
     effect::{self, ColorEffect, DimmerEffect},
     fixture::Fixture,
@@ -256,7 +259,44 @@ impl<'a> EngineState<'a> {
             fixture.set_color(color).unwrap();
         }
     }
+    fn meta_pad_events(&self) -> impl Iterator<Item = PadEvent<'_>> {
+        let active_scene_button = self
+            .midi_mapping
+            .meta_buttons
+            .values()
+            .find(|button| {
+                if let MetaButtonAction::ActivateScene(scene_id) = button.on_action {
+                    self.active_scene_id == scene_id
+                } else {
+                    false
+                }
+            })
+            .unwrap();
+
+        let active_time_multiplier_button = self
+            .midi_mapping
+            .meta_buttons
+            .values()
+            .find(|button| {
+                if let MetaButtonAction::UpdateGlobalSpeedMultiplier(multiplier) = button.on_action
+                {
+                    multiplier == OrderedFloat::from(self.global_speed_multiplier)
+                } else {
+                    false
+                }
+            })
+            .unwrap();
+
+        vec![
+            PadEvent::new_on(active_scene_button),
+            PadEvent::new_on(active_time_multiplier_button),
+        ]
+        .into_iter()
+    }
     pub fn pad_events(&self) -> impl Iterator<Item = PadEvent<'_>> {
-        self.button_states().iter().map(PadEvent::from)
+        self.button_states()
+            .iter()
+            .map(PadEvent::from)
+            .chain(self.meta_pad_events())
     }
 }
