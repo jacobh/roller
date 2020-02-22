@@ -265,11 +265,7 @@ impl<'a> EngineState<'a> {
             .meta_buttons
             .values()
             .find(|button| {
-                if let MetaButtonAction::ActivateScene(scene_id) = button.on_action {
-                    self.active_scene_id == scene_id
-                } else {
-                    false
-                }
+                button.on_action == MetaButtonAction::ActivateScene(self.active_scene_id)
             })
             .unwrap();
 
@@ -278,12 +274,10 @@ impl<'a> EngineState<'a> {
             .meta_buttons
             .values()
             .find(|button| {
-                if let MetaButtonAction::UpdateGlobalSpeedMultiplier(multiplier) = button.on_action
-                {
-                    multiplier == OrderedFloat::from(self.global_speed_multiplier)
-                } else {
-                    false
-                }
+                button.on_action
+                    == MetaButtonAction::UpdateGlobalSpeedMultiplier(OrderedFloat::from(
+                        self.global_speed_multiplier,
+                    ))
             })
             .unwrap();
 
