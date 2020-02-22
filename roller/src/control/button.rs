@@ -131,7 +131,7 @@ impl<'a> Pad<'a> {
             return;
         }
 
-        match self.mapping.button_type() {
+        match event.mapping.button_type() {
             ButtonType::Flash => {
                 if event.mapping == self.mapping {
                     self.state = match event.note_state {
@@ -170,11 +170,6 @@ impl<'a> Pad<'a> {
                     }
                 }
                 NoteState::Off => {
-                    // TODO not required?
-                    if event.mapping == self.mapping {
-                        self.state = AkaiPadState::Green;
-                    }
-
                     if group_id_match.is_match() {
                         let pad_idx = self
                             .active_group_notes
@@ -185,7 +180,13 @@ impl<'a> Pad<'a> {
                             self.active_group_notes.remove(pad_idx);
                         }
 
-                        if self.active_group_notes.is_empty() && event.mapping != self.mapping {
+                        if event.mapping == self.mapping {
+                            if self.active_group_notes.is_empty() {
+                                // leave as green
+                            } else {
+                                self.state = AkaiPadState::Red;
+                            }
+                        } else if self.active_group_notes.is_empty() {
                             self.state = AkaiPadState::Yellow;
                         }
                     }
