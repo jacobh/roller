@@ -7,7 +7,7 @@ use std::time::Instant;
 
 use crate::{
     color::Color,
-    control::midi::{MidiMapping, NoteState},
+    control::midi::NoteState,
     effect::{ColorEffect, DimmerEffect},
     lighting_engine::{LightingEvent, SceneId},
     utils::FxIndexMap,
@@ -38,7 +38,7 @@ pub enum ButtonAction {
     ActivateColorEffect(ColorEffect),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ButtonType {
     // Once enabled, this button, or a button in its group, must stay on)
     Switch,
@@ -110,33 +110,74 @@ impl AkaiPadState {
     }
 }
 
-pub fn pad_states(
-    all_buttons: Vec<&ButtonMapping>,
-    button_states: &FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)>,
-) -> FxHashMap<Note, AkaiPadState> {
-    let mut state: FxHashMap<_, _> = all_buttons
+pub trait PadMapping {
+    fn note(&self) -> Note;
+    fn group_id(&self) -> Option<ButtonGroupId>;
+    fn button_type(&self) -> ButtonType;
+}
+
+impl PadMapping for ButtonMapping {
+    fn note(&self) -> Note {
+        self.note
+    }
+    fn group_id(&self) -> Option<ButtonGroupId> {
+        self.group_id
+    }
+    fn button_type(&self) -> ButtonType {
+        self.button_type
+    }
+}
+
+impl PadMapping for MetaButtonMapping {
+    fn note(&self) -> Note {
+        self.note
+    }
+    fn group_id(&self) -> Option<ButtonGroupId> {
+        match self.on_action {
+            MetaButtonAction::TapTempo => None,
+            MetaButtonAction::UpdateGlobalSpeedMultiplier(_) => Some(ButtonGroupId::new(1)),
+            MetaButtonAction::ActivateScene(_) => Some(ButtonGroupId::new(2)),
+        }
+    }
+    fn button_type(&self) -> ButtonType {
+        match self.on_action {
+            MetaButtonAction::TapTempo => ButtonType::Flash,
+            MetaButtonAction::UpdateGlobalSpeedMultiplier(_) => ButtonType::Switch,
+            MetaButtonAction::ActivateScene(_) => ButtonType::Switch,
+        }
+    }
+}
+
+pub fn pad_states<T>(
+    all_pads: Vec<&T>,
+    pad_states: &FxIndexMap<(T, NoteState), (ToggleState, Instant)>,
+) -> FxHashMap<Note, AkaiPadState>
+where
+    T: PadMapping + std::hash::Hash + Eq,
+{
+    let mut state: FxHashMap<_, _> = all_pads
         .iter()
-        .map(|mapping| (mapping.note, AkaiPadState::Yellow))
+        .map(|mapping| (mapping.note(), AkaiPadState::Yellow))
         .collect();
 
     let mut group_notes: FxHashMap<ButtonGroupId, Vec<Note>> = FxHashMap::default();
-    for button in all_buttons.iter() {
-        if let Some(group_id) = button.group_id {
-            group_notes.entry(group_id).or_default().push(button.note);
+    for pad in all_pads.iter() {
+        if let Some(group_id) = pad.group_id() {
+            group_notes.entry(group_id).or_default().push(pad.note());
         }
     }
 
-    let mut active_group_buttons: FxHashMap<ButtonGroupId, Vec<Note>> = group_notes
+    let mut active_group_pads: FxHashMap<ButtonGroupId, Vec<Note>> = group_notes
         .keys()
         .map(|group_id| (*group_id, Vec::new()))
         .collect();
 
-    for ((mapping, note_state), (toggle_state, _)) in button_states.iter() {
-        match mapping.button_type {
+    for ((mapping, note_state), (toggle_state, _)) in pad_states.iter() {
+        match mapping.button_type() {
             ButtonType::Flash => {
                 // TODO groups
                 state.insert(
-                    mapping.note,
+                    mapping.note(),
                     match note_state {
                         NoteState::On => AkaiPadState::Green,
                         NoteState::Off => AkaiPadState::Yellow,
@@ -146,7 +187,7 @@ pub fn pad_states(
             ButtonType::Toggle => {
                 // TODO groups
                 state.insert(
-                    mapping.note,
+                    mapping.note(),
                     match note_state {
                         NoteState::On => match toggle_state {
                             ToggleState::On => AkaiPadState::Green,
@@ -161,15 +202,15 @@ pub fn pad_states(
             }
             ButtonType::Switch => match note_state {
                 NoteState::On => {
-                    state.insert(mapping.note, AkaiPadState::Green);
+                    state.insert(mapping.note(), AkaiPadState::Green);
 
-                    if let Some(group_id) = mapping.group_id {
-                        let active_group_buttons = active_group_buttons.get_mut(&group_id).unwrap();
-                        active_group_buttons.push(mapping.note);
+                    if let Some(group_id) = mapping.group_id() {
+                        let active_group_pads = active_group_pads.get_mut(&group_id).unwrap();
+                        active_group_pads.push(mapping.note());
 
-                        if active_group_buttons.len() == 1 {
+                        if active_group_pads.len() == 1 {
                             for note in group_notes[&group_id].iter() {
-                                if *note != mapping.note {
+                                if *note != mapping.note() {
                                     state.insert(*note, AkaiPadState::Red);
                                 }
                             }
@@ -177,25 +218,25 @@ pub fn pad_states(
                     }
                 }
                 NoteState::Off => {
-                    state.insert(mapping.note, AkaiPadState::Green);
-                    if let Some(group_id) = mapping.group_id {
-                        let active_group_buttons = active_group_buttons.get_mut(&group_id).unwrap();
+                    state.insert(mapping.note(), AkaiPadState::Green);
+                    if let Some(group_id) = mapping.group_id() {
+                        let active_group_pads = active_group_pads.get_mut(&group_id).unwrap();
 
-                        let button_idx = active_group_buttons
+                        let pad_idx = active_group_pads
                             .iter()
-                            .position(|note| *note == mapping.note);
-                        if let Some(button_idx) = button_idx {
-                            active_group_buttons.remove(button_idx);
+                            .position(|note| *note == mapping.note());
+                        if let Some(pad_idx) = pad_idx {
+                            active_group_pads.remove(pad_idx);
                         }
 
-                        if active_group_buttons.is_empty() {
+                        if active_group_pads.is_empty() {
                             for note in group_notes[&group_id].iter() {
-                                if *note != mapping.note {
+                                if *note != mapping.note() {
                                     state.insert(*note, AkaiPadState::Yellow);
                                 }
                             }
                         } else {
-                            state.insert(mapping.note, AkaiPadState::Red);
+                            state.insert(mapping.note(), AkaiPadState::Red);
                         }
                     }
                 }
