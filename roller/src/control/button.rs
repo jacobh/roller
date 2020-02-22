@@ -110,6 +110,124 @@ impl AkaiPadState {
     }
 }
 
+pub struct Pad<'a, T>
+where
+    T: PadMapping,
+{
+    mapping: &'a T,
+    state: AkaiPadState,
+    active_group_notes: Vec<Note>,
+}
+impl<'a, T> Pad<'a, T>
+where
+    T: PadMapping,
+{
+    fn new(mapping: &'a T) -> Pad<'a, T> {
+        Pad {
+            mapping,
+            state: AkaiPadState::Yellow,
+            active_group_notes: Vec::new(),
+        }
+    }
+    fn apply_event(&mut self, event: &PadEvent<'a, T>) {
+        let group_id_match =
+            ButtonGroupIdMatch::match_(event.mapping.group_id(), self.mapping.group_id());
+        // If this event isn't for the current mapping or a mapping in this group, short circuit
+        if event.mapping != self.mapping && !group_id_match.is_match() {
+            return;
+        }
+
+        match self.mapping.button_type() {
+            ButtonType::Flash => {
+                if event.mapping == self.mapping {
+                    self.state = match event.note_state {
+                        NoteState::On => AkaiPadState::Green,
+                        NoteState::Off => AkaiPadState::Yellow,
+                    }
+                }
+            }
+            ButtonType::Toggle => {
+                // TODO groups
+                if event.mapping == self.mapping {
+                    self.state = match event.note_state {
+                        NoteState::On => match event.toggle_state {
+                            ToggleState::On => AkaiPadState::Green,
+                            ToggleState::Off => AkaiPadState::Red,
+                        },
+                        NoteState::Off => match event.toggle_state {
+                            ToggleState::On => AkaiPadState::Green,
+                            ToggleState::Off => AkaiPadState::Yellow,
+                        },
+                    }
+                }
+            }
+            ButtonType::Switch => match event.note_state {
+                NoteState::On => {
+                    if event.mapping == self.mapping {
+                        self.state = AkaiPadState::Green;
+                    }
+
+                    if group_id_match.is_match() {
+                        self.active_group_notes.push(event.mapping.note());
+
+                        if !self.active_group_notes.contains(&self.mapping.note()) {
+                            self.state = AkaiPadState::Red;
+                        }
+                    }
+                }
+                NoteState::Off => {
+                    // TODO not required?
+                    if event.mapping == self.mapping {
+                        self.state = AkaiPadState::Green;
+                    }
+
+                    if group_id_match.is_match() {
+                        let pad_idx = self
+                            .active_group_notes
+                            .iter()
+                            .position(|note| *note == event.mapping.note());
+
+                        if let Some(pad_idx) = pad_idx {
+                            self.active_group_notes.remove(pad_idx);
+                        }
+
+                        if self.active_group_notes.is_empty() && event.mapping != self.mapping {
+                            self.state = AkaiPadState::Yellow;
+                        }
+                    }
+                }
+            },
+        }
+    }
+}
+
+enum ButtonGroupIdMatch {
+    MatchingGroupId(ButtonGroupId),
+    NoGroupId,
+    ConflictingGroupIds,
+}
+impl ButtonGroupIdMatch {
+    fn match_(a: Option<ButtonGroupId>, b: Option<ButtonGroupId>) -> ButtonGroupIdMatch {
+        match (a, b) {
+            (Some(a), Some(b)) => {
+                if a == b {
+                    ButtonGroupIdMatch::MatchingGroupId(a)
+                } else {
+                    ButtonGroupIdMatch::ConflictingGroupIds
+                }
+            }
+            (Some(_), None) | (None, Some(_)) => ButtonGroupIdMatch::ConflictingGroupIds,
+            (None, None) => ButtonGroupIdMatch::NoGroupId,
+        }
+    }
+    fn is_match(&self) -> bool {
+        match self {
+            ButtonGroupIdMatch::MatchingGroupId(_) => true,
+            _ => false,
+        }
+    }
+}
+
 pub trait PadMapping: std::hash::Hash + Eq {
     fn note(&self) -> Note;
     fn group_id(&self) -> Option<ButtonGroupId>;
@@ -182,99 +300,16 @@ pub fn pad_states<'a, T>(
 where
     T: 'a + PadMapping,
 {
-    let mut state: FxHashMap<_, _> = all_pads
-        .iter()
-        .map(|mapping| (mapping.note(), AkaiPadState::Yellow))
-        .collect();
+    let mut state: Vec<_> = all_pads.iter().map(|mapping| Pad::new(*mapping)).collect();
 
-    let mut group_notes: FxHashMap<ButtonGroupId, Vec<Note>> = FxHashMap::default();
-    for pad in all_pads.iter() {
-        if let Some(group_id) = pad.group_id() {
-            group_notes.entry(group_id).or_default().push(pad.note());
-        }
-    }
-
-    let mut active_group_pads: FxHashMap<ButtonGroupId, Vec<Note>> = group_notes
-        .keys()
-        .map(|group_id| (*group_id, Vec::new()))
-        .collect();
-
-    for PadEvent {
-        mapping,
-        note_state,
-        toggle_state,
-    } in pad_events
-    {
-        match mapping.button_type() {
-            ButtonType::Flash => {
-                // TODO groups
-                state.insert(
-                    mapping.note(),
-                    match note_state {
-                        NoteState::On => AkaiPadState::Green,
-                        NoteState::Off => AkaiPadState::Yellow,
-                    },
-                );
-            }
-            ButtonType::Toggle => {
-                // TODO groups
-                state.insert(
-                    mapping.note(),
-                    match note_state {
-                        NoteState::On => match toggle_state {
-                            ToggleState::On => AkaiPadState::Green,
-                            ToggleState::Off => AkaiPadState::Red,
-                        },
-                        NoteState::Off => match toggle_state {
-                            ToggleState::On => AkaiPadState::Green,
-                            ToggleState::Off => AkaiPadState::Yellow,
-                        },
-                    },
-                );
-            }
-            ButtonType::Switch => match note_state {
-                NoteState::On => {
-                    state.insert(mapping.note(), AkaiPadState::Green);
-
-                    if let Some(group_id) = mapping.group_id() {
-                        let active_group_pads = active_group_pads.get_mut(&group_id).unwrap();
-                        active_group_pads.push(mapping.note());
-
-                        if active_group_pads.len() == 1 {
-                            for note in group_notes[&group_id].iter() {
-                                if *note != mapping.note() {
-                                    state.insert(*note, AkaiPadState::Red);
-                                }
-                            }
-                        }
-                    }
-                }
-                NoteState::Off => {
-                    state.insert(mapping.note(), AkaiPadState::Green);
-                    if let Some(group_id) = mapping.group_id() {
-                        let active_group_pads = active_group_pads.get_mut(&group_id).unwrap();
-
-                        let pad_idx = active_group_pads
-                            .iter()
-                            .position(|note| *note == mapping.note());
-                        if let Some(pad_idx) = pad_idx {
-                            active_group_pads.remove(pad_idx);
-                        }
-
-                        if active_group_pads.is_empty() {
-                            for note in group_notes[&group_id].iter() {
-                                if *note != mapping.note() {
-                                    state.insert(*note, AkaiPadState::Yellow);
-                                }
-                            }
-                        } else {
-                            state.insert(mapping.note(), AkaiPadState::Red);
-                        }
-                    }
-                }
-            },
+    for event in pad_events {
+        for pad in state.iter_mut() {
+            pad.apply_event(&event);
         }
     }
 
     state
+        .into_iter()
+        .map(|pad| (pad.mapping.note(), pad.state))
+        .collect()
 }
