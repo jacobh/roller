@@ -7,7 +7,7 @@ use crate::{
     clock::Clock,
     color::Color,
     control::{
-        button::{ButtonAction, ButtonMapping, ButtonType, ToggleState, PadEvent},
+        button::{ButtonAction, ButtonMapping, ButtonType, PadEvent, ToggleState},
         midi::NoteState,
     },
     effect::{self, ColorEffect, DimmerEffect},
@@ -255,7 +255,7 @@ impl EngineState {
             fixture.set_color(color).unwrap();
         }
     }
-    pub fn pad_events<'a>(&'a self) -> impl Iterator<Item=PadEvent<'a>> {
+    pub fn pad_events<'a>(&'a self) -> impl Iterator<Item = PadEvent<'a>> {
         self.button_states().iter().map(PadEvent::from)
     }
 }
