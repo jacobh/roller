@@ -240,10 +240,10 @@ impl EngineState {
                     self.color_effect_intensity,
                 );
 
-                let group_dimmer = *fixture
+                let group_dimmer = fixture
                     .group_id
-                    .and_then(|group_id| self.group_dimmers.get(&group_id))
-                    .unwrap_or(&1.0);
+                    .and_then(|group_id| self.group_dimmers.get(&group_id).map(|x| *x))
+                    .unwrap_or(1.0);
 
                 let dimmer = self.master_dimmer * group_dimmer * effect_dimmer;
                 (dimmer, color)
