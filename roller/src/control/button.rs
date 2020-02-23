@@ -313,11 +313,16 @@ impl<'a> PadEvent<'a> {
 }
 
 // convert from an item in the `ButtonStateMap` hashmap
-impl<'a> From<(&'a (ButtonMapping, NoteState), &'a (ToggleState, Instant))> for PadEvent<'a> {
+impl<'a>
+    From<(
+        &'a (ButtonMapping, NoteState),
+        &'a (ToggleState, Instant, Rate),
+    )> for PadEvent<'a>
+{
     fn from(
-        ((mapping, note_state), (toggle_state, _)): (
+        ((mapping, note_state), (toggle_state, _, _)): (
             &'a (ButtonMapping, NoteState),
-            &'a (ToggleState, Instant),
+            &'a (ToggleState, Instant, Rate),
         ),
     ) -> PadEvent<'a> {
         PadEvent {

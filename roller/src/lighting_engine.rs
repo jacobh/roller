@@ -18,7 +18,7 @@ use crate::{
     utils::FxIndexMap,
 };
 
-type ButtonStateMap = FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant)>;
+type ButtonStateMap = FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant, Rate)>;
 
 // This is just for the case where no buttons have been activated yet
 lazy_static::lazy_static! {
@@ -95,10 +95,10 @@ impl<'a> EngineState<'a> {
                 let prev_toggle_state = self
                     .button_states_mut()
                     .shift_remove(&key)
-                    .map(|(toggle_state, _)| toggle_state)
+                    .map(|(toggle_state, _, _)| toggle_state)
                     .unwrap_or(ToggleState::Off);
                 self.button_states_mut()
-                    .insert(key, (prev_toggle_state.toggle(), now));
+                    .insert(key, (prev_toggle_state.toggle(), now, Rate::default()));
             }
             LightingEvent::TapTempo(now) => {
                 self.clock.tap(now);
@@ -145,29 +145,29 @@ impl<'a> EngineState<'a> {
             .map(|(_, color)| *color)
             .unwrap_or_else(|| Color::Violet)
     }
-    fn active_dimmer_effects(&self) -> FxHashSet<&DimmerEffect> {
-        let mut effects = FxHashSet::default();
+    fn active_dimmer_effects(&self) -> FxHashMap<&DimmerEffect, Rate> {
+        let mut effects = FxHashMap::default();
 
         // TODO button groups
-        for ((mapping, state), (toggle_state, _)) in self.button_states().iter() {
+        for ((mapping, state), (toggle_state, _, rate)) in self.button_states().iter() {
             if let ButtonAction::ActivateDimmerEffect(effect) = &mapping.on_action {
                 match mapping.button_type {
                     ButtonType::Flash => {
                         match state {
-                            NoteState::On => effects.insert(effect),
+                            NoteState::On => effects.insert(effect, *rate),
                             NoteState::Off => effects.remove(&effect),
                         };
                     }
                     ButtonType::Switch => match state {
                         NoteState::On => {
-                            effects.insert(effect);
+                            effects.insert(effect, *rate);
                         }
                         NoteState::Off => {}
                     },
                     ButtonType::Toggle => match state {
                         NoteState::On => {
                             match toggle_state {
-                                ToggleState::On => effects.insert(effect),
+                                ToggleState::On => effects.insert(effect, *rate),
                                 ToggleState::Off => effects.remove(&effect),
                             };
                         }
@@ -179,29 +179,29 @@ impl<'a> EngineState<'a> {
 
         effects
     }
-    fn active_color_effects(&self) -> FxHashSet<&ColorEffect> {
-        let mut effects = FxHashSet::default();
+    fn active_color_effects(&self) -> FxHashMap<&ColorEffect, Rate> {
+        let mut effects = FxHashMap::default();
 
         // TODO button groups
-        for ((mapping, state), (toggle_state, _)) in self.button_states().iter() {
+        for ((mapping, state), (toggle_state, _, rate)) in self.button_states().iter() {
             if let ButtonAction::ActivateColorEffect(effect) = &mapping.on_action {
                 match mapping.button_type {
                     ButtonType::Flash => {
                         match state {
-                            NoteState::On => effects.insert(effect),
+                            NoteState::On => effects.insert(effect, *rate),
                             NoteState::Off => effects.remove(&effect),
                         };
                     }
                     ButtonType::Switch => match state {
                         NoteState::On => {
-                            effects.insert(effect);
+                            effects.insert(effect, *rate);
                         }
                         NoteState::Off => {}
                     },
                     ButtonType::Toggle => match state {
                         NoteState::On => {
                             match toggle_state {
-                                ToggleState::On => effects.insert(effect),
+                                ToggleState::On => effects.insert(effect, *rate),
                                 ToggleState::Off => effects.remove(&effect),
                             };
                         }
@@ -222,21 +222,34 @@ impl<'a> EngineState<'a> {
         let fixture_values = fixtures
             .iter()
             .map(|fixture| {
-                let effect_dimmer = active_dimmer_effects.iter().fold(1.0, |dimmer, effect| {
-                    dimmer
-                        * effect::compress(
-                            effect.offset_dimmer(&clock_snapshot, &fixture, &fixtures),
-                            self.dimmer_effect_intensity,
-                        )
-                });
+                let effect_dimmer =
+                    active_dimmer_effects
+                        .iter()
+                        .fold(1.0, |dimmer, (effect, rate)| {
+                            dimmer
+                                * effect::compress(
+                                    effect.offset_dimmer(
+                                        &clock_snapshot.with_rate(*rate),
+                                        &fixture,
+                                        &fixtures,
+                                    ),
+                                    self.dimmer_effect_intensity,
+                                )
+                        });
 
                 let color = effect::color_intensity(
                     global_color.to_hsl(),
-                    active_color_effects
-                        .iter()
-                        .fold(global_color.to_hsl(), |color, effect| {
-                            effect.offset_color(color, &clock_snapshot, &fixture, &fixtures)
-                        }),
+                    active_color_effects.iter().fold(
+                        global_color.to_hsl(),
+                        |color, (effect, rate)| {
+                            effect.offset_color(
+                                color,
+                                &clock_snapshot.with_rate(*rate),
+                                &fixture,
+                                &fixtures,
+                            )
+                        },
+                    ),
                     self.color_effect_intensity,
                 );
 
