@@ -137,11 +137,12 @@ impl AkaiPadState {
 
 pub struct Pad<'a> {
     mapping: PadMapping<'a>,
+    group_toggle_state: Option<GroupToggleState>,
     state: AkaiPadState,
     active_group_notes: Vec<Note>,
 }
 impl<'a> Pad<'a> {
-    fn new(mapping: PadMapping<'a>) -> Pad<'a> {
+    fn new(mapping: PadMapping<'a>, group_toggle_state: Option<GroupToggleState>) -> Pad<'a> {
         let active_group_notes = if mapping.group_id().is_some() {
             Vec::with_capacity(8)
         } else {
@@ -149,6 +150,7 @@ impl<'a> Pad<'a> {
         };
         Pad {
             mapping,
+            group_toggle_state,
             active_group_notes,
             state: AkaiPadState::Yellow,
         }
@@ -356,9 +358,19 @@ impl<'a>
 
 pub fn pad_states<'a>(
     all_pads: Vec<PadMapping<'a>>,
+    group_toggle_states: &FxHashMap<ButtonGroupId, GroupToggleState>,
     pad_events: impl IntoIterator<Item = PadEvent<'a>>,
 ) -> FxHashMap<Note, AkaiPadState> {
-    let mut state: Vec<_> = all_pads.into_iter().map(Pad::new).collect();
+    let mut state: Vec<_> = all_pads
+        .into_iter()
+        .map(|mapping| {
+            let toggle_state = mapping
+                .group_id()
+                .and_then(|id| group_toggle_states.get(&id).copied());
+
+            Pad::new(mapping, toggle_state)
+        })
+        .collect();
 
     for event in pad_events {
         for pad in state.iter_mut() {
