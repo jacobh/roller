@@ -64,6 +64,24 @@ impl<'a> EngineState<'a> {
             .get(&self.active_scene_id)
             .unwrap_or_else(|| &*EMPTY_BUTTON_STATES)
     }
+    fn pressed_buttons(&self) -> FxHashSet<&ButtonMapping> {
+        self.button_states().keys().fold(
+            FxHashSet::default(),
+            |mut pressed_buttons, (button, note_state)| {
+                match note_state {
+                    NoteState::On => pressed_buttons.insert(button),
+                    NoteState::Off => pressed_buttons.remove(button),
+                };
+                pressed_buttons
+            },
+        )
+    }
+    fn pressed_notes(&self) -> FxHashSet<Note> {
+        self.pressed_buttons()
+            .into_iter()
+            .map(|button| button.note)
+            .collect()
+    }
     pub fn button_states_mut(&mut self) -> &mut ButtonStateMap {
         self.scene_button_states
             .entry(self.active_scene_id)
@@ -82,7 +100,18 @@ impl<'a> EngineState<'a> {
                 self.color_effect_intensity = intensity;
             }
             LightingEvent::UpdateClockRate(rate) => {
-                self.global_clock_rate = rate;
+                let pressed_notes = self.pressed_notes();
+
+                // If there are any buttons currently pressed, update the rate of those buttons, note the global rate
+                if !pressed_notes.is_empty() {
+                    for ((button, _), (_, _, button_rate)) in self.button_states_mut().iter_mut() {
+                        if pressed_notes.contains(&button.note) {
+                            *button_rate = rate;
+                        }
+                    }
+                } else {
+                    self.global_clock_rate = rate;
+                }
             }
             LightingEvent::ActivateScene(scene_id) => {
                 self.active_scene_id = scene_id;
