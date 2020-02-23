@@ -64,7 +64,7 @@ impl ButtonMapping {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum MetaButtonAction {
     TapTempo,
-    UpdateGlobalSpeedMultiplier(OrderedFloat<f64>),
+    UpdateSpeedMultiplier(OrderedFloat<f64>),
     ActivateScene(SceneId),
 }
 
@@ -77,8 +77,8 @@ impl MetaButtonMapping {
     pub fn lighting_event(&self, now: Instant) -> LightingEvent {
         match self.on_action {
             MetaButtonAction::TapTempo => LightingEvent::TapTempo(now),
-            MetaButtonAction::UpdateGlobalSpeedMultiplier(multiplier) => {
-                LightingEvent::UpdateGlobalSpeedMultiplier(multiplier.into_inner())
+            MetaButtonAction::UpdateSpeedMultiplier(multiplier) => {
+                LightingEvent::UpdateSpeedMultiplier(multiplier.into_inner())
             }
             MetaButtonAction::ActivateScene(scene_id) => LightingEvent::ActivateScene(scene_id),
         }
@@ -244,9 +244,7 @@ impl<'a> PadMapping<'a> {
             PadMapping::Standard(mapping) => mapping.group_id,
             PadMapping::Meta(mapping) => match mapping.on_action {
                 MetaButtonAction::TapTempo => None,
-                MetaButtonAction::UpdateGlobalSpeedMultiplier(_) => {
-                    Some(ButtonGroupId::new(100_001))
-                }
+                MetaButtonAction::UpdateSpeedMultiplier(_) => Some(ButtonGroupId::new(100_001)),
                 MetaButtonAction::ActivateScene(_) => Some(ButtonGroupId::new(100_002)),
             },
         }
@@ -256,7 +254,7 @@ impl<'a> PadMapping<'a> {
             PadMapping::Standard(mapping) => mapping.button_type,
             PadMapping::Meta(mapping) => match mapping.on_action {
                 MetaButtonAction::TapTempo => ButtonType::Flash,
-                MetaButtonAction::UpdateGlobalSpeedMultiplier(_) => ButtonType::Switch,
+                MetaButtonAction::UpdateSpeedMultiplier(_) => ButtonType::Switch,
                 MetaButtonAction::ActivateScene(_) => ButtonType::Switch,
             },
         }

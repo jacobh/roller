@@ -42,7 +42,7 @@ pub enum LightingEvent {
     },
     UpdateDimmerEffectIntensity(f64),
     UpdateColorEffectIntensity(f64),
-    UpdateGlobalSpeedMultiplier(f64),
+    UpdateSpeedMultiplier(f64),
     ActivateScene(SceneId),
     UpdateButton(Instant, NoteState, ButtonMapping),
     TapTempo(Instant),
@@ -82,7 +82,7 @@ impl<'a> EngineState<'a> {
             LightingEvent::UpdateColorEffectIntensity(intensity) => {
                 self.color_effect_intensity = intensity;
             }
-            LightingEvent::UpdateGlobalSpeedMultiplier(multiplier) => {
+            LightingEvent::UpdateSpeedMultiplier(multiplier) => {
                 self.global_speed_multiplier = multiplier;
             }
             LightingEvent::ActivateScene(scene_id) => {
@@ -275,7 +275,7 @@ impl<'a> EngineState<'a> {
             .values()
             .find(|button| {
                 button.on_action
-                    == MetaButtonAction::UpdateGlobalSpeedMultiplier(OrderedFloat::from(
+                    == MetaButtonAction::UpdateSpeedMultiplier(OrderedFloat::from(
                         self.global_speed_multiplier,
                     ))
             })
