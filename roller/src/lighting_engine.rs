@@ -307,7 +307,7 @@ impl<'a> EngineState<'a> {
             })
             .unwrap();
 
-        let active_time_multiplier_button = self
+        let active_clock_rate_button = self
             .midi_mapping
             .meta_buttons
             .values()
@@ -318,7 +318,7 @@ impl<'a> EngineState<'a> {
 
         vec![
             PadEvent::new_on(active_scene_button),
-            PadEvent::new_on(active_time_multiplier_button),
+            PadEvent::new_on(active_clock_rate_button),
         ]
         .into_iter()
     }
