@@ -21,3 +21,16 @@ pub fn tick_stream(interval: Duration) -> impl Stream<Item = ()> {
         })
     })
 }
+
+pub fn shift_remove_vec<T>(vec: &mut Vec<T>, item: &T) -> Option<T>
+where
+    T: PartialEq,
+{
+    let item_idx = vec.iter().position(|x| item == x);
+
+    if let Some(item_idx) = item_idx {
+        Some(vec.remove(item_idx))
+    } else {
+        None
+    }
+}

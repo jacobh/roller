@@ -15,7 +15,7 @@ use crate::{
     effect::{self, ColorEffect, DimmerEffect},
     fixture::Fixture,
     project::FixtureGroupId,
-    utils::FxIndexMap,
+    utils::{FxIndexMap, shift_remove_vec},
 };
 
 type ButtonStateMap = FxIndexMap<(ButtonMapping, NoteState), ButtonStateValue>;
@@ -152,13 +152,7 @@ impl<'a> EngineState<'a> {
                     on_colors.push((note, color));
                 }
                 NoteState::Off => {
-                    let color_idx = on_colors
-                        .iter()
-                        .position(|(color_note, _)| *color_note == note);
-
-                    if let Some(color_idx) = color_idx {
-                        on_colors.remove(color_idx);
-                    }
+                    shift_remove_vec(&mut on_colors, &(note, color));
                     last_off = Some((note, color));
                 }
             }
@@ -169,6 +163,39 @@ impl<'a> EngineState<'a> {
             .or_else(|| last_off.as_ref())
             .map(|(_, color)| *color)
             .unwrap_or_else(|| Color::Violet)
+    }
+    pub fn secondary_color(&self) -> Option<Color> {
+        self.button_states()
+            .iter()
+            .filter_map(
+                |((mapping, state), (toggle_state, _, _))| match mapping.on_action {
+                    ButtonAction::UpdateGlobalColor(color) => match mapping.button_type {
+                        ButtonType::Toggle => Some((mapping.note, state, toggle_state, color)),
+                        _ => panic!("only toggle button type implemented for secondary colors"),
+                    },
+                    _ => None,
+                },
+            )
+            .fold(
+                Vec::new(),
+                |mut active_colors, (note, note_state, toggle_state, color)| {
+                    match note_state {
+                        NoteState::On => match toggle_state {
+                            ToggleState::On => {
+                                active_colors.push((note, color));
+                            }
+                            ToggleState::Off => {
+                                shift_remove_vec(&mut active_colors, &(note, color));
+                            }
+                        },
+                        NoteState::Off => {}
+                    };
+                    active_colors
+                },
+            )
+            .into_iter()
+            .last()
+            .map(|(_, color)| color)
     }
     fn active_dimmer_effects(&self) -> FxHashMap<&DimmerEffect, Rate> {
         let mut effects = FxHashMap::default();
@@ -241,6 +268,7 @@ impl<'a> EngineState<'a> {
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
         let clock_snapshot = self.clock.snapshot().with_rate(self.global_clock_rate);
         let global_color = self.global_color();
+        let _secondary_color = self.secondary_color();
         let active_dimmer_effects = self.active_dimmer_effects();
         let active_color_effects = self.active_color_effects();
 
