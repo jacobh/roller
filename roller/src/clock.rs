@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 
 use crate::fixture::Fixture;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, From, Into)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, From, Into)]
 pub struct Beats(OrderedFloat<f64>);
 impl Beats {
     pub fn new(x: impl Into<OrderedFloat<f64>>) -> Beats {
@@ -54,7 +54,7 @@ impl From<Beats> for f64 {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, From, Into)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, From, Into)]
 pub struct Rate(OrderedFloat<f64>);
 impl Rate {
     pub fn new(x: impl Into<OrderedFloat<f64>>) -> Rate {

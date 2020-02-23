@@ -18,7 +18,8 @@ use crate::{
     utils::FxIndexMap,
 };
 
-type ButtonStateMap = FxIndexMap<(ButtonMapping, NoteState), (ToggleState, Instant, Rate)>;
+type ButtonStateMap = FxIndexMap<(ButtonMapping, NoteState), ButtonStateValue>;
+type ButtonStateValue = (ToggleState, Instant, Rate);
 
 // This is just for the case where no buttons have been activated yet
 lazy_static::lazy_static! {
@@ -64,12 +65,12 @@ impl<'a> EngineState<'a> {
             .get(&self.active_scene_id)
             .unwrap_or_else(|| &*EMPTY_BUTTON_STATES)
     }
-    fn pressed_buttons(&self) -> FxHashSet<&ButtonMapping> {
-        self.button_states().keys().fold(
-            FxHashSet::default(),
-            |mut pressed_buttons, (button, note_state)| {
+    fn pressed_buttons(&self) -> FxHashMap<&ButtonMapping, &ButtonStateValue> {
+        self.button_states().iter().fold(
+            FxHashMap::default(),
+            |mut pressed_buttons, ((button, note_state), value)| {
                 match note_state {
-                    NoteState::On => pressed_buttons.insert(button),
+                    NoteState::On => pressed_buttons.insert(button, value),
                     NoteState::Off => pressed_buttons.remove(button),
                 };
                 pressed_buttons
@@ -79,7 +80,7 @@ impl<'a> EngineState<'a> {
     fn pressed_notes(&self) -> FxHashSet<Note> {
         self.pressed_buttons()
             .into_iter()
-            .map(|button| button.note)
+            .map(|(button, _)| button.note)
             .collect()
     }
     pub fn button_states_mut(&mut self) -> &mut ButtonStateMap {
@@ -307,12 +308,21 @@ impl<'a> EngineState<'a> {
             })
             .unwrap();
 
+        let pressed_button_rate: Option<Rate> = self
+            .pressed_buttons()
+            .values()
+            .map(|(_, _, rate)| *rate)
+            .max();
+
         let active_clock_rate_button = self
             .midi_mapping
             .meta_buttons
             .values()
             .find(|button| {
-                button.on_action == MetaButtonAction::UpdateClockRate(self.global_clock_rate)
+                button.on_action
+                    == MetaButtonAction::UpdateClockRate(
+                        pressed_button_rate.unwrap_or(self.global_clock_rate),
+                    )
             })
             .unwrap();
 
