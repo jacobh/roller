@@ -33,6 +33,7 @@ impl ToggleState {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ButtonAction {
     UpdateGlobalColor(Color),
+    UpdateGlobalSecondaryColor(Color),
     ActivateDimmerEffect(DimmerEffect),
     ActivateColorEffect(ColorEffect),
 }

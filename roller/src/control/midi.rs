@@ -221,6 +221,55 @@ impl MidiController {
                         group_id: Some(ButtonGroupId::new(1)),
                         on_action: ButtonAction::UpdateGlobalColor(Color::Green),
                     },
+                    // Secondary
+                    ButtonMapping {
+                        note: Note::new(57),
+                        button_type: ButtonType::Toggle,
+                        group_id: Some(ButtonGroupId::new(2)),
+                        on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::White),
+                    },
+                    ButtonMapping {
+                        note: Note::new(49),
+                        button_type: ButtonType::Toggle,
+                        group_id: Some(ButtonGroupId::new(2)),
+                        on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Yellow),
+                    },
+                    ButtonMapping {
+                        note: Note::new(41),
+                        button_type: ButtonType::Toggle,
+                        group_id: Some(ButtonGroupId::new(2)),
+                        on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::DeepOrange),
+                    },
+                    ButtonMapping {
+                        note: Note::new(33),
+                        button_type: ButtonType::Toggle,
+                        group_id: Some(ButtonGroupId::new(2)),
+                        on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Red),
+                    },
+                    ButtonMapping {
+                        note: Note::new(25),
+                        button_type: ButtonType::Toggle,
+                        group_id: Some(ButtonGroupId::new(2)),
+                        on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Violet),
+                    },
+                    ButtonMapping {
+                        note: Note::new(17),
+                        button_type: ButtonType::Toggle,
+                        group_id: Some(ButtonGroupId::new(2)),
+                        on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::DarkBlue),
+                    },
+                    ButtonMapping {
+                        note: Note::new(9),
+                        button_type: ButtonType::Toggle,
+                        group_id: Some(ButtonGroupId::new(2)),
+                        on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Teal),
+                    },
+                    ButtonMapping {
+                        note: Note::new(1),
+                        button_type: ButtonType::Toggle,
+                        group_id: Some(ButtonGroupId::new(2)),
+                        on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Green),
+                    },
                     // Dimmer Effects
                     ButtonMapping {
                         note: Note::new(63),
