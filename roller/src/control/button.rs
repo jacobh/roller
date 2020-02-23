@@ -30,6 +30,32 @@ impl ToggleState {
     }
 }
 
+/// An enum tracking the toggle state of a button group
+/// When toggled with the same note, it will turn off, when toggled with a
+/// different note, it will stay on with the internal note updated
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum GroupToggleState {
+    On(Note),
+    Off,
+}
+impl GroupToggleState {
+    pub fn toggle(self, note: Note) -> GroupToggleState {
+        match self {
+            GroupToggleState::On(current_note) => {
+                if current_note == note {
+                    GroupToggleState::Off
+                } else {
+                    GroupToggleState::On(note)
+                }
+            }
+            GroupToggleState::Off => GroupToggleState::On(note),
+        }
+    }
+    pub fn toggle_mut(&mut self, note: Note) {
+        *self = self.toggle(note);
+    }
+}
+
 // Buttons are used for configurable, creative controls. activating colors, chases, etc
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ButtonAction {

@@ -8,7 +8,8 @@ use crate::{
     color::Color,
     control::{
         button::{
-            ButtonAction, ButtonMapping, ButtonType, MetaButtonAction, PadEvent, ToggleState,
+            ButtonAction, ButtonGroupId, ButtonMapping, ButtonType, GroupToggleState,
+            MetaButtonAction, PadEvent, ToggleState,
         },
         midi::{MidiMapping, NoteState},
     },
@@ -25,6 +26,9 @@ type ButtonStateValue = (ToggleState, Instant, Rate);
 lazy_static::lazy_static! {
     static ref EMPTY_BUTTON_STATES: ButtonStateMap = {
         FxIndexMap::default()
+    };
+    static ref EMPTY_BUTTON_GROUP_TOGGLE_STATES: FxHashMap<ButtonGroupId, GroupToggleState> = {
+        FxHashMap::default()
     };
 }
 
@@ -52,6 +56,8 @@ pub struct EngineState<'a> {
     pub color_effect_intensity: f64,
     pub global_clock_rate: Rate,
     pub active_scene_id: SceneId,
+    pub scene_button_group_toggle_states:
+        FxHashMap<SceneId, FxHashMap<ButtonGroupId, GroupToggleState>>,
     pub scene_button_states: FxHashMap<SceneId, ButtonStateMap>,
 }
 impl<'a> EngineState<'a> {
@@ -82,6 +88,24 @@ impl<'a> EngineState<'a> {
         self.scene_button_states
             .entry(self.active_scene_id)
             .or_default()
+    }
+    fn button_group_toggle_states(&self) -> &FxHashMap<ButtonGroupId, GroupToggleState> {
+        self.scene_button_group_toggle_states
+            .get(&self.active_scene_id)
+            .unwrap_or_else(|| &*EMPTY_BUTTON_GROUP_TOGGLE_STATES)
+    }
+    fn toggle_button_group(&mut self, id: ButtonGroupId, note: Note) {
+        let button_group_states = self
+            .scene_button_group_toggle_states
+            .entry(self.active_scene_id)
+            .or_default();
+
+        button_group_states
+            .entry(id)
+            .and_modify(|toggle_state| {
+                toggle_state.toggle_mut(note);
+            })
+            .or_insert(GroupToggleState::On(note));
     }
     pub fn apply_event(&mut self, event: LightingEvent) {
         // dbg!(&event);
@@ -116,12 +140,20 @@ impl<'a> EngineState<'a> {
                 self.group_dimmers.insert(group_id, dimmer);
             }
             LightingEvent::UpdateButton(now, state, mapping) => {
+                if state == NoteState::On {
+                    if let Some(group_id) = mapping.group_id {
+                        self.toggle_button_group(group_id, mapping.note);
+                    }
+                }
+
                 let key = (mapping, state);
+
                 let prev_toggle_state = self
                     .button_states_mut()
                     .shift_remove(&key)
                     .map(|(toggle_state, _, _)| toggle_state)
                     .unwrap_or(ToggleState::Off);
+
                 self.button_states_mut()
                     .insert(key, (prev_toggle_state.toggle(), now, Rate::default()));
             }
