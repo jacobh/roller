@@ -10,6 +10,7 @@ use crate::{
     control::midi::NoteState,
     effect::{ColorEffect, DimmerEffect},
     lighting_engine::{LightingEvent, SceneId},
+    utils::shift_remove_vec,
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize)]
@@ -174,14 +175,7 @@ impl<'a> Pad<'a> {
                 }
                 NoteState::Off => {
                     if group_id_match.is_match() {
-                        let pad_idx = self
-                            .active_group_notes
-                            .iter()
-                            .position(|note| *note == event.mapping.note());
-
-                        if let Some(pad_idx) = pad_idx {
-                            self.active_group_notes.remove(pad_idx);
-                        }
+                        shift_remove_vec(&mut self.active_group_notes, &event.mapping.note());
 
                         if event.mapping == self.mapping {
                             if self.active_group_notes.is_empty() {

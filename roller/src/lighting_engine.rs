@@ -15,7 +15,7 @@ use crate::{
     effect::{self, ColorEffect, DimmerEffect},
     fixture::Fixture,
     project::FixtureGroupId,
-    utils::{FxIndexMap, shift_remove_vec},
+    utils::{shift_remove_vec, FxIndexMap},
 };
 
 type ButtonStateMap = FxIndexMap<(ButtonMapping, NoteState), ButtonStateValue>;
