@@ -10,3 +10,12 @@ Roller is a DMX lighting control app
     - As few hard-coded values as possible
     - Effects should be composable
     - Speed/Intensity as parameters, so one set of effects can work from chill house music up to searing gabber
+
+
+## Architecture (WIP)
+### DMX/Ola Output
+### Projects, Fixtures, Fixture Profiles
+### MIDI Control
+### Clock
+### Effects
+### Lighting Engine
