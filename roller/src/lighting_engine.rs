@@ -89,7 +89,7 @@ impl<'a> EngineState<'a> {
             .entry(self.active_scene_id)
             .or_default()
     }
-    fn button_group_toggle_states(&self) -> &FxHashMap<ButtonGroupId, GroupToggleState> {
+    pub fn button_group_toggle_states(&self) -> &FxHashMap<ButtonGroupId, GroupToggleState> {
         self.scene_button_group_toggle_states
             .get(&self.active_scene_id)
             .unwrap_or_else(|| &*EMPTY_BUTTON_GROUP_TOGGLE_STATES)

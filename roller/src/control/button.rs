@@ -173,7 +173,6 @@ impl<'a> Pad<'a> {
                 }
             }
             ButtonType::Toggle => {
-                // TODO groups
                 if event.mapping == self.mapping {
                     self.state = match event.note_state {
                         NoteState::On => match event.toggle_state {
@@ -182,9 +181,23 @@ impl<'a> Pad<'a> {
                         },
                         NoteState::Off => match event.toggle_state {
                             ToggleState::On => self.mapping.active_color(),
-                            ToggleState::Off => AkaiPadState::Yellow,
+                            ToggleState::Off => self.mapping.inactive_color(),
                         },
                     }
+                }
+
+                match self.group_toggle_state {
+                    Some(GroupToggleState::On(note)) => {
+                        if note == self.mapping.note() {
+                            self.state = self.mapping.active_color();
+                        } else {
+                            self.state = self.mapping.inactive_color();
+                        }
+                    }
+                    Some(GroupToggleState::Off) => {
+                        self.state = self.mapping.inactive_color();
+                    }
+                    None => {}
                 }
             }
             ButtonType::Switch => match event.note_state {

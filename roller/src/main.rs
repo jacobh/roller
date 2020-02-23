@@ -62,6 +62,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     midi_controller.run_pad_startup().await;
     let mut current_pad_states = pad_states(
         midi_controller.midi_mapping.pad_mappings().collect(),
+        state.button_group_toggle_states(),
         state.pad_events(),
     );
     midi_controller
@@ -82,6 +83,7 @@ async fn main() -> Result<(), async_std::io::Error> {
 
                 let new_pad_states = pad_states(
                     midi_controller.midi_mapping.pad_mappings().collect(),
+                    state.button_group_toggle_states(),
                     state.pad_events(),
                 );
 
