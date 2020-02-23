@@ -1,11 +1,10 @@
 use derive_more::Constructor;
 use midi::Note;
-use ordered_float::OrderedFloat;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 
 use crate::{
-    clock::Clock,
+    clock::{Clock, Rate},
     color::Color,
     control::{
         button::{
@@ -42,7 +41,7 @@ pub enum LightingEvent {
     },
     UpdateDimmerEffectIntensity(f64),
     UpdateColorEffectIntensity(f64),
-    UpdateSpeedMultiplier(f64),
+    UpdateClockRate(Rate),
     ActivateScene(SceneId),
     UpdateButton(Instant, NoteState, ButtonMapping),
     TapTempo(Instant),
@@ -55,7 +54,7 @@ pub struct EngineState<'a> {
     pub group_dimmers: FxHashMap<FixtureGroupId, f64>,
     pub dimmer_effect_intensity: f64,
     pub color_effect_intensity: f64,
-    pub global_speed_multiplier: f64,
+    pub global_clock_rate: Rate,
     pub active_scene_id: SceneId,
     pub scene_button_states: FxHashMap<SceneId, ButtonStateMap>,
 }
@@ -82,8 +81,8 @@ impl<'a> EngineState<'a> {
             LightingEvent::UpdateColorEffectIntensity(intensity) => {
                 self.color_effect_intensity = intensity;
             }
-            LightingEvent::UpdateSpeedMultiplier(multiplier) => {
-                self.global_speed_multiplier = multiplier;
+            LightingEvent::UpdateClockRate(rate) => {
+                self.global_clock_rate = rate;
             }
             LightingEvent::ActivateScene(scene_id) => {
                 self.active_scene_id = scene_id;
@@ -215,10 +214,7 @@ impl<'a> EngineState<'a> {
         effects
     }
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
-        let clock_snapshot = self
-            .clock
-            .snapshot()
-            .multiply_speed(self.global_speed_multiplier);
+        let clock_snapshot = self.clock.snapshot().with_rate(self.global_clock_rate);
         let global_color = self.global_color();
         let active_dimmer_effects = self.active_dimmer_effects();
         let active_color_effects = self.active_color_effects();
@@ -274,10 +270,7 @@ impl<'a> EngineState<'a> {
             .meta_buttons
             .values()
             .find(|button| {
-                button.on_action
-                    == MetaButtonAction::UpdateSpeedMultiplier(OrderedFloat::from(
-                        self.global_speed_multiplier,
-                    ))
+                button.on_action == MetaButtonAction::UpdateClockRate(self.global_clock_rate)
             })
             .unwrap();
 

@@ -1,11 +1,11 @@
 use derive_more::Constructor;
 use midi::Note;
-use ordered_float::OrderedFloat;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use std::time::Instant;
 
 use crate::{
+    clock::Rate,
     color::Color,
     control::midi::NoteState,
     effect::{ColorEffect, DimmerEffect},
@@ -64,7 +64,7 @@ impl ButtonMapping {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum MetaButtonAction {
     TapTempo,
-    UpdateSpeedMultiplier(OrderedFloat<f64>),
+    UpdateClockRate(Rate),
     ActivateScene(SceneId),
 }
 
@@ -77,9 +77,7 @@ impl MetaButtonMapping {
     pub fn lighting_event(&self, now: Instant) -> LightingEvent {
         match self.on_action {
             MetaButtonAction::TapTempo => LightingEvent::TapTempo(now),
-            MetaButtonAction::UpdateSpeedMultiplier(multiplier) => {
-                LightingEvent::UpdateSpeedMultiplier(multiplier.into_inner())
-            }
+            MetaButtonAction::UpdateClockRate(rate) => LightingEvent::UpdateClockRate(rate),
             MetaButtonAction::ActivateScene(scene_id) => LightingEvent::ActivateScene(scene_id),
         }
     }
@@ -244,7 +242,7 @@ impl<'a> PadMapping<'a> {
             PadMapping::Standard(mapping) => mapping.group_id,
             PadMapping::Meta(mapping) => match mapping.on_action {
                 MetaButtonAction::TapTempo => None,
-                MetaButtonAction::UpdateSpeedMultiplier(_) => Some(ButtonGroupId::new(100_001)),
+                MetaButtonAction::UpdateClockRate(_) => Some(ButtonGroupId::new(100_001)),
                 MetaButtonAction::ActivateScene(_) => Some(ButtonGroupId::new(100_002)),
             },
         }
@@ -254,7 +252,7 @@ impl<'a> PadMapping<'a> {
             PadMapping::Standard(mapping) => mapping.button_type,
             PadMapping::Meta(mapping) => match mapping.on_action {
                 MetaButtonAction::TapTempo => ButtonType::Flash,
-                MetaButtonAction::UpdateSpeedMultiplier(_) => ButtonType::Switch,
+                MetaButtonAction::UpdateClockRate(_) => ButtonType::Switch,
                 MetaButtonAction::ActivateScene(_) => ButtonType::Switch,
             },
         }

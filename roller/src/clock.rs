@@ -54,6 +54,24 @@ impl From<Beats> for f64 {
     }
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, From, Into)]
+pub struct Rate(OrderedFloat<f64>);
+impl Rate {
+    pub fn new(x: impl Into<OrderedFloat<f64>>) -> Rate {
+        Rate(x.into())
+    }
+}
+impl Default for Rate {
+    fn default() -> Rate {
+        Rate::new(1.0)
+    }
+}
+impl From<Rate> for f64 {
+    fn from(rate: Rate) -> f64 {
+        rate.0.into_inner()
+    }
+}
+
 pub struct Clock {
     started_at: Instant,
     bpm: f64,
@@ -109,9 +127,9 @@ pub struct ClockSnapshot {
     bpm: f64,
 }
 impl ClockSnapshot {
-    pub fn multiply_speed(&self, multiplier: f64) -> ClockSnapshot {
+    pub fn with_rate(&self, rate: Rate) -> ClockSnapshot {
         ClockSnapshot {
-            secs_elapsed: self.secs_elapsed * multiplier,
+            secs_elapsed: self.secs_elapsed * f64::from(rate),
             bpm: self.bpm,
         }
     }

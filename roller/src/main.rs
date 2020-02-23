@@ -12,7 +12,7 @@ mod lighting_engine;
 mod project;
 mod utils;
 
-use crate::clock::Clock;
+use crate::clock::{Clock, Rate};
 use crate::control::button::pad_states;
 use crate::lighting_engine::{EngineState, LightingEvent, SceneId};
 
@@ -30,7 +30,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         group_dimmers: FxHashMap::default(),
         dimmer_effect_intensity: 0.5,
         color_effect_intensity: 1.0,
-        global_speed_multiplier: 1.0,
+        global_clock_rate: Rate::new(1.0),
         active_scene_id: SceneId::new(1),
         scene_button_states: FxHashMap::default(),
     };

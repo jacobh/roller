@@ -4,7 +4,7 @@ use rustc_hash::FxHashMap;
 use std::time::{Duration, Instant};
 
 use crate::{
-    clock::{Beats, ClockOffset, ClockOffsetMode},
+    clock::{Beats, ClockOffset, ClockOffsetMode, Rate},
     color::Color,
     control::{
         button::{
@@ -381,35 +381,35 @@ impl MidiController {
                     },
                     MetaButtonMapping {
                         note: Note::new(82),
-                        on_action: MetaButtonAction::UpdateSpeedMultiplier(0.333_333.into()),
+                        on_action: MetaButtonAction::UpdateClockRate(Rate::new(0.333_333)),
                     },
                     MetaButtonMapping {
                         note: Note::new(83),
-                        on_action: MetaButtonAction::UpdateSpeedMultiplier(0.5.into()),
+                        on_action: MetaButtonAction::UpdateClockRate(Rate::new(0.5)),
                     },
                     MetaButtonMapping {
                         note: Note::new(84),
-                        on_action: MetaButtonAction::UpdateSpeedMultiplier(0.666_667.into()),
+                        on_action: MetaButtonAction::UpdateClockRate(Rate::new(0.666_667)),
                     },
                     MetaButtonMapping {
                         note: Note::new(85),
-                        on_action: MetaButtonAction::UpdateSpeedMultiplier(0.75.into()),
+                        on_action: MetaButtonAction::UpdateClockRate(Rate::new(0.75)),
                     },
                     MetaButtonMapping {
                         note: Note::new(86),
-                        on_action: MetaButtonAction::UpdateSpeedMultiplier(1.0.into()),
+                        on_action: MetaButtonAction::UpdateClockRate(Rate::new(1.0)),
                     },
                     MetaButtonMapping {
                         note: Note::new(87),
-                        on_action: MetaButtonAction::UpdateSpeedMultiplier(1.5.into()),
+                        on_action: MetaButtonAction::UpdateClockRate(Rate::new(1.5)),
                     },
                     MetaButtonMapping {
                         note: Note::new(88),
-                        on_action: MetaButtonAction::UpdateSpeedMultiplier(2.0.into()),
+                        on_action: MetaButtonAction::UpdateClockRate(Rate::new(2.0)),
                     },
                     MetaButtonMapping {
                         note: Note::new(89),
-                        on_action: MetaButtonAction::UpdateSpeedMultiplier(3.0.into()),
+                        on_action: MetaButtonAction::UpdateClockRate(Rate::new(3.0)),
                     },
                 ],
             )),
