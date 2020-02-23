@@ -201,7 +201,7 @@ impl<'a> EngineState<'a> {
             .iter()
             .filter_map(
                 |((mapping, state), (toggle_state, _, _))| match mapping.on_action {
-                    ButtonAction::UpdateGlobalColor(color) => match mapping.button_type {
+                    ButtonAction::UpdateGlobalSecondaryColor(color) => match mapping.button_type {
                         ButtonType::Toggle => Some((mapping.note, state, toggle_state, color)),
                         _ => panic!("only toggle button type implemented for secondary colors"),
                     },
