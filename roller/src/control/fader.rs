@@ -12,11 +12,8 @@ pub enum FaderType {
 impl FaderType {
     fn lighting_event(&self, value: f64) -> LightingEvent {
         match *self {
-            FaderType::MasterDimmer => LightingEvent::UpdateMasterDimmer { dimmer: value },
-            FaderType::GroupDimmer(group_id) => LightingEvent::UpdateGroupDimmer {
-                group_id,
-                dimmer: value,
-            },
+            FaderType::MasterDimmer => LightingEvent::UpdateMasterDimmer(value),
+            FaderType::GroupDimmer(group_id) => LightingEvent::UpdateGroupDimmer(group_id, value),
             FaderType::DimmerEffectIntensity => LightingEvent::UpdateDimmerEffectIntensity(value),
             FaderType::ColorEffectIntensity => LightingEvent::UpdateColorEffectIntensity(value),
         }

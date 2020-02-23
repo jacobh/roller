@@ -33,13 +33,8 @@ pub struct SceneId(usize);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LightingEvent {
-    UpdateMasterDimmer {
-        dimmer: f64,
-    },
-    UpdateGroupDimmer {
-        group_id: FixtureGroupId,
-        dimmer: f64,
-    },
+    UpdateMasterDimmer(f64),
+    UpdateGroupDimmer(FixtureGroupId, f64),
     UpdateDimmerEffectIntensity(f64),
     UpdateColorEffectIntensity(f64),
     UpdateClockRate(Rate),
@@ -91,7 +86,7 @@ impl<'a> EngineState<'a> {
     pub fn apply_event(&mut self, event: LightingEvent) {
         // dbg!(&event);
         match event {
-            LightingEvent::UpdateMasterDimmer { dimmer } => {
+            LightingEvent::UpdateMasterDimmer(dimmer) => {
                 self.master_dimmer = dimmer;
             }
             LightingEvent::UpdateDimmerEffectIntensity(intensity) => {
@@ -117,7 +112,7 @@ impl<'a> EngineState<'a> {
             LightingEvent::ActivateScene(scene_id) => {
                 self.active_scene_id = scene_id;
             }
-            LightingEvent::UpdateGroupDimmer { group_id, dimmer } => {
+            LightingEvent::UpdateGroupDimmer(group_id, dimmer) => {
                 self.group_dimmers.insert(group_id, dimmer);
             }
             LightingEvent::UpdateButton(now, state, mapping) => {
