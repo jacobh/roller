@@ -94,20 +94,9 @@ impl<'a> EngineState<'a> {
                     })
             })
     }
-    pub fn group_button_states(&self) -> impl Iterator<Item = (ButtonGroupId, &ButtonStateMap)> {
-        self.scene_group_button_states
-            .get(&self.active_scene_id)
-            .unwrap_or_else(|| &*EMPTY_GROUP_BUTTON_STATES)
-            .iter()
-            .map(|(id, (_, _, states))| (*id, states))
-    }
     fn pressed_buttons(&self) -> FxHashMap<&ButtonMapping, &ButtonStateValue> {
-        self.group_button_states()
-            .flat_map(|(_, states)| {
-                states
-                    .iter()
-                    .map(|((button, note_state), value)| (button, note_state, value))
-            })
+        self.button_states()
+            .map(|(_, _, _, button, note_state, value)| (button, note_state, value))
             .fold(
                 FxHashMap::default(),
                 |mut pressed_buttons, (button, note_state, value)| {
