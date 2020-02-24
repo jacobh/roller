@@ -149,7 +149,7 @@ impl<'a> EngineState<'a> {
             .iter()
             .map(|(group_id, (_, toggle_state, _))| (*group_id, *toggle_state))
     }
-    fn toggle_button_group(&mut self, id: ButtonGroupId, note: Note) {
+    fn toggle_button_group(&mut self, id: ButtonGroupId, button_type: ButtonType, note: Note) {
         let button_group_states = self
             .scene_group_button_states
             .entry(self.active_scene_id)
@@ -160,9 +160,8 @@ impl<'a> EngineState<'a> {
             .and_modify(|(_, toggle_state, _)| {
                 toggle_state.toggle_mut(note);
             })
-            // TODO it's incorrect to assume this is a toggle button group
             .or_insert((
-                ButtonType::Toggle,
+                button_type,
                 GroupToggleState::On(note),
                 FxIndexMap::default(),
             ));
@@ -203,7 +202,7 @@ impl<'a> EngineState<'a> {
             }
             LightingEvent::UpdateButton(now, state, mapping, group) => {
                 if state == NoteState::On {
-                    self.toggle_button_group(group.id, mapping.note);
+                    self.toggle_button_group(group.id, group.button_type, mapping.note);
                 }
 
                 let key = (mapping, group.id, group.button_type, state);
