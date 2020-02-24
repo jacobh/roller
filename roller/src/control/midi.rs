@@ -8,7 +8,7 @@ use crate::{
     color::Color,
     control::{
         button::{
-            AkaiPadState, ButtonAction, ButtonGroup, ButtonGroupId, ButtonMapping, ButtonType,
+            AkaiPadState, ButtonAction, ButtonGroup, ButtonMapping, ButtonType,
             MetaButtonAction, MetaButtonMapping, PadMapping,
         },
         fader::{FaderCurve, FaderType, MidiFaderMapping},

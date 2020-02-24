@@ -384,24 +384,32 @@ impl<'a>
     From<(
         ButtonGroupId,
         ButtonType,
+        GroupToggleState,
         &'a ButtonMapping,
         NoteState,
-        &'a (ToggleState, Instant, Rate),
+        &'a (Instant, Rate),
     )> for PadEvent<'a>
 {
     fn from(
-        (group_id, button_type, mapping, note_state, (toggle_state, _, _)): (
+        (group_id, button_type, group_toggle_state, mapping, note_state, _): (
             ButtonGroupId,
             ButtonType,
+            GroupToggleState,
             &'a ButtonMapping,
             NoteState,
-            &'a (ToggleState, Instant, Rate),
+            &'a (Instant, Rate),
         ),
     ) -> PadEvent<'a> {
+        let toggle_state = if group_toggle_state == GroupToggleState::On(mapping.note) {
+            ToggleState::On
+        } else {
+            ToggleState::Off
+        };
+
         PadEvent {
             mapping: PadMapping::Standard(mapping, group_id, button_type),
-            note_state: note_state,
-            toggle_state: *toggle_state,
+            note_state,
+            toggle_state,
         }
     }
 }
