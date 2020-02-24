@@ -32,7 +32,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         color_effect_intensity: 1.0,
         global_clock_rate: Rate::new(1.0),
         active_scene_id: SceneId::new(1),
-        scene_button_group_toggle_states: FxHashMap::default(),
+        scene_group_button_states: FxHashMap::default(),
         scene_button_states: FxHashMap::default(),
     };
 
@@ -62,7 +62,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     midi_controller.run_pad_startup().await;
     let mut current_pad_states = pad_states(
         midi_controller.midi_mapping.pad_mappings().collect(),
-        state.button_group_toggle_states(),
+        &state.button_group_toggle_states().collect(),
         state.pad_events(),
     );
     midi_controller
@@ -83,7 +83,7 @@ async fn main() -> Result<(), async_std::io::Error> {
 
                 let new_pad_states = pad_states(
                     midi_controller.midi_mapping.pad_mappings().collect(),
-                    state.button_group_toggle_states(),
+                    &state.button_group_toggle_states().collect(),
                     state.pad_events(),
                 );
 

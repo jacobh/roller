@@ -28,7 +28,7 @@ lazy_static::lazy_static! {
     static ref EMPTY_BUTTON_STATES: ButtonStateMap = {
         FxIndexMap::default()
     };
-    static ref EMPTY_BUTTON_GROUP_TOGGLE_STATES: FxHashMap<ButtonGroupId, GroupToggleState> = {
+    static ref EMPTY_GROUP_BUTTON_STATES: FxHashMap<ButtonGroupId, (ButtonType, GroupToggleState, ())> = {
         FxHashMap::default()
     };
 }
@@ -57,8 +57,8 @@ pub struct EngineState<'a> {
     pub color_effect_intensity: f64,
     pub global_clock_rate: Rate,
     pub active_scene_id: SceneId,
-    pub scene_button_group_toggle_states:
-        FxHashMap<SceneId, FxHashMap<ButtonGroupId, GroupToggleState>>,
+    pub scene_group_button_states:
+        FxHashMap<SceneId, FxHashMap<ButtonGroupId, (ButtonType, GroupToggleState, ())>>,
     pub scene_button_states: FxHashMap<SceneId, ButtonStateMap>,
 }
 impl<'a> EngineState<'a> {
@@ -90,23 +90,28 @@ impl<'a> EngineState<'a> {
             .entry(self.active_scene_id)
             .or_default()
     }
-    pub fn button_group_toggle_states(&self) -> &FxHashMap<ButtonGroupId, GroupToggleState> {
-        self.scene_button_group_toggle_states
+    pub fn button_group_toggle_states(
+        &self,
+    ) -> impl Iterator<Item = (ButtonGroupId, GroupToggleState)> + '_ {
+        self.scene_group_button_states
             .get(&self.active_scene_id)
-            .unwrap_or_else(|| &*EMPTY_BUTTON_GROUP_TOGGLE_STATES)
+            .unwrap_or_else(|| &*EMPTY_GROUP_BUTTON_STATES)
+            .iter()
+            .map(|(group_id, (_, toggle_state, _))| (*group_id, *toggle_state))
     }
     fn toggle_button_group(&mut self, id: ButtonGroupId, note: Note) {
         let button_group_states = self
-            .scene_button_group_toggle_states
+            .scene_group_button_states
             .entry(self.active_scene_id)
             .or_default();
 
         button_group_states
             .entry(id)
-            .and_modify(|toggle_state| {
+            .and_modify(|(_, toggle_state, _)| {
                 toggle_state.toggle_mut(note);
             })
-            .or_insert(GroupToggleState::On(note));
+            // TODO it's incorrect to assume this is a toggle button group
+            .or_insert((ButtonType::Toggle, GroupToggleState::On(note), ()));
     }
     pub fn apply_event(&mut self, event: LightingEvent) {
         // dbg!(&event);
