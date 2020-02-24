@@ -50,8 +50,10 @@ impl MidiMapping {
                 .collect(),
         }
     }
-    fn buttons(&self) -> impl Iterator<Item = &'_ ButtonMapping> {
-        self.button_groups.iter().flat_map(|group| group.buttons())
+    fn group_buttons(&self) -> impl Iterator<Item = (&'_ ButtonGroup, &'_ ButtonMapping)> {
+        self.button_groups
+            .iter()
+            .flat_map(|group| group.buttons().map(move |button| (group, button)))
     }
     fn midi_to_lighting_event(&self, midi_event: &MidiEvent) -> Option<LightingEvent> {
         let now = Instant::now();
@@ -62,23 +64,31 @@ impl MidiMapping {
                 .get(control)
                 .map(|fader| fader.lighting_event(1.0 / 127.0 * (*value as f64))),
             MidiEvent::NoteOn { note, .. } => self
-                .buttons()
-                .find(|button| button.note == *note)
-                .map(|button| button.clone().into_lighting_event(NoteState::On, now))
+                .group_buttons()
+                .find(|(_, button)| button.note == *note)
+                .map(|(group, button)| {
+                    button
+                        .clone()
+                        .into_lighting_event(group.clone(), NoteState::On, now)
+                })
                 .or_else(|| {
                     self.meta_buttons
                         .get(note)
                         .map(|meta_button| meta_button.lighting_event(now))
                 }),
             MidiEvent::NoteOff { note, .. } => self
-                .buttons()
-                .find(|button| button.note == *note)
-                .map(|button| button.clone().into_lighting_event(NoteState::Off, now)),
+                .group_buttons()
+                .find(|(_, button)| button.note == *note)
+                .map(|(group, button)| {
+                    button
+                        .clone()
+                        .into_lighting_event(group.clone(), NoteState::Off, now)
+                }),
             MidiEvent::Other(_) => None,
         }
     }
     pub fn pad_mappings(&self) -> impl Iterator<Item = PadMapping<'_>> {
-        self.buttons()
+        self.group_buttons()
             .map(PadMapping::from)
             .chain(self.meta_buttons.values().map(PadMapping::from))
     }
@@ -177,50 +187,34 @@ impl MidiController {
                         vec![
                             ButtonMapping {
                                 note: Note::new(56),
-                                button_type: ButtonType::Switch,
-                                group_id: Some(ButtonGroupId::new(1)),
                                 on_action: ButtonAction::UpdateGlobalColor(Color::White),
                             },
                             ButtonMapping {
                                 note: Note::new(48),
-                                button_type: ButtonType::Switch,
-                                group_id: Some(ButtonGroupId::new(1)),
                                 on_action: ButtonAction::UpdateGlobalColor(Color::Yellow),
                             },
                             ButtonMapping {
                                 note: Note::new(40),
-                                button_type: ButtonType::Switch,
-                                group_id: Some(ButtonGroupId::new(1)),
                                 on_action: ButtonAction::UpdateGlobalColor(Color::DeepOrange),
                             },
                             ButtonMapping {
                                 note: Note::new(32),
-                                button_type: ButtonType::Switch,
-                                group_id: Some(ButtonGroupId::new(1)),
                                 on_action: ButtonAction::UpdateGlobalColor(Color::Red),
                             },
                             ButtonMapping {
                                 note: Note::new(24),
-                                button_type: ButtonType::Switch,
-                                group_id: Some(ButtonGroupId::new(1)),
                                 on_action: ButtonAction::UpdateGlobalColor(Color::Violet),
                             },
                             ButtonMapping {
                                 note: Note::new(16),
-                                button_type: ButtonType::Switch,
-                                group_id: Some(ButtonGroupId::new(1)),
                                 on_action: ButtonAction::UpdateGlobalColor(Color::DarkBlue),
                             },
                             ButtonMapping {
                                 note: Note::new(8),
-                                button_type: ButtonType::Switch,
-                                group_id: Some(ButtonGroupId::new(1)),
                                 on_action: ButtonAction::UpdateGlobalColor(Color::Teal),
                             },
                             ButtonMapping {
                                 note: Note::new(0),
-                                button_type: ButtonType::Switch,
-                                group_id: Some(ButtonGroupId::new(1)),
                                 on_action: ButtonAction::UpdateGlobalColor(Color::Green),
                             },
                         ],
@@ -231,54 +225,38 @@ impl MidiController {
                         vec![
                             ButtonMapping {
                                 note: Note::new(57),
-                                button_type: ButtonType::Toggle,
-                                group_id: Some(ButtonGroupId::new(2)),
                                 on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::White),
                             },
                             ButtonMapping {
                                 note: Note::new(49),
-                                button_type: ButtonType::Toggle,
-                                group_id: Some(ButtonGroupId::new(2)),
                                 on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Yellow),
                             },
                             ButtonMapping {
                                 note: Note::new(41),
-                                button_type: ButtonType::Toggle,
-                                group_id: Some(ButtonGroupId::new(2)),
                                 on_action: ButtonAction::UpdateGlobalSecondaryColor(
                                     Color::DeepOrange,
                                 ),
                             },
                             ButtonMapping {
                                 note: Note::new(33),
-                                button_type: ButtonType::Toggle,
-                                group_id: Some(ButtonGroupId::new(2)),
                                 on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Red),
                             },
                             ButtonMapping {
                                 note: Note::new(25),
-                                button_type: ButtonType::Toggle,
-                                group_id: Some(ButtonGroupId::new(2)),
                                 on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Violet),
                             },
                             ButtonMapping {
                                 note: Note::new(17),
-                                button_type: ButtonType::Toggle,
-                                group_id: Some(ButtonGroupId::new(2)),
                                 on_action: ButtonAction::UpdateGlobalSecondaryColor(
                                     Color::DarkBlue,
                                 ),
                             },
                             ButtonMapping {
                                 note: Note::new(9),
-                                button_type: ButtonType::Toggle,
-                                group_id: Some(ButtonGroupId::new(2)),
                                 on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Teal),
                             },
                             ButtonMapping {
                                 note: Note::new(1),
-                                button_type: ButtonType::Toggle,
-                                group_id: Some(ButtonGroupId::new(2)),
                                 on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Green),
                             },
                         ],
@@ -286,8 +264,6 @@ impl MidiController {
                     // Dimmer Effects
                     ButtonMapping {
                         note: Note::new(63),
-                        button_type: ButtonType::Toggle,
-                        group_id: None,
                         on_action: ButtonAction::ActivateDimmerEffect(
                             DimmerModulator::new(Waveform::TriangleDown, Beats::new(1.0), 1.0)
                                 .into(),
@@ -296,8 +272,6 @@ impl MidiController {
                     .into_group(ButtonType::Toggle),
                     ButtonMapping {
                         note: Note::new(55),
-                        button_type: ButtonType::Toggle,
-                        group_id: None,
                         on_action: ButtonAction::ActivateDimmerEffect(
                             DimmerModulator::new(Waveform::HalfSineUp, Beats::new(0.5), 1.0).into(),
                         ),
@@ -305,8 +279,6 @@ impl MidiController {
                     .into_group(ButtonType::Toggle),
                     ButtonMapping {
                         note: Note::new(47),
-                        button_type: ButtonType::Flash,
-                        group_id: None,
                         on_action: ButtonAction::ActivateDimmerEffect(
                             DimmerModulator::new(Waveform::ShortSquarePulse, Beats::new(0.5), 1.0)
                                 .into(),
@@ -315,8 +287,6 @@ impl MidiController {
                     .into_group(ButtonType::Flash),
                     ButtonMapping {
                         note: Note::new(39),
-                        button_type: ButtonType::Toggle,
-                        group_id: None,
                         on_action: ButtonAction::ActivateDimmerEffect(
                             DimmerModulator::new(Waveform::ShortSquarePulse, Beats::new(1.0), 1.0)
                                 .into(),
@@ -326,8 +296,6 @@ impl MidiController {
                     // Dimmer sequences
                     ButtonMapping {
                         note: Note::new(61),
-                        button_type: ButtonType::Toggle,
-                        group_id: None,
                         on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                             vec![
                                 DimmerModulator::new(
@@ -350,8 +318,6 @@ impl MidiController {
                     .into_group(ButtonType::Toggle),
                     ButtonMapping {
                         note: Note::new(53),
-                        button_type: ButtonType::Toggle,
-                        group_id: None,
                         on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                             vec![
                                 DimmerModulator::new(
@@ -368,8 +334,6 @@ impl MidiController {
                     // Color effects
                     ButtonMapping {
                         note: Note::new(58),
-                        button_type: ButtonType::Toggle,
-                        group_id: None,
                         on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
                             vec![ColorModulator::new(
                                 ColorModulation::HueShift(120.0.into()),
@@ -382,8 +346,6 @@ impl MidiController {
                     .into_group(ButtonType::Toggle),
                     ButtonMapping {
                         note: Note::new(50),
-                        button_type: ButtonType::Toggle,
-                        group_id: None,
                         on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
                             vec![ColorModulator::new(
                                 ColorModulation::HueShift((-90.0).into()),
@@ -397,8 +359,6 @@ impl MidiController {
                     // Color sequences
                     ButtonMapping {
                         note: Note::new(34),
-                        button_type: ButtonType::Toggle,
-                        group_id: None,
                         on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
                             vec![
                                 (ColorModulation::NoOp, Beats::new(1.0)).into(),
@@ -414,8 +374,6 @@ impl MidiController {
                     .into_group(ButtonType::Toggle),
                     ButtonMapping {
                         note: Note::new(26),
-                        button_type: ButtonType::Toggle,
-                        group_id: None,
                         on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
                             vec![
                                 ColorModulator::new(
