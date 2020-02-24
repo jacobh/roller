@@ -15,6 +15,11 @@ use crate::{
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize)]
 pub struct ButtonGroupId(usize);
+impl ButtonGroupId {
+    fn new_random() -> ButtonGroupId {
+        ButtonGroupId(rand::random())
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ToggleState {
@@ -102,6 +107,22 @@ impl MetaButtonMapping {
             MetaButtonAction::TapTempo => LightingEvent::TapTempo(now),
             MetaButtonAction::UpdateClockRate(rate) => LightingEvent::UpdateClockRate(rate),
             MetaButtonAction::ActivateScene(scene_id) => LightingEvent::ActivateScene(scene_id),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ButtonGroup {
+    id: ButtonGroupId,
+    button_type: ButtonType,
+    buttons: Vec<ButtonMapping>,
+}
+impl ButtonGroup {
+    fn new(buttons: Vec<ButtonMapping>, button_type: ButtonType) -> ButtonGroup {
+        ButtonGroup {
+            id: ButtonGroupId::new_random(),
+            buttons,
+            button_type,
         }
     }
 }
