@@ -19,8 +19,7 @@ use crate::{
     utils::{shift_remove_vec, FxIndexMap},
 };
 
-type ButtonStateMap =
-    FxIndexMap<(ButtonMapping, ButtonGroupId, ButtonType, NoteState), ButtonStateValue>;
+type ButtonStateMap = FxIndexMap<(ButtonMapping, NoteState), ButtonStateValue>;
 type ButtonStateValue = (ToggleState, Instant, Rate);
 
 // This is just for the case where no buttons have been activated yet
@@ -28,9 +27,10 @@ lazy_static::lazy_static! {
     static ref EMPTY_BUTTON_STATES: ButtonStateMap = {
         FxIndexMap::default()
     };
-    static ref EMPTY_GROUP_BUTTON_STATES: FxHashMap<ButtonGroupId, (ButtonType, GroupToggleState, ButtonStateMap)> = {
-        FxHashMap::default()
-    };
+    static ref EMPTY_GROUP_BUTTON_STATES: FxHashMap<
+        ButtonGroupId,
+        (ButtonType, GroupToggleState, ButtonStateMap),
+    > = FxHashMap::default();
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor)]
@@ -81,7 +81,7 @@ impl<'a> EngineState<'a> {
             .flat_map(|(group_id, (button_type, _, button_states))| {
                 button_states
                     .iter()
-                    .map(move |((button, _, _, note_state), value)| {
+                    .map(move |((button, note_state), value)| {
                         (*group_id, *button_type, button, *note_state, value)
                     })
             })
@@ -98,7 +98,7 @@ impl<'a> EngineState<'a> {
             .flat_map(|(_, states)| {
                 states
                     .iter()
-                    .map(|((button, _, _, note_state), value)| (button, note_state, value))
+                    .map(|((button, note_state), value)| (button, note_state, value))
             })
             .fold(
                 FxHashMap::default(),
@@ -184,7 +184,7 @@ impl<'a> EngineState<'a> {
                 // If there are any buttons currently pressed, update the rate of those buttons, note the global rate
                 if !pressed_notes.is_empty() {
                     for (_, button_states) in self.group_button_states_mut() {
-                        for ((button, _, _, _), (_, _, button_rate)) in button_states.iter_mut() {
+                        for ((button, _), (_, _, button_rate)) in button_states.iter_mut() {
                             if pressed_notes.contains(&button.note) {
                                 *button_rate = rate;
                             }
@@ -205,7 +205,7 @@ impl<'a> EngineState<'a> {
                     self.toggle_button_group(group.id, group.button_type, mapping.note);
                 }
 
-                let key = (mapping, group.id, group.button_type, state);
+                let key = (mapping, state);
 
                 let prev_toggle_state = self
                     .button_states_mut(group.id, group.button_type)
