@@ -33,7 +33,6 @@ async fn main() -> Result<(), async_std::io::Error> {
         global_clock_rate: Rate::new(1.0),
         active_scene_id: SceneId::new(1),
         scene_group_button_states: FxHashMap::default(),
-        scene_button_states: FxHashMap::default(),
     };
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
