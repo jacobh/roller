@@ -83,6 +83,9 @@ pub struct ButtonMapping {
     pub on_action: ButtonAction,
 }
 impl ButtonMapping {
+    pub fn into_group(self, button_type: ButtonType) -> ButtonGroup {
+        ButtonGroup::new(button_type, vec![self])
+    }
     pub fn into_lighting_event(self, note_state: NoteState, now: Instant) -> LightingEvent {
         LightingEvent::UpdateButton(now, note_state, self)
     }
@@ -111,17 +114,26 @@ impl MetaButtonMapping {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ButtonGroup {
     id: ButtonGroupId,
     button_type: ButtonType,
-    buttons: Vec<ButtonMapping>,
+    buttons: FxHashMap<Note, ButtonMapping>,
 }
 impl ButtonGroup {
-    fn new(buttons: Vec<ButtonMapping>, button_type: ButtonType) -> ButtonGroup {
+    pub fn buttons(&self) -> impl Iterator<Item = &'_ ButtonMapping> {
+        self.buttons.values()
+    }
+    pub fn new(
+        button_type: ButtonType,
+        buttons: impl IntoIterator<Item = ButtonMapping>,
+    ) -> ButtonGroup {
         ButtonGroup {
             id: ButtonGroupId::new_random(),
-            buttons,
+            buttons: buttons
+                .into_iter()
+                .map(|button| (button.note, button))
+                .collect(),
             button_type,
         }
     }

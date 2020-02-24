@@ -8,8 +8,8 @@ use crate::{
     color::Color,
     control::{
         button::{
-            AkaiPadState, ButtonAction, ButtonGroupId, ButtonMapping, ButtonType, MetaButtonAction,
-            MetaButtonMapping, PadMapping,
+            AkaiPadState, ButtonAction, ButtonGroup, ButtonGroupId, ButtonMapping, ButtonType,
+            MetaButtonAction, MetaButtonMapping, PadMapping,
         },
         fader::{FaderCurve, FaderType, MidiFaderMapping},
     },
@@ -29,13 +29,13 @@ pub enum NoteState {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MidiMapping {
     faders: FxHashMap<ControlChannel, MidiFaderMapping>,
-    pub buttons: FxHashMap<Note, ButtonMapping>,
+    pub button_groups: Vec<ButtonGroup>,
     pub meta_buttons: FxHashMap<Note, MetaButtonMapping>,
 }
 impl MidiMapping {
     fn new(
         faders: Vec<MidiFaderMapping>,
-        buttons: Vec<ButtonMapping>,
+        button_groups: Vec<ButtonGroup>,
         meta_buttons: Vec<MetaButtonMapping>,
     ) -> MidiMapping {
         MidiMapping {
@@ -43,15 +43,15 @@ impl MidiMapping {
                 .into_iter()
                 .map(|mapping| (mapping.control_channel, mapping))
                 .collect(),
-            buttons: buttons
-                .into_iter()
-                .map(|mapping| (mapping.note, mapping))
-                .collect(),
+            button_groups,
             meta_buttons: meta_buttons
                 .into_iter()
                 .map(|mapping| (mapping.note, mapping))
                 .collect(),
         }
+    }
+    fn buttons(&self) -> impl Iterator<Item = &'_ ButtonMapping> {
+        self.button_groups.iter().flat_map(|group| group.buttons())
     }
     fn midi_to_lighting_event(&self, midi_event: &MidiEvent) -> Option<LightingEvent> {
         let now = Instant::now();
@@ -62,8 +62,8 @@ impl MidiMapping {
                 .get(control)
                 .map(|fader| fader.lighting_event(1.0 / 127.0 * (*value as f64))),
             MidiEvent::NoteOn { note, .. } => self
-                .buttons
-                .get(note)
+                .buttons()
+                .find(|button| button.note == *note)
                 .map(|button| button.clone().into_lighting_event(NoteState::On, now))
                 .or_else(|| {
                     self.meta_buttons
@@ -71,15 +71,14 @@ impl MidiMapping {
                         .map(|meta_button| meta_button.lighting_event(now))
                 }),
             MidiEvent::NoteOff { note, .. } => self
-                .buttons
-                .get(note)
+                .buttons()
+                .find(|button| button.note == *note)
                 .map(|button| button.clone().into_lighting_event(NoteState::Off, now)),
             MidiEvent::Other(_) => None,
         }
     }
     pub fn pad_mappings(&self) -> impl Iterator<Item = PadMapping<'_>> {
-        self.buttons
-            .values()
+        self.buttons()
             .map(PadMapping::from)
             .chain(self.meta_buttons.values().map(PadMapping::from))
     }
@@ -173,103 +172,117 @@ impl MidiController {
                 ],
                 vec![
                     // Colours
-                    ButtonMapping {
-                        note: Note::new(56),
-                        button_type: ButtonType::Switch,
-                        group_id: Some(ButtonGroupId::new(1)),
-                        on_action: ButtonAction::UpdateGlobalColor(Color::White),
-                    },
-                    ButtonMapping {
-                        note: Note::new(48),
-                        button_type: ButtonType::Switch,
-                        group_id: Some(ButtonGroupId::new(1)),
-                        on_action: ButtonAction::UpdateGlobalColor(Color::Yellow),
-                    },
-                    ButtonMapping {
-                        note: Note::new(40),
-                        button_type: ButtonType::Switch,
-                        group_id: Some(ButtonGroupId::new(1)),
-                        on_action: ButtonAction::UpdateGlobalColor(Color::DeepOrange),
-                    },
-                    ButtonMapping {
-                        note: Note::new(32),
-                        button_type: ButtonType::Switch,
-                        group_id: Some(ButtonGroupId::new(1)),
-                        on_action: ButtonAction::UpdateGlobalColor(Color::Red),
-                    },
-                    ButtonMapping {
-                        note: Note::new(24),
-                        button_type: ButtonType::Switch,
-                        group_id: Some(ButtonGroupId::new(1)),
-                        on_action: ButtonAction::UpdateGlobalColor(Color::Violet),
-                    },
-                    ButtonMapping {
-                        note: Note::new(16),
-                        button_type: ButtonType::Switch,
-                        group_id: Some(ButtonGroupId::new(1)),
-                        on_action: ButtonAction::UpdateGlobalColor(Color::DarkBlue),
-                    },
-                    ButtonMapping {
-                        note: Note::new(8),
-                        button_type: ButtonType::Switch,
-                        group_id: Some(ButtonGroupId::new(1)),
-                        on_action: ButtonAction::UpdateGlobalColor(Color::Teal),
-                    },
-                    ButtonMapping {
-                        note: Note::new(0),
-                        button_type: ButtonType::Switch,
-                        group_id: Some(ButtonGroupId::new(1)),
-                        on_action: ButtonAction::UpdateGlobalColor(Color::Green),
-                    },
+                    ButtonGroup::new(
+                        ButtonType::Switch,
+                        vec![
+                            ButtonMapping {
+                                note: Note::new(56),
+                                button_type: ButtonType::Switch,
+                                group_id: Some(ButtonGroupId::new(1)),
+                                on_action: ButtonAction::UpdateGlobalColor(Color::White),
+                            },
+                            ButtonMapping {
+                                note: Note::new(48),
+                                button_type: ButtonType::Switch,
+                                group_id: Some(ButtonGroupId::new(1)),
+                                on_action: ButtonAction::UpdateGlobalColor(Color::Yellow),
+                            },
+                            ButtonMapping {
+                                note: Note::new(40),
+                                button_type: ButtonType::Switch,
+                                group_id: Some(ButtonGroupId::new(1)),
+                                on_action: ButtonAction::UpdateGlobalColor(Color::DeepOrange),
+                            },
+                            ButtonMapping {
+                                note: Note::new(32),
+                                button_type: ButtonType::Switch,
+                                group_id: Some(ButtonGroupId::new(1)),
+                                on_action: ButtonAction::UpdateGlobalColor(Color::Red),
+                            },
+                            ButtonMapping {
+                                note: Note::new(24),
+                                button_type: ButtonType::Switch,
+                                group_id: Some(ButtonGroupId::new(1)),
+                                on_action: ButtonAction::UpdateGlobalColor(Color::Violet),
+                            },
+                            ButtonMapping {
+                                note: Note::new(16),
+                                button_type: ButtonType::Switch,
+                                group_id: Some(ButtonGroupId::new(1)),
+                                on_action: ButtonAction::UpdateGlobalColor(Color::DarkBlue),
+                            },
+                            ButtonMapping {
+                                note: Note::new(8),
+                                button_type: ButtonType::Switch,
+                                group_id: Some(ButtonGroupId::new(1)),
+                                on_action: ButtonAction::UpdateGlobalColor(Color::Teal),
+                            },
+                            ButtonMapping {
+                                note: Note::new(0),
+                                button_type: ButtonType::Switch,
+                                group_id: Some(ButtonGroupId::new(1)),
+                                on_action: ButtonAction::UpdateGlobalColor(Color::Green),
+                            },
+                        ],
+                    ),
                     // Secondary
-                    ButtonMapping {
-                        note: Note::new(57),
-                        button_type: ButtonType::Toggle,
-                        group_id: Some(ButtonGroupId::new(2)),
-                        on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::White),
-                    },
-                    ButtonMapping {
-                        note: Note::new(49),
-                        button_type: ButtonType::Toggle,
-                        group_id: Some(ButtonGroupId::new(2)),
-                        on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Yellow),
-                    },
-                    ButtonMapping {
-                        note: Note::new(41),
-                        button_type: ButtonType::Toggle,
-                        group_id: Some(ButtonGroupId::new(2)),
-                        on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::DeepOrange),
-                    },
-                    ButtonMapping {
-                        note: Note::new(33),
-                        button_type: ButtonType::Toggle,
-                        group_id: Some(ButtonGroupId::new(2)),
-                        on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Red),
-                    },
-                    ButtonMapping {
-                        note: Note::new(25),
-                        button_type: ButtonType::Toggle,
-                        group_id: Some(ButtonGroupId::new(2)),
-                        on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Violet),
-                    },
-                    ButtonMapping {
-                        note: Note::new(17),
-                        button_type: ButtonType::Toggle,
-                        group_id: Some(ButtonGroupId::new(2)),
-                        on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::DarkBlue),
-                    },
-                    ButtonMapping {
-                        note: Note::new(9),
-                        button_type: ButtonType::Toggle,
-                        group_id: Some(ButtonGroupId::new(2)),
-                        on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Teal),
-                    },
-                    ButtonMapping {
-                        note: Note::new(1),
-                        button_type: ButtonType::Toggle,
-                        group_id: Some(ButtonGroupId::new(2)),
-                        on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Green),
-                    },
+                    ButtonGroup::new(
+                        ButtonType::Toggle,
+                        vec![
+                            ButtonMapping {
+                                note: Note::new(57),
+                                button_type: ButtonType::Toggle,
+                                group_id: Some(ButtonGroupId::new(2)),
+                                on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::White),
+                            },
+                            ButtonMapping {
+                                note: Note::new(49),
+                                button_type: ButtonType::Toggle,
+                                group_id: Some(ButtonGroupId::new(2)),
+                                on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Yellow),
+                            },
+                            ButtonMapping {
+                                note: Note::new(41),
+                                button_type: ButtonType::Toggle,
+                                group_id: Some(ButtonGroupId::new(2)),
+                                on_action: ButtonAction::UpdateGlobalSecondaryColor(
+                                    Color::DeepOrange,
+                                ),
+                            },
+                            ButtonMapping {
+                                note: Note::new(33),
+                                button_type: ButtonType::Toggle,
+                                group_id: Some(ButtonGroupId::new(2)),
+                                on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Red),
+                            },
+                            ButtonMapping {
+                                note: Note::new(25),
+                                button_type: ButtonType::Toggle,
+                                group_id: Some(ButtonGroupId::new(2)),
+                                on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Violet),
+                            },
+                            ButtonMapping {
+                                note: Note::new(17),
+                                button_type: ButtonType::Toggle,
+                                group_id: Some(ButtonGroupId::new(2)),
+                                on_action: ButtonAction::UpdateGlobalSecondaryColor(
+                                    Color::DarkBlue,
+                                ),
+                            },
+                            ButtonMapping {
+                                note: Note::new(9),
+                                button_type: ButtonType::Toggle,
+                                group_id: Some(ButtonGroupId::new(2)),
+                                on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Teal),
+                            },
+                            ButtonMapping {
+                                note: Note::new(1),
+                                button_type: ButtonType::Toggle,
+                                group_id: Some(ButtonGroupId::new(2)),
+                                on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Green),
+                            },
+                        ],
+                    ),
                     // Dimmer Effects
                     ButtonMapping {
                         note: Note::new(63),
@@ -279,7 +292,8 @@ impl MidiController {
                             DimmerModulator::new(Waveform::TriangleDown, Beats::new(1.0), 1.0)
                                 .into(),
                         ),
-                    },
+                    }
+                    .into_group(ButtonType::Toggle),
                     ButtonMapping {
                         note: Note::new(55),
                         button_type: ButtonType::Toggle,
@@ -287,7 +301,8 @@ impl MidiController {
                         on_action: ButtonAction::ActivateDimmerEffect(
                             DimmerModulator::new(Waveform::HalfSineUp, Beats::new(0.5), 1.0).into(),
                         ),
-                    },
+                    }
+                    .into_group(ButtonType::Toggle),
                     ButtonMapping {
                         note: Note::new(47),
                         button_type: ButtonType::Flash,
@@ -296,7 +311,8 @@ impl MidiController {
                             DimmerModulator::new(Waveform::ShortSquarePulse, Beats::new(0.5), 1.0)
                                 .into(),
                         ),
-                    },
+                    }
+                    .into_group(ButtonType::Flash),
                     ButtonMapping {
                         note: Note::new(39),
                         button_type: ButtonType::Toggle,
@@ -305,7 +321,8 @@ impl MidiController {
                             DimmerModulator::new(Waveform::ShortSquarePulse, Beats::new(1.0), 1.0)
                                 .into(),
                         ),
-                    },
+                    }
+                    .into_group(ButtonType::Toggle),
                     // Dimmer sequences
                     ButtonMapping {
                         note: Note::new(61),
@@ -329,7 +346,8 @@ impl MidiController {
                             ],
                             Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
                         )),
-                    },
+                    }
+                    .into_group(ButtonType::Toggle),
                     ButtonMapping {
                         note: Note::new(53),
                         button_type: ButtonType::Toggle,
@@ -345,7 +363,8 @@ impl MidiController {
                             ],
                             Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
                         )),
-                    },
+                    }
+                    .into_group(ButtonType::Toggle),
                     // Color effects
                     ButtonMapping {
                         note: Note::new(58),
@@ -359,7 +378,8 @@ impl MidiController {
                             )],
                             Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
                         )),
-                    },
+                    }
+                    .into_group(ButtonType::Toggle),
                     ButtonMapping {
                         note: Note::new(50),
                         button_type: ButtonType::Toggle,
@@ -372,7 +392,8 @@ impl MidiController {
                             )],
                             Some(ClockOffset::new(ClockOffsetMode::Random, Beats::new(0.5))),
                         )),
-                    },
+                    }
+                    .into_group(ButtonType::Toggle),
                     // Color sequences
                     ButtonMapping {
                         note: Note::new(34),
@@ -389,7 +410,8 @@ impl MidiController {
                             ],
                             Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(4.0))),
                         )),
-                    },
+                    }
+                    .into_group(ButtonType::Toggle),
                     ButtonMapping {
                         note: Note::new(26),
                         button_type: ButtonType::Toggle,
@@ -405,7 +427,8 @@ impl MidiController {
                             ],
                             Some(ClockOffset::new(ClockOffsetMode::Random, Beats::new(0.5))),
                         )),
-                    },
+                    }
+                    .into_group(ButtonType::Toggle),
                 ],
                 vec![
                     MetaButtonMapping {
