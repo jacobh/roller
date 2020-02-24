@@ -40,15 +40,10 @@ pub enum GroupToggleState {
 }
 impl GroupToggleState {
     pub fn toggle(self, note: Note) -> GroupToggleState {
-        match self {
-            GroupToggleState::On(current_note) => {
-                if current_note == note {
-                    GroupToggleState::Off
-                } else {
-                    GroupToggleState::On(note)
-                }
-            }
-            GroupToggleState::Off => GroupToggleState::On(note),
+        if self == GroupToggleState::On(note) {
+            GroupToggleState::Off
+        } else {
+            GroupToggleState::On(note)
         }
     }
     pub fn toggle_mut(&mut self, note: Note) {
