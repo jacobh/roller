@@ -36,6 +36,19 @@ lazy_static::lazy_static! {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor)]
 pub struct SceneId(usize);
 
+pub struct ButtonGroupInfo {
+    pub id: ButtonGroupId,
+    pub button_type: ButtonType,
+    pub toggle_state: GroupToggleState,
+}
+
+pub struct ButtonInfo<'a> {
+    pub button: &'a ButtonMapping,
+    pub note_state: NoteState,
+    pub triggered_at: Instant,
+    pub effect_rate: Rate,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum LightingEvent {
     UpdateMasterDimmer(f64),
@@ -63,50 +76,45 @@ pub struct EngineState<'a> {
     >,
 }
 impl<'a> EngineState<'a> {
-    pub fn button_states(
-        &self,
-    ) -> impl Iterator<
-        Item = (
-            ButtonGroupId,
-            ButtonType,
-            GroupToggleState,
-            &'_ ButtonMapping,
-            NoteState,
-            &'_ ButtonStateValue,
-        ),
-    > {
+    pub fn button_states(&self) -> impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'_>)> {
         self.scene_group_button_states
             .get(&self.active_scene_id)
             .unwrap_or_else(|| &*EMPTY_GROUP_BUTTON_STATES)
             .iter()
             .flat_map(|(group_id, (button_type, toggle_state, button_states))| {
-                button_states
-                    .iter()
-                    .map(move |((button, note_state), value)| {
+                button_states.iter().map(
+                    move |((button, note_state), (triggered_at, effect_rate))| {
                         (
-                            *group_id,
-                            *button_type,
-                            *toggle_state,
-                            button,
-                            *note_state,
-                            value,
+                            ButtonGroupInfo {
+                                id: *group_id,
+                                button_type: *button_type,
+                                toggle_state: *toggle_state,
+                            },
+                            ButtonInfo {
+                                button: button,
+                                note_state: *note_state,
+                                triggered_at: *triggered_at,
+                                effect_rate: *effect_rate,
+                            },
                         )
-                    })
+                    },
+                )
             })
     }
-    fn pressed_buttons(&self) -> FxHashMap<&ButtonMapping, &ButtonStateValue> {
-        self.button_states()
-            .map(|(_, _, _, button, note_state, value)| (button, note_state, value))
-            .fold(
-                FxHashMap::default(),
-                |mut pressed_buttons, (button, note_state, value)| {
-                    match note_state {
-                        NoteState::On => pressed_buttons.insert(button, value),
-                        NoteState::Off => pressed_buttons.remove(button),
-                    };
-                    pressed_buttons
-                },
-            )
+    fn pressed_buttons(&self) -> FxHashMap<&ButtonMapping, ButtonStateValue> {
+        self.button_states().fold(
+            FxHashMap::default(),
+            |mut pressed_buttons, (_, button_info)| {
+                match button_info.note_state {
+                    NoteState::On => pressed_buttons.insert(
+                        button_info.button,
+                        (button_info.triggered_at, button_info.effect_rate),
+                    ),
+                    NoteState::Off => pressed_buttons.remove(button_info.button),
+                };
+                pressed_buttons
+            },
+        )
     }
     fn pressed_notes(&self) -> FxHashSet<Note> {
         self.pressed_buttons()
@@ -215,17 +223,17 @@ impl<'a> EngineState<'a> {
         let mut on_colors: Vec<(Note, Color)> = Vec::new();
         let mut last_off: Option<(Note, Color)> = None;
 
-        let color_buttons =
-            self.button_states()
-                .flat_map(
-                    |(_, button_type, _, mapping, state, _)| match mapping.on_action {
-                        ButtonAction::UpdateGlobalColor(color) => match button_type {
-                            ButtonType::Switch => Some((mapping.note, state, color)),
-                            _ => panic!("only switch button type implemented for colors"),
-                        },
-                        _ => None,
-                    },
-                );
+        let color_buttons = self.button_states().flat_map(|(group_info, button_info)| {
+            match button_info.button.on_action {
+                ButtonAction::UpdateGlobalColor(color) => match group_info.button_type {
+                    ButtonType::Switch => {
+                        Some((button_info.button.note, button_info.note_state, color))
+                    }
+                    _ => panic!("only switch button type implemented for colors"),
+                },
+                _ => None,
+            }
+        });
 
         for (note, state, color) in color_buttons {
             match state {
@@ -248,9 +256,12 @@ impl<'a> EngineState<'a> {
     pub fn secondary_color(&self) -> Option<Color> {
         self.button_states()
             .filter_map(
-                |(_, button_type, toggle_state, mapping, _, _)| match mapping.on_action {
-                    ButtonAction::UpdateGlobalSecondaryColor(color) => match button_type {
-                        ButtonType::Toggle => Some((mapping.note, toggle_state, color)),
+                |(group_info, button_info)| match button_info.button.on_action {
+                    ButtonAction::UpdateGlobalSecondaryColor(color) => match group_info.button_type
+                    {
+                        ButtonType::Toggle => {
+                            Some((button_info.button.note, group_info.toggle_state, color))
+                        }
                         _ => panic!("only toggle button type implemented for secondary colors"),
                     },
                     _ => None,
@@ -269,25 +280,27 @@ impl<'a> EngineState<'a> {
         let mut effects = FxHashMap::default();
 
         // TODO button groups
-        for (_, button_type, toggle_state, mapping, state, (_, rate)) in self.button_states() {
-            if let ButtonAction::ActivateDimmerEffect(effect) = &mapping.on_action {
-                match button_type {
+        for (group_info, button_info) in self.button_states() {
+            if let ButtonAction::ActivateDimmerEffect(effect) = &button_info.button.on_action {
+                match group_info.button_type {
                     ButtonType::Flash => {
-                        match state {
-                            NoteState::On => effects.insert(effect, *rate),
+                        match button_info.note_state {
+                            NoteState::On => effects.insert(effect, button_info.effect_rate),
                             NoteState::Off => effects.remove(&effect),
                         };
                     }
-                    ButtonType::Switch => match state {
+                    ButtonType::Switch => match button_info.note_state {
                         NoteState::On => {
-                            effects.insert(effect, *rate);
+                            effects.insert(effect, button_info.effect_rate);
                         }
                         NoteState::Off => {}
                     },
-                    ButtonType::Toggle => match state {
+                    ButtonType::Toggle => match button_info.note_state {
                         NoteState::On => {
-                            if GroupToggleState::On(mapping.note) == toggle_state {
-                                effects.insert(effect, *rate);
+                            if GroupToggleState::On(button_info.button.note)
+                                == group_info.toggle_state
+                            {
+                                effects.insert(effect, button_info.effect_rate);
                             }
                         }
                         NoteState::Off => {}
@@ -302,25 +315,27 @@ impl<'a> EngineState<'a> {
         let mut effects = FxHashMap::default();
 
         // TODO button groups
-        for (_, button_type, toggle_state, mapping, state, (_, rate)) in self.button_states() {
-            if let ButtonAction::ActivateColorEffect(effect) = &mapping.on_action {
-                match button_type {
+        for (group_info, button_info) in self.button_states() {
+            if let ButtonAction::ActivateColorEffect(effect) = &button_info.button.on_action {
+                match group_info.button_type {
                     ButtonType::Flash => {
-                        match state {
-                            NoteState::On => effects.insert(effect, *rate),
+                        match button_info.note_state {
+                            NoteState::On => effects.insert(effect, button_info.effect_rate),
                             NoteState::Off => effects.remove(&effect),
                         };
                     }
-                    ButtonType::Switch => match state {
+                    ButtonType::Switch => match button_info.note_state {
                         NoteState::On => {
-                            effects.insert(effect, *rate);
+                            effects.insert(effect, button_info.effect_rate);
                         }
                         NoteState::Off => {}
                     },
-                    ButtonType::Toggle => match state {
+                    ButtonType::Toggle => match button_info.note_state {
                         NoteState::On => {
-                            if GroupToggleState::On(mapping.note) == toggle_state {
-                                effects.insert(effect, *rate);
+                            if GroupToggleState::On(button_info.button.note)
+                                == group_info.toggle_state
+                            {
+                                effects.insert(effect, button_info.effect_rate);
                             }
                         }
                         NoteState::Off => {}

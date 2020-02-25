@@ -9,7 +9,7 @@ use crate::{
     color::Color,
     control::midi::NoteState,
     effect::{ColorEffect, DimmerEffect},
-    lighting_engine::{LightingEvent, SceneId},
+    lighting_engine::{ButtonGroupInfo, ButtonInfo, LightingEvent, SceneId},
     utils::shift_remove_vec,
 };
 
@@ -380,35 +380,22 @@ impl<'a> PadEvent<'a> {
 }
 
 // convert from an item in the `ButtonStateMap` hashmap
-impl<'a>
-    From<(
-        ButtonGroupId,
-        ButtonType,
-        GroupToggleState,
-        &'a ButtonMapping,
-        NoteState,
-        &'a (Instant, Rate),
-    )> for PadEvent<'a>
-{
-    fn from(
-        (group_id, button_type, group_toggle_state, mapping, note_state, _): (
-            ButtonGroupId,
-            ButtonType,
-            GroupToggleState,
-            &'a ButtonMapping,
-            NoteState,
-            &'a (Instant, Rate),
-        ),
-    ) -> PadEvent<'a> {
-        let toggle_state = if group_toggle_state == GroupToggleState::On(mapping.note) {
-            ToggleState::On
-        } else {
-            ToggleState::Off
-        };
+impl<'a> From<(ButtonGroupInfo, ButtonInfo<'a>)> for PadEvent<'a> {
+    fn from((group_info, button_info): (ButtonGroupInfo, ButtonInfo<'a>)) -> PadEvent<'a> {
+        let toggle_state =
+            if group_info.toggle_state == GroupToggleState::On(button_info.button.note) {
+                ToggleState::On
+            } else {
+                ToggleState::Off
+            };
 
         PadEvent {
-            mapping: PadMapping::Standard(mapping, group_id, button_type),
-            note_state,
+            mapping: PadMapping::Standard(
+                button_info.button,
+                group_info.id,
+                group_info.button_type,
+            ),
+            note_state: button_info.note_state,
             toggle_state,
         }
     }
