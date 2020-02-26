@@ -273,20 +273,41 @@ impl MidiController {
                     ButtonMapping {
                         note: Note::new(55),
                         on_action: ButtonAction::ActivateDimmerEffect(
-                            DimmerModulator::new(Waveform::HalfSineUp, Beats::new(0.5), 1.0).into(),
+                            DimmerModulator::new(Waveform::SineDown, Beats::new(1.0), 1.0).into(),
                         ),
                     }
                     .into_group(ButtonType::Toggle),
                     ButtonMapping {
                         note: Note::new(47),
                         on_action: ButtonAction::ActivateDimmerEffect(
-                            DimmerModulator::new(Waveform::ShortSquarePulse, Beats::new(0.5), 1.0)
+                            DimmerModulator::new(Waveform::HalfSineUp, Beats::new(1.0), 1.0).into(),
+                        ),
+                    }
+                    .into_group(ButtonType::Toggle),
+                    ButtonMapping {
+                        note: Note::new(39),
+                        on_action: ButtonAction::ActivateDimmerEffect(
+                            DimmerModulator::new(Waveform::SawUp, Beats::new(1.0), 1.0).into(),
+                        ),
+                    }
+                    .into_group(ButtonType::Toggle),
+                    ButtonMapping {
+                        note: Note::new(31),
+                        on_action: ButtonAction::ActivateDimmerEffect(
+                            DimmerModulator::new(Waveform::HalfSineDown, Beats::new(1.0), 1.0)
                                 .into(),
                         ),
                     }
-                    .into_group(ButtonType::Flash),
+                    .into_group(ButtonType::Toggle),
                     ButtonMapping {
-                        note: Note::new(39),
+                        note: Note::new(23),
+                        on_action: ButtonAction::ActivateDimmerEffect(
+                            DimmerModulator::new(Waveform::SawDown, Beats::new(1.0), 1.0).into(),
+                        ),
+                    }
+                    .into_group(ButtonType::Toggle),
+                    ButtonMapping {
+                        note: Note::new(15),
                         on_action: ButtonAction::ActivateDimmerEffect(
                             DimmerModulator::new(Waveform::ShortSquarePulse, Beats::new(1.0), 1.0)
                                 .into(),
