@@ -11,7 +11,7 @@ universe_id = 10
     [[universes.fixtures]]
     start_channel = 5
     fixture_profile = "ave_quad_pro_flat_4ch"
-    group_id = 1
+    group_id = 2
 
     [[universes.fixtures]]
     start_channel = 9
