@@ -140,7 +140,7 @@ impl<'a> EngineState<'a> {
             }
         }
     }
-    pub fn button_states_mut(
+    fn button_states_mut(
         &mut self,
         group_id: ButtonGroupId,
         button_type: ButtonType,
@@ -180,6 +180,20 @@ impl<'a> EngineState<'a> {
                 FxIndexMap::default(),
             ));
     }
+    fn update_button_state(
+        &mut self,
+        group: &ButtonGroup,
+        button: ButtonMapping,
+        note_state: NoteState,
+        now: Instant,
+    ) {
+        if note_state == NoteState::On {
+            self.toggle_button_group(group.id, group.button_type, button.note);
+        }
+
+        self.button_states_mut(group.id, group.button_type)
+            .insert((button, note_state), (now, Rate::default()));
+    }
     pub fn apply_event(&mut self, event: LightingEvent) {
         // dbg!(&event);
         match event {
@@ -209,12 +223,7 @@ impl<'a> EngineState<'a> {
                 self.group_dimmers.insert(group_id, dimmer);
             }
             LightingEvent::UpdateButton(now, state, mapping, group) => {
-                if state == NoteState::On {
-                    self.toggle_button_group(group.id, group.button_type, mapping.note);
-                }
-
-                self.button_states_mut(group.id, group.button_type)
-                    .insert((mapping, state), (now, Rate::default()));
+                self.update_button_state(&group, mapping, state, now);
             }
             LightingEvent::TapTempo(now) => {
                 self.clock.tap(now);
