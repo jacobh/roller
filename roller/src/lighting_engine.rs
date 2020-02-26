@@ -57,7 +57,7 @@ pub enum LightingEvent {
     UpdateColorEffectIntensity(f64),
     UpdateClockRate(Rate),
     ActivateScene(SceneId),
-    UpdateButton(Instant, NoteState, ButtonMapping, ButtonGroup),
+    UpdateButton(ButtonGroup, ButtonMapping, NoteState, Instant),
     TapTempo(Instant),
 }
 
@@ -222,8 +222,8 @@ impl<'a> EngineState<'a> {
             LightingEvent::UpdateGroupDimmer(group_id, dimmer) => {
                 self.group_dimmers.insert(group_id, dimmer);
             }
-            LightingEvent::UpdateButton(now, state, mapping, group) => {
-                self.update_button_state(&group, mapping, state, now);
+            LightingEvent::UpdateButton(group, mapping, note_state, now) => {
+                self.update_button_state(&group, mapping, note_state, now);
             }
             LightingEvent::TapTempo(now) => {
                 self.clock.tap(now);

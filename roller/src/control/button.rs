@@ -90,7 +90,7 @@ impl ButtonMapping {
         note_state: NoteState,
         now: Instant,
     ) -> LightingEvent {
-        LightingEvent::UpdateButton(now, note_state, self, group)
+        LightingEvent::UpdateButton(group, self, note_state, now)
     }
 }
 
