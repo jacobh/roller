@@ -191,8 +191,14 @@ impl<'a> EngineState<'a> {
             self.toggle_button_group(group.id, group.button_type, button.note);
         }
 
-        self.button_states_mut(group.id, group.button_type)
-            .insert((button, note_state), (now, Rate::default()));
+        let button_states = self.button_states_mut(group.id, group.button_type);
+        let key = (button, note_state);
+
+        let previous_state = button_states.shift_remove(&key);
+        let effect_rate = previous_state
+            .map(|(_, rate)| rate)
+            .unwrap_or_else(|| Rate::default());
+        button_states.insert(key, (now, effect_rate));
     }
     pub fn apply_event(&mut self, event: LightingEvent) {
         // dbg!(&event);
