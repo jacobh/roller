@@ -352,6 +352,19 @@ impl MidiController {
                         )),
                     }
                     .into_group(ButtonType::Toggle),
+                    ButtonMapping {
+                        note: Note::new(45),
+                        on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
+                            vec![
+                                DimmerModulator::new(Waveform::HalfSineDown, Beats::new(1.0), 1.0),
+                                DimmerModulator::new(Waveform::HalfSineUp, Beats::new(1.0), (0.0, 0.8)),
+                                DimmerModulator::new(Waveform::HalfSineUp, Beats::new(1.0), (0.0, 0.9)),
+                                DimmerModulator::new(Waveform::HalfSineUp, Beats::new(1.0), 1.0),
+                            ],
+                            None
+                        )),
+                    }
+                    .into_group(ButtonType::Toggle),
                     // Color effects
                     ButtonMapping {
                         note: Note::new(58),
