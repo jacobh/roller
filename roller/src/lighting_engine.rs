@@ -122,14 +122,23 @@ impl<'a> EngineState<'a> {
             .map(|(button, _)| button.note)
             .collect()
     }
-    pub fn group_button_states_mut(
-        &mut self,
-    ) -> impl Iterator<Item = (ButtonGroupId, &mut ButtonStateMap)> {
-        self.scene_group_button_states
+    fn update_pressed_button_rates(&mut self, rate: Rate) {
+        let pressed_notes = self.pressed_notes();
+
+        let scene_button_states = self
+            .scene_group_button_states
             .entry(self.active_scene_id)
             .or_default()
-            .iter_mut()
-            .map(|(id, (_, _, states))| (*id, states))
+            .values_mut()
+            .map(|(_, _, states)| states);
+
+        for button_states in scene_button_states {
+            for ((button, _), (_, button_rate)) in button_states.iter_mut() {
+                if pressed_notes.contains(&button.note) {
+                    *button_rate = rate;
+                }
+            }
+        }
     }
     pub fn button_states_mut(
         &mut self,
@@ -188,13 +197,7 @@ impl<'a> EngineState<'a> {
 
                 // If there are any buttons currently pressed, update the rate of those buttons, note the global rate
                 if !pressed_notes.is_empty() {
-                    for (_, button_states) in self.group_button_states_mut() {
-                        for ((button, _), (_, button_rate)) in button_states.iter_mut() {
-                            if pressed_notes.contains(&button.note) {
-                                *button_rate = rate;
-                            }
-                        }
-                    }
+                    self.update_pressed_button_rates(rate);
                 } else {
                     self.global_clock_rate = rate;
                 }
