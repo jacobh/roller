@@ -53,15 +53,30 @@ struct FixtureProfileData {
     channels: Vec<FixtureProfileChannel>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FixtureProfile {
-    data: FixtureProfileData,
-
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct FixtureProfileBeam {
     dimmer_channel: Option<FixtureProfileChannel>,
     red_channel: Option<FixtureProfileChannel>,
     green_channel: Option<FixtureProfileChannel>,
     blue_channel: Option<FixtureProfileChannel>,
     cool_white_channel: Option<FixtureProfileChannel>,
+}
+impl FixtureProfileBeam {
+    pub fn is_dimmable(&self) -> bool {
+        self.dimmer_channel.is_some()
+    }
+    pub fn is_colorable(&self) -> bool {
+        [&self.red_channel, &self.green_channel, &self.blue_channel]
+            .iter()
+            .all(|channel| channel.is_some())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FixtureProfile {
+    data: FixtureProfileData,
+
+    beams: FxHashMap<Option<usize>, FixtureProfileBeam>,
     pan_channel: Option<FixtureProfileChannel>,
     tilt_channel: Option<FixtureProfileChannel>,
 }
@@ -78,27 +93,75 @@ impl FixtureProfile {
             .map(|channel| (channel.parameter, channel.clone()))
             .collect();
 
+        let beams: FxHashMap<Option<usize>, FixtureProfileBeam> = profile_data
+            .channels
+            .iter()
+            .fold(FxHashMap::default(), |mut beams, channel| {
+                let mut beam = beams.entry(channel.beam).or_default();
+
+                match channel.parameter {
+                    FixtureParameter::Dimmer => {
+                        beam.dimmer_channel = Some(channel.clone());
+                    }
+                    FixtureParameter::Red => {
+                        beam.red_channel = Some(channel.clone());
+                    }
+                    FixtureParameter::Green => {
+                        beam.green_channel = Some(channel.clone());
+                    }
+                    FixtureParameter::Blue => {
+                        beam.blue_channel = Some(channel.clone());
+                    }
+                    _ => {}
+                }
+
+                beams
+            });
+
         // Ensure channel count is correct
         assert_eq!(profile_data.channel_count, profile_data.channels.len());
+
+        // assert have at least 1 beam
+        assert!(beams.len() > 0);
         Ok(FixtureProfile {
-            dimmer_channel: parameters.get(&FixtureParameter::Dimmer).cloned(),
-            red_channel: parameters.get(&FixtureParameter::Red).cloned(),
-            green_channel: parameters.get(&FixtureParameter::Green).cloned(),
-            blue_channel: parameters.get(&FixtureParameter::Blue).cloned(),
-            cool_white_channel: parameters.get(&FixtureParameter::CoolWhite).cloned(),
+            beams,
             pan_channel: parameters.get(&FixtureParameter::Pan).cloned(),
             tilt_channel: parameters.get(&FixtureParameter::Tilt).cloned(),
-
             data: profile_data,
         })
     }
+    fn dimmer_channels(&self) -> impl Iterator<Item = &FixtureProfileChannel> {
+        self.beams
+            .values()
+            .filter_map(|beam| beam.dimmer_channel.as_ref())
+    }
+    fn color_channels(
+        &self,
+    ) -> impl Iterator<
+        Item = (
+            &FixtureProfileChannel,
+            &FixtureProfileChannel,
+            &FixtureProfileChannel,
+        ),
+    > {
+        self.beams.values().filter_map(|beam| {
+            match (
+                beam.red_channel.as_ref(),
+                beam.green_channel.as_ref(),
+                beam.blue_channel.as_ref(),
+            ) {
+                (Some(red_channel), Some(blue_channel), Some(green_channel)) => {
+                    Some((red_channel, blue_channel, green_channel))
+                }
+                _ => None,
+            }
+        })
+    }
     pub fn is_dimmable(&self) -> bool {
-        self.dimmer_channel.is_some()
+        self.beams.values().any(FixtureProfileBeam::is_dimmable)
     }
     pub fn is_colorable(&self) -> bool {
-        [&self.red_channel, &self.green_channel, &self.blue_channel]
-            .iter()
-            .all(|channel| channel.is_some())
+        self.beams.values().any(FixtureProfileBeam::is_colorable)
     }
     pub fn is_positionable(&self) -> bool {
         [&self.pan_channel, &self.tilt_channel]
@@ -175,16 +238,11 @@ impl Fixture {
     pub fn relative_dmx(&self) -> Vec<u8> {
         let mut dmx: Vec<u8> = vec![0; self.profile.data.channel_count];
 
-        if let Some(channel) = &self.profile.dimmer_channel {
+        for channel in self.profile.dimmer_channels() {
             dmx[channel.channel_index()] = channel.encode_value(self.dimmer);
         }
 
-        if let (Some(color), Some(red_channel), Some(green_channel), Some(blue_channel)) = (
-            self.color,
-            &self.profile.red_channel,
-            &self.profile.green_channel,
-            &self.profile.blue_channel,
-        ) {
+        if let Some(color) = self.color {
             let (mut red, mut green, mut blue) = color.into_components();
 
             // If light doesn't have dimmer control, scale the color values instead
@@ -194,9 +252,11 @@ impl Fixture {
                 blue *= self.dimmer;
             }
 
-            dmx[red_channel.channel_index()] = red_channel.encode_value(red);
-            dmx[green_channel.channel_index()] = green_channel.encode_value(green);
-            dmx[blue_channel.channel_index()] = blue_channel.encode_value(blue);
+            for (red_channel, green_channel, blue_channel) in self.profile.color_channels() {
+                dmx[red_channel.channel_index()] = red_channel.encode_value(red);
+                dmx[green_channel.channel_index()] = green_channel.encode_value(green);
+                dmx[blue_channel.channel_index()] = blue_channel.encode_value(blue);
+            }
         }
 
         if let (Some(position), Some(tilt_channel), Some(pan_channel)) = (
