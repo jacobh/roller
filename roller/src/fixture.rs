@@ -264,6 +264,7 @@ impl Fixture {
         let mut dmx: Vec<u8> = vec![0; self.profile.data.channel_count];
 
         for beam in self.beams.values() {
+            // TODO dimmer is being applied twice, once for Some(beam_id) and once for None
             if let Some(channel) = &beam.profile.dimmer_channel {
                 dmx[channel.channel_index()] = channel.encode_value(beam.dimmer);
             }
