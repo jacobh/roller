@@ -230,9 +230,21 @@ impl Fixture {
             position: None,
         }
     }
+    fn global_beam_mut(&mut self) -> Option<&mut FixtureBeam> {
+        self.beams.get_mut(&None)
+    }
+    fn beams_mut(&mut self) -> impl Iterator<Item = (BeamId, &mut FixtureBeam)> {
+        self.beams
+            .iter_mut()
+            .filter_map(|(beam_id, beam)| beam_id.map(|beam_id| (beam_id, beam)))
+    }
     pub fn set_dimmer(&mut self, dimmer: f64) {
-        for beam in self.beams.values_mut() {
+        if let Some(beam) = self.global_beam_mut() {
             beam.dimmer = dimmer;
+        } else {
+            for (_, beam) in self.beams_mut() {
+                beam.dimmer = dimmer;
+            }
         }
     }
     pub fn set_color(
@@ -264,7 +276,6 @@ impl Fixture {
         let mut dmx: Vec<u8> = vec![0; self.profile.data.channel_count];
 
         for beam in self.beams.values() {
-            // TODO dimmer is being applied twice, once for Some(beam_id) and once for None
             if let Some(channel) = &beam.profile.dimmer_channel {
                 dmx[channel.channel_index()] = channel.encode_value(beam.dimmer);
             }
