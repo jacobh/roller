@@ -21,6 +21,7 @@ enum FixtureParameter {
 struct FixtureProfileChannel {
     parameter: FixtureParameter,
     channel: usize,
+    beam: Option<usize>,
     #[serde(default = "FixtureProfileChannel::default_min_value")]
     min_value: u8,
     #[serde(default = "FixtureProfileChannel::default_max_value")]

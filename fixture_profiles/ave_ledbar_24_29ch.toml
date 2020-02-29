@@ -1,0 +1,144 @@
+slug = "ave_ledbar_24_29ch"
+label = "AVE LEDBAR-24"
+channel_count = 29
+
+[[channels]]
+channel = 1
+parameter = "dimmer"
+
+# strobe
+[[channels]]
+channel = 2
+parameter = "unused"
+
+[[channels]]
+channel = 3
+parameter = "red"
+beam = 1
+
+[[channels]]
+channel = 4
+parameter = "green"
+beam = 1
+
+[[channels]]
+channel = 5
+parameter = "blue"
+beam = 1
+
+[[channels]]
+channel = 6
+parameter = "red"
+beam = 2
+
+[[channels]]
+channel = 7
+parameter = "green"
+beam = 2
+
+[[channels]]
+channel = 8
+parameter = "blue"
+beam = 2
+
+[[channels]]
+channel = 9
+parameter = "red"
+beam = 3
+
+[[channels]]
+channel = 10
+parameter = "green"
+beam = 3
+
+[[channels]]
+channel = 11
+parameter = "blue"
+beam = 3
+
+[[channels]]
+channel = 12
+parameter = "red"
+beam = 4
+
+[[channels]]
+channel = 13
+parameter = "green"
+beam = 4
+
+[[channels]]
+channel = 14
+parameter = "blue"
+beam = 4
+
+[[channels]]
+channel = 15
+parameter = "red"
+beam = 5
+
+[[channels]]
+channel = 16
+parameter = "green"
+beam = 5
+
+[[channels]]
+channel = 17
+parameter = "blue"
+beam = 5
+
+[[channels]]
+channel = 18
+parameter = "red"
+beam = 6
+
+[[channels]]
+channel = 19
+parameter = "green"
+beam = 6
+
+[[channels]]
+channel = 20
+parameter = "blue"
+beam = 6
+
+[[channels]]
+channel = 21
+parameter = "red"
+beam = 7
+
+[[channels]]
+channel = 22
+parameter = "green"
+beam = 7
+
+[[channels]]
+channel = 23
+parameter = "blue"
+beam = 7
+
+[[channels]]
+channel = 24
+parameter = "red"
+beam = 8
+
+[[channels]]
+channel = 25
+parameter = "green"
+beam = 8
+
+[[channels]]
+channel = 26
+parameter = "blue"
+beam = 8
+
+[[channels]]
+channel = 27
+parameter = "unused"
+
+[[channels]]
+channel = 28
+parameter = "unused"
+
+[[channels]]
+channel = 29
+parameter = "unused"
