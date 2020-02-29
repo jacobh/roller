@@ -165,6 +165,11 @@ impl MidiController {
                         fader_curve: FaderCurve::root(1.25),
                     },
                     MidiFaderMapping {
+                        control_channel: ControlChannel::new(50),
+                        fader_type: FaderType::GroupDimmer(FixtureGroupId::new(3)),
+                        fader_curve: FaderCurve::root(1.25),
+                    },
+                    MidiFaderMapping {
                         control_channel: ControlChannel::new(54),
                         fader_type: FaderType::ColorEffectIntensity,
                         fader_curve: FaderCurve::linear(),
