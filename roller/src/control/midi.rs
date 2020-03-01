@@ -460,7 +460,11 @@ impl MidiController {
                             ButtonMapping {
                                 note: Note::new(44),
                                 on_action: ButtonAction::ActivateBeamEffect(
-                                    BeamModulator::new(Waveform::OnePointFiveRootDown, Beats::new(1.0)).into(),
+                                    BeamModulator::new(
+                                        Waveform::OnePointFiveRootDown,
+                                        Beats::new(1.0),
+                                    )
+                                    .into(),
                                 ),
                             },
                         ],
