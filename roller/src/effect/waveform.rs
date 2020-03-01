@@ -13,6 +13,8 @@ pub enum Waveform {
     ShortSquarePulse,
     HalfRootUp,
     HalfRootDown,
+    OnePointFiveRootUp,
+    OnePointFiveRootDown,
     On,
     Off,
 }
@@ -27,8 +29,10 @@ impl Waveform {
             Waveform::HalfSineUp => half_sine_up(x),
             Waveform::HalfSineDown => half_sine_down(x),
             Waveform::ShortSquarePulse => short_square_pulse(x),
-            Waveform::HalfRootUp => half_root_up(x),
-            Waveform::HalfRootDown => half_root_down(x),
+            Waveform::HalfRootUp => root(x, 0.5),
+            Waveform::HalfRootDown => invert(root(x, 0.5)),
+            Waveform::OnePointFiveRootUp => root(x, 1.5),
+            Waveform::OnePointFiveRootDown => invert(root(x, 1.5)),
             Waveform::On => 1.0,
             Waveform::Off => 0.0,
         }
@@ -82,10 +86,10 @@ fn short_square_pulse(x: f64) -> f64 {
     }
 }
 
-fn half_root_up(x: f64) -> f64 {
-    f64::powf(x, 1.0 / 0.5)
+fn root(x: f64, root: f64) -> f64 {
+    f64::powf(x, 1.0 / root)
 }
 
-fn half_root_down(x: f64) -> f64 {
-    1.0 - half_root_up(x)
+fn invert(x: f64) -> f64 {
+    1.0 - x
 }

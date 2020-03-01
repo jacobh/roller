@@ -438,18 +438,32 @@ impl MidiController {
                     // Beam effects
                     ButtonGroup::new(
                         ButtonType::Toggle,
-                        vec![ButtonMapping {
-                            note: Note::new(60),
-                            on_action: ButtonAction::ActivateBeamEffect(BeamEffect::new(
-                                vec![
-                                    BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
-                                    BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
-                                    BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
-                                    BeamModulator::new(Waveform::HalfRootUp, Beats::new(1.0)),
-                                ],
-                                None,
-                            )),
-                        }],
+                        vec![
+                            ButtonMapping {
+                                note: Note::new(60),
+                                on_action: ButtonAction::ActivateBeamEffect(BeamEffect::new(
+                                    vec![
+                                        BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
+                                        BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
+                                        BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
+                                        BeamModulator::new(Waveform::HalfRootUp, Beats::new(1.0)),
+                                    ],
+                                    None,
+                                )),
+                            },
+                            ButtonMapping {
+                                note: Note::new(52),
+                                on_action: ButtonAction::ActivateBeamEffect(
+                                    BeamModulator::new(Waveform::SineDown, Beats::new(2.0)).into(),
+                                ),
+                            },
+                            ButtonMapping {
+                                note: Note::new(44),
+                                on_action: ButtonAction::ActivateBeamEffect(
+                                    BeamModulator::new(Waveform::OnePointFiveRootDown, Beats::new(1.0)).into(),
+                                ),
+                            },
+                        ],
                     ),
                 ],
                 vec![
