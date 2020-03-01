@@ -1,4 +1,4 @@
-use async_std::{prelude::*, sync::Arc};
+use async_std::prelude::*;
 use derive_more::{Constructor, From, Into};
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
@@ -176,7 +176,7 @@ impl FixtureProfile {
 }
 
 pub async fn load_fixture_profiles(
-) -> Result<FxHashMap<String, Arc<FixtureProfile>>, async_std::io::Error> {
+) -> Result<FxHashMap<String, FixtureProfile>, async_std::io::Error> {
     let mut profile_paths = async_std::fs::read_dir("./fixture_profiles").await?;
 
     let mut fixture_profiles = FxHashMap::default();
@@ -184,7 +184,7 @@ pub async fn load_fixture_profiles(
         let path = entry?.path();
 
         let fixture_profile = FixtureProfile::load(path).await?;
-        fixture_profiles.insert(fixture_profile.data.slug.clone(), Arc::new(fixture_profile));
+        fixture_profiles.insert(fixture_profile.data.slug.clone(), fixture_profile);
     }
 
     Ok(fixture_profiles)
@@ -208,7 +208,7 @@ impl FixtureBeam {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Fixture {
-    pub profile: Arc<FixtureProfile>,
+    pub profile: FixtureProfile,
     universe: usize,
     start_channel: usize,
     pub group_id: Option<FixtureGroupId>,
@@ -218,7 +218,7 @@ pub struct Fixture {
 }
 impl Fixture {
     pub fn new(
-        profile: Arc<FixtureProfile>,
+        profile: FixtureProfile,
         universe: usize,
         start_channel: usize,
         group_id: Option<FixtureGroupId>,
