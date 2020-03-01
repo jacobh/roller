@@ -1,3 +1,4 @@
+use crate::effect::sigmoid;
 use std::f64::consts::PI;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -6,6 +7,7 @@ pub enum Waveform {
     SawUp,
     SawDown,
     TriangleDown,
+    SigmoidWaveDown,
     SineUp,
     SineDown,
     HalfSineUp,
@@ -24,6 +26,7 @@ impl Waveform {
             Waveform::SawUp => saw_up(x),
             Waveform::SawDown => saw_down(x),
             Waveform::TriangleDown => triangle_down(x),
+            Waveform::SigmoidWaveDown => sigmoid(triangle_down(x), 0.5),
             Waveform::SineUp => sine_up(x),
             Waveform::SineDown => sine_down(x),
             Waveform::HalfSineUp => half_sine_up(x),

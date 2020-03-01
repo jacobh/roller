@@ -11,6 +11,13 @@ pub use color::{ColorEffect, ColorModulation, ColorModulator};
 pub use dimmer::{DimmerEffect, DimmerModulator};
 pub use waveform::Waveform;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum EffectDirection {
+    BottomToTop,
+    ToCenter,
+    FromCenter,
+}
+
 // Utilities
 pub fn intensity(dimmer: f64, intensity: f64) -> f64 {
     1.0 - intensity + dimmer * intensity

@@ -1,6 +1,6 @@
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
-    effect::Waveform,
+    effect::{EffectDirection, Waveform},
     fixture::Fixture,
 };
 
@@ -29,7 +29,7 @@ pub struct BeamRangeStop {
 impl BeamRangeStop {
     fn new(a: f64, b: f64) -> BeamRangeStop {
         let (low, high) = if a > b { (b, a) } else { (a, b) };
-        BeamRangeStop {low, high}
+        BeamRangeStop { low, high }
     }
 }
 
@@ -127,25 +127,22 @@ impl From<BeamModulator> for BeamEffect {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ModulatorDirection {
-    BottomToTop,
-    ToCenter,
-    FromCenter,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct BeamModulator {
     waveform: Waveform,
     meter_length: Beats,
-    direction: ModulatorDirection,
+    direction: EffectDirection,
 }
 impl BeamModulator {
-    pub fn new(waveform: Waveform, meter_length: Beats) -> BeamModulator {
+    pub fn new(
+        waveform: Waveform,
+        meter_length: Beats,
+        direction: EffectDirection,
+    ) -> BeamModulator {
         BeamModulator {
             meter_length,
             waveform,
-            direction: ModulatorDirection::ToCenter,
+            direction,
         }
     }
     fn beam_for_elapsed_percent(&self, elapsed_percent: f64) -> BeamRange {
@@ -154,14 +151,14 @@ impl BeamModulator {
         let high = f64::min(x + 0.1, 1.0);
 
         match self.direction {
-            ModulatorDirection::BottomToTop => BeamRange::new(&[(low, high)]),
-            ModulatorDirection::FromCenter => {
+            EffectDirection::BottomToTop => BeamRange::new(&[(low, high)]),
+            EffectDirection::FromCenter => {
                 let low = low / 2.0;
                 let high = high / 2.0;
 
                 BeamRange::new(&[(0.5 - low, 0.5 - high), (0.5 + low, 0.5 + high)])
             }
-            ModulatorDirection::ToCenter => {
+            EffectDirection::ToCenter => {
                 let low = low / 2.0;
                 let high = high / 2.0;
 

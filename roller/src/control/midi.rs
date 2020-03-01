@@ -15,7 +15,7 @@ use crate::{
     },
     effect::{
         BeamEffect, BeamModulator, ColorEffect, ColorModulation, ColorModulator, DimmerEffect,
-        DimmerModulator, Waveform,
+        DimmerModulator, EffectDirection, Waveform,
     },
     lighting_engine::{LightingEvent, SceneId},
     project::FixtureGroupId,
@@ -443,10 +443,26 @@ impl MidiController {
                                 note: Note::new(60),
                                 on_action: ButtonAction::ActivateBeamEffect(BeamEffect::new(
                                     vec![
-                                        BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
-                                        BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
-                                        BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
-                                        BeamModulator::new(Waveform::HalfRootUp, Beats::new(1.0)),
+                                        BeamModulator::new(
+                                            Waveform::SawDown,
+                                            Beats::new(1.0),
+                                            EffectDirection::ToCenter,
+                                        ),
+                                        BeamModulator::new(
+                                            Waveform::SawDown,
+                                            Beats::new(1.0),
+                                            EffectDirection::ToCenter,
+                                        ),
+                                        BeamModulator::new(
+                                            Waveform::SawDown,
+                                            Beats::new(1.0),
+                                            EffectDirection::ToCenter,
+                                        ),
+                                        BeamModulator::new(
+                                            Waveform::HalfRootUp,
+                                            Beats::new(1.0),
+                                            EffectDirection::ToCenter,
+                                        ),
                                     ],
                                     None,
                                 )),
@@ -454,18 +470,83 @@ impl MidiController {
                             ButtonMapping {
                                 note: Note::new(52),
                                 on_action: ButtonAction::ActivateBeamEffect(
-                                    BeamModulator::new(Waveform::SineDown, Beats::new(2.0)).into(),
+                                    BeamModulator::new(
+                                        Waveform::SineDown,
+                                        Beats::new(2.0),
+                                        EffectDirection::FromCenter,
+                                    )
+                                    .into(),
                                 ),
                             },
                             ButtonMapping {
                                 note: Note::new(44),
                                 on_action: ButtonAction::ActivateBeamEffect(
                                     BeamModulator::new(
-                                        Waveform::OnePointFiveRootDown,
-                                        Beats::new(1.0),
+                                        Waveform::SigmoidWaveDown,
+                                        Beats::new(2.0),
+                                        EffectDirection::BottomToTop,
                                     )
                                     .into(),
                                 ),
+                            },
+                            ButtonMapping {
+                                note: Note::new(36),
+                                on_action: ButtonAction::ActivateBeamEffect(
+                                    BeamModulator::new(
+                                        Waveform::OnePointFiveRootDown,
+                                        Beats::new(1.0),
+                                        EffectDirection::FromCenter,
+                                    )
+                                    .into(),
+                                ),
+                            },
+                            ButtonMapping {
+                                note: Note::new(28),
+                                on_action: ButtonAction::ActivateBeamEffect(BeamEffect::new(
+                                    vec![
+                                        BeamModulator::new(
+                                            Waveform::OnePointFiveRootDown,
+                                            Beats::new(1.0),
+                                            EffectDirection::BottomToTop,
+                                        ),
+                                        BeamModulator::new(
+                                            Waveform::OnePointFiveRootDown,
+                                            Beats::new(1.0),
+                                            EffectDirection::BottomToTop,
+                                        ),
+                                        BeamModulator::new(
+                                            Waveform::OnePointFiveRootDown,
+                                            Beats::new(1.0),
+                                            EffectDirection::BottomToTop,
+                                        ),
+                                        BeamModulator::new(
+                                            Waveform::OnePointFiveRootDown,
+                                            Beats::new(1.0),
+                                            EffectDirection::BottomToTop,
+                                        ),
+                                        BeamModulator::new(
+                                            Waveform::OnePointFiveRootUp,
+                                            Beats::new(1.0),
+                                            EffectDirection::BottomToTop,
+                                        ),
+                                        BeamModulator::new(
+                                            Waveform::OnePointFiveRootUp,
+                                            Beats::new(1.0),
+                                            EffectDirection::BottomToTop,
+                                        ),
+                                        BeamModulator::new(
+                                            Waveform::OnePointFiveRootUp,
+                                            Beats::new(1.0),
+                                            EffectDirection::BottomToTop,
+                                        ),
+                                        BeamModulator::new(
+                                            Waveform::OnePointFiveRootUp,
+                                            Beats::new(1.0),
+                                            EffectDirection::BottomToTop,
+                                        ),
+                                    ],
+                                    None,
+                                )),
                             },
                         ],
                     ),
