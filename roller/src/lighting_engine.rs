@@ -4,7 +4,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 
 use crate::{
-    clock::{Clock, Rate},
+    clock::{Beats, Clock, Rate},
     color::Color,
     control::{
         button::{
@@ -13,7 +13,7 @@ use crate::{
         },
         midi::{MidiMapping, NoteState},
     },
-    effect::{self, ColorEffect, DimmerEffect},
+    effect::{self, BeamEffect, BeamModulator, BeamRange, ColorEffect, DimmerEffect, Waveform},
     fixture::Fixture,
     project::FixtureGroupId,
     utils::{shift_remove_vec, FxIndexMap},
@@ -371,6 +371,16 @@ impl<'a> EngineState<'a> {
         let active_dimmer_effects = self.active_dimmer_effects();
         let active_color_effects = self.active_color_effects();
 
+        let beam_effect = BeamEffect::new(
+            vec![
+                BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
+                BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
+                BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
+                BeamModulator::new(Waveform::HalfRootUp, Beats::new(1.0)),
+            ],
+            None,
+        );
+
         let fixture_values = fixtures
             .iter()
             .map(|fixture| {
@@ -411,19 +421,29 @@ impl<'a> EngineState<'a> {
                     self.color_effect_intensity,
                 );
 
+                let beam_range: Option<BeamRange> = if fixture.profile.beam_count() > 1 {
+                    Some(beam_effect.offset_beam(&clock_snapshot, &fixture, &fixtures))
+                } else {
+                    None
+                };
+
                 let group_dimmer = fixture
                     .group_id
                     .and_then(|group_id| self.group_dimmers.get(&group_id).copied())
                     .unwrap_or(1.0);
 
                 let dimmer = self.master_dimmer * group_dimmer * effect_dimmer;
-                (dimmer, color)
+                (dimmer, color, beam_range)
             })
             .collect::<Vec<_>>();
 
-        for (fixture, (dimmer, color)) in fixtures.iter_mut().zip(fixture_values) {
+        for (fixture, (dimmer, color, beam_range)) in fixtures.iter_mut().zip(fixture_values) {
             fixture.set_dimmer(dimmer);
             fixture.set_color(color).unwrap();
+
+            if let Some(beam_range) = beam_range {
+                fixture.set_beam_dimmers(&beam_range.beam_dimmers(fixture.profile.beam_count()))
+            }
         }
     }
     fn meta_pad_events(&self) -> impl Iterator<Item = PadEvent<'_>> {

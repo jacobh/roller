@@ -1,10 +1,12 @@
 use crate::color::Hsl64;
 use palette::Mix;
 
+mod beam;
 mod color;
 mod dimmer;
 mod waveform;
 
+pub use beam::{BeamEffect, BeamModulator, BeamRange};
 pub use color::{ColorEffect, ColorModulation, ColorModulator};
 pub use dimmer::{DimmerEffect, DimmerModulator};
 pub use waveform::Waveform;
