@@ -169,21 +169,16 @@ impl AkaiPadState {
 
 pub struct Pad<'a> {
     mapping: PadMapping<'a>,
-    group_toggle_state: Option<GroupToggleState>,
+    group_toggle_state: GroupToggleState,
     state: AkaiPadState,
     active_group_notes: Vec<Note>,
 }
 impl<'a> Pad<'a> {
-    fn new(mapping: PadMapping<'a>, group_toggle_state: Option<GroupToggleState>) -> Pad<'a> {
-        let active_group_notes = if mapping.group_id().is_some() {
-            Vec::with_capacity(8)
-        } else {
-            Vec::new()
-        };
+    fn new(mapping: PadMapping<'a>, group_toggle_state: GroupToggleState) -> Pad<'a> {
         Pad {
             mapping,
             group_toggle_state,
-            active_group_notes,
+            active_group_notes: Vec::with_capacity(8),
             state: AkaiPadState::Yellow,
         }
     }
@@ -219,17 +214,16 @@ impl<'a> Pad<'a> {
                 }
 
                 match self.group_toggle_state {
-                    Some(GroupToggleState::On(note)) => {
+                    GroupToggleState::On(note) => {
                         if note == self.mapping.note() {
                             self.state = self.mapping.active_color();
                         } else {
                             self.state = self.mapping.inactive_color();
                         }
                     }
-                    Some(GroupToggleState::Off) => {
+                    GroupToggleState::Off => {
                         self.state = self.mapping.inactive_color();
                     }
-                    None => {}
                 }
             }
             ButtonType::Switch => match event.note_state {
@@ -412,7 +406,8 @@ pub fn pad_states<'a>(
         .map(|mapping| {
             let toggle_state = mapping
                 .group_id()
-                .and_then(|id| group_toggle_states.get(&id).copied());
+                .and_then(|id| group_toggle_states.get(&id).copied())
+                .unwrap_or_else(|| GroupToggleState::Off);
 
             Pad::new(mapping, toggle_state)
         })
