@@ -21,20 +21,6 @@ impl ButtonGroupId {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ToggleState {
-    On,
-    Off,
-}
-impl ToggleState {
-    pub fn toggle(self) -> ToggleState {
-        match self {
-            ToggleState::On => ToggleState::Off,
-            ToggleState::Off => ToggleState::On,
-        }
-    }
-}
-
 /// An enum tracking the toggle state of a button group
 /// When toggled with the same note, it will turn off, when toggled with a
 /// different note, it will stay on with the internal note updated
@@ -199,33 +185,18 @@ impl<'a> Pad<'a> {
                     }
                 }
             }
-            ButtonType::Toggle => {
-                if event.mapping == self.mapping {
-                    self.state = match event.note_state {
-                        NoteState::On => match event.toggle_state {
-                            ToggleState::On => self.mapping.active_color(),
-                            ToggleState::Off => self.mapping.deactivated_color(),
-                        },
-                        NoteState::Off => match event.toggle_state {
-                            ToggleState::On => self.mapping.active_color(),
-                            ToggleState::Off => self.mapping.inactive_color(),
-                        },
-                    }
-                }
-
-                match self.group_toggle_state {
-                    GroupToggleState::On(note) => {
-                        if note == self.mapping.note() {
-                            self.state = self.mapping.active_color();
-                        } else {
-                            self.state = self.mapping.inactive_color();
-                        }
-                    }
-                    GroupToggleState::Off => {
+            ButtonType::Toggle => match self.group_toggle_state {
+                GroupToggleState::On(note) => {
+                    if note == self.mapping.note() {
+                        self.state = self.mapping.active_color();
+                    } else {
                         self.state = self.mapping.inactive_color();
                     }
                 }
-            }
+                GroupToggleState::Off => {
+                    self.state = self.mapping.inactive_color();
+                }
+            },
             ButtonType::Switch => match event.note_state {
                 NoteState::On => {
                     if event.mapping == self.mapping {
@@ -353,37 +324,28 @@ impl<'a> From<&'a MetaButtonMapping> for PadMapping<'a> {
 pub struct PadEvent<'a> {
     mapping: PadMapping<'a>,
     note_state: NoteState,
-    toggle_state: ToggleState,
 }
 impl<'a> PadEvent<'a> {
-    pub fn new<T>(mapping: &'a T, note_state: NoteState, toggle_state: ToggleState) -> PadEvent<'a>
+    pub fn new<T>(mapping: &'a T, note_state: NoteState) -> PadEvent<'a>
     where
         &'a T: Into<PadMapping<'a>>,
     {
         PadEvent {
             mapping: mapping.into(),
             note_state,
-            toggle_state,
         }
     }
     pub fn new_on<T>(mapping: &'a T) -> PadEvent<'a>
     where
         &'a T: Into<PadMapping<'a>>,
     {
-        PadEvent::new(mapping, NoteState::On, ToggleState::On)
+        PadEvent::new(mapping, NoteState::On)
     }
 }
 
 // convert from an item in the `ButtonStateMap` hashmap
 impl<'a> From<(ButtonGroupInfo, ButtonInfo<'a>)> for PadEvent<'a> {
     fn from((group_info, button_info): (ButtonGroupInfo, ButtonInfo<'a>)) -> PadEvent<'a> {
-        let toggle_state =
-            if group_info.toggle_state == GroupToggleState::On(button_info.button.note) {
-                ToggleState::On
-            } else {
-                ToggleState::Off
-            };
-
         PadEvent {
             mapping: PadMapping::Standard(
                 button_info.button,
@@ -391,7 +353,6 @@ impl<'a> From<(ButtonGroupInfo, ButtonInfo<'a>)> for PadEvent<'a> {
                 group_info.button_type,
             ),
             note_state: button_info.note_state,
-            toggle_state,
         }
     }
 }
