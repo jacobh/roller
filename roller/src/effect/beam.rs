@@ -1,5 +1,3 @@
-use derive_more::Constructor;
-
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
     effect::Waveform,
@@ -23,21 +21,35 @@ fn percent_contained(a: (f64, f64), b: (f64, f64)) -> f64 {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Constructor)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct BeamRangeStop {
-    position: f64,
+    low: f64,
+    high: f64,
+}
+impl BeamRangeStop {
+    fn new(a: f64, b: f64) -> BeamRangeStop {
+        let (low, high) = if a > b { (b, a) } else { (a, b) };
+        BeamRangeStop {low, high}
+    }
+}
+
+impl From<&(f64, f64)> for BeamRangeStop {
+    fn from((a, b): &(f64, f64)) -> BeamRangeStop {
+        BeamRangeStop::new(*a, *b)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct BeamRange(BeamRangeStop, BeamRangeStop);
+pub struct BeamRange {
+    stops: Vec<BeamRangeStop>,
+}
 impl BeamRange {
-    fn new(a: f64, b: f64) -> BeamRange {
-        BeamRange(BeamRangeStop::new(a), BeamRangeStop::new(b))
+    fn new(stops: impl IntoIterator<Item = impl Into<BeamRangeStop>>) -> BeamRange {
+        BeamRange {
+            stops: stops.into_iter().map(|stop| stop.into()).collect(),
+        }
     }
     pub fn beam_dimmers(&self, beam_count: usize) -> Vec<f64> {
-        let min_stop = &self.0;
-        let max_stop = &self.1;
-
         let beam_width = 1.0 / beam_count as f64;
 
         (0..beam_count)
@@ -46,7 +58,13 @@ impl BeamRange {
                 let beam_min = beam_idx as f64 * beam_width;
                 let beam_max = (beam_idx + 1) as f64 * beam_width;
 
-                percent_contained((beam_min, beam_max), (min_stop.position, max_stop.position))
+                f64::min(
+                    self.stops
+                        .iter()
+                        .map(|stop| percent_contained((beam_min, beam_max), (stop.low, stop.high)))
+                        .sum(),
+                    1.0,
+                )
             })
             .collect()
     }
@@ -109,20 +127,46 @@ impl From<BeamModulator> for BeamEffect {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ModulatorDirection {
+    BottomToTop,
+    ToCenter,
+    FromCenter,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct BeamModulator {
     waveform: Waveform,
     meter_length: Beats,
+    direction: ModulatorDirection,
 }
 impl BeamModulator {
     pub fn new(waveform: Waveform, meter_length: Beats) -> BeamModulator {
         BeamModulator {
             meter_length,
             waveform,
+            direction: ModulatorDirection::ToCenter,
         }
     }
     fn beam_for_elapsed_percent(&self, elapsed_percent: f64) -> BeamRange {
         let x = self.waveform.apply(elapsed_percent);
-        BeamRange::new(f64::powf(x, 1.0 / 0.75), f64::powf(x, 1.0 / 1.5))
+        let low = f64::max(x - 0.1, 0.0);
+        let high = f64::min(x + 0.1, 1.0);
+
+        match self.direction {
+            ModulatorDirection::BottomToTop => BeamRange::new(&[(low, high)]),
+            ModulatorDirection::FromCenter => {
+                let low = low / 2.0;
+                let high = high / 2.0;
+
+                BeamRange::new(&[(0.5 - low, 0.5 - high), (0.5 + low, 0.5 + high)])
+            }
+            ModulatorDirection::ToCenter => {
+                let low = low / 2.0;
+                let high = high / 2.0;
+
+                BeamRange::new(&[(low, high), (1.0 - low, 1.0 - high)])
+            }
+        }
     }
 }
