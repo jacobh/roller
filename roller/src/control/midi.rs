@@ -316,7 +316,7 @@ impl MidiController {
                     .into_group(ButtonType::Toggle),
                     // Dimmer sequences
                     ButtonMapping {
-                        note: Note::new(61),
+                        note: Note::new(62),
                         on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                             vec![
                                 DimmerModulator::new(
@@ -338,7 +338,7 @@ impl MidiController {
                     }
                     .into_group(ButtonType::Toggle),
                     ButtonMapping {
-                        note: Note::new(53),
+                        note: Note::new(54),
                         on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                             vec![
                                 DimmerModulator::new(
@@ -353,7 +353,7 @@ impl MidiController {
                     }
                     .into_group(ButtonType::Toggle),
                     ButtonMapping {
-                        note: Note::new(45),
+                        note: Note::new(46),
                         on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                             vec![
                                 DimmerModulator::new(Waveform::HalfSineDown, Beats::new(1.0), 1.0),
