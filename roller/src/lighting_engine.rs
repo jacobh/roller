@@ -49,6 +49,47 @@ pub struct ButtonInfo<'a> {
     pub effect_rate: Rate,
 }
 
+fn active_effects<'a, T, F>(
+    button_states: impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'a>)>,
+    extract_effect_fn: F,
+) -> FxHashMap<&'a T, Rate>
+where
+    T: Eq + std::hash::Hash,
+    F: Fn(&ButtonAction) -> Option<&T>,
+{
+    let mut effects = FxHashMap::default();
+
+    for (group_info, button_info) in button_states {
+        if let Some(effect) = extract_effect_fn(&button_info.button.on_action) {
+            match group_info.button_type {
+                ButtonType::Flash => {
+                    match button_info.note_state {
+                        NoteState::On => effects.insert(effect, button_info.effect_rate),
+                        NoteState::Off => effects.remove(&effect),
+                    };
+                }
+                ButtonType::Switch => match button_info.note_state {
+                    NoteState::On => {
+                        effects.insert(effect, button_info.effect_rate);
+                    }
+                    NoteState::Off => {}
+                },
+                ButtonType::Toggle => match button_info.note_state {
+                    NoteState::On => {
+                        if GroupToggleState::On(button_info.button.note) == group_info.toggle_state
+                        {
+                            effects.insert(effect, button_info.effect_rate);
+                        }
+                    }
+                    NoteState::Off => {}
+                },
+            }
+        }
+    }
+
+    effects
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum LightingEvent {
     UpdateMasterDimmer(f64),
@@ -295,107 +336,22 @@ impl<'a> EngineState<'a> {
             .last()
     }
     fn active_dimmer_effects(&self) -> FxHashMap<&DimmerEffect, Rate> {
-        let mut effects = FxHashMap::default();
-
-        for (group_info, button_info) in self.button_states() {
-            if let ButtonAction::ActivateDimmerEffect(effect) = &button_info.button.on_action {
-                match group_info.button_type {
-                    ButtonType::Flash => {
-                        match button_info.note_state {
-                            NoteState::On => effects.insert(effect, button_info.effect_rate),
-                            NoteState::Off => effects.remove(&effect),
-                        };
-                    }
-                    ButtonType::Switch => match button_info.note_state {
-                        NoteState::On => {
-                            effects.insert(effect, button_info.effect_rate);
-                        }
-                        NoteState::Off => {}
-                    },
-                    ButtonType::Toggle => match button_info.note_state {
-                        NoteState::On => {
-                            if GroupToggleState::On(button_info.button.note)
-                                == group_info.toggle_state
-                            {
-                                effects.insert(effect, button_info.effect_rate);
-                            }
-                        }
-                        NoteState::Off => {}
-                    },
-                }
-            }
-        }
-
-        effects
+        active_effects(self.button_states(), |action| match action {
+            ButtonAction::ActivateDimmerEffect(effect) => Some(effect),
+            _ => None,
+        })
     }
     fn active_color_effects(&self) -> FxHashMap<&ColorEffect, Rate> {
-        let mut effects = FxHashMap::default();
-
-        // TODO button groups
-        for (group_info, button_info) in self.button_states() {
-            if let ButtonAction::ActivateColorEffect(effect) = &button_info.button.on_action {
-                match group_info.button_type {
-                    ButtonType::Flash => {
-                        match button_info.note_state {
-                            NoteState::On => effects.insert(effect, button_info.effect_rate),
-                            NoteState::Off => effects.remove(&effect),
-                        };
-                    }
-                    ButtonType::Switch => match button_info.note_state {
-                        NoteState::On => {
-                            effects.insert(effect, button_info.effect_rate);
-                        }
-                        NoteState::Off => {}
-                    },
-                    ButtonType::Toggle => match button_info.note_state {
-                        NoteState::On => {
-                            if GroupToggleState::On(button_info.button.note)
-                                == group_info.toggle_state
-                            {
-                                effects.insert(effect, button_info.effect_rate);
-                            }
-                        }
-                        NoteState::Off => {}
-                    },
-                }
-            }
-        }
-
-        effects
+        active_effects(self.button_states(), |action| match action {
+            ButtonAction::ActivateColorEffect(effect) => Some(effect),
+            _ => None,
+        })
     }
     fn active_beam_effects(&self) -> FxHashMap<&BeamEffect, Rate> {
-        let mut effects = FxHashMap::default();
-
-        for (group_info, button_info) in self.button_states() {
-            if let ButtonAction::ActivateBeamEffect(effect) = &button_info.button.on_action {
-                match group_info.button_type {
-                    ButtonType::Flash => {
-                        match button_info.note_state {
-                            NoteState::On => effects.insert(effect, button_info.effect_rate),
-                            NoteState::Off => effects.remove(&effect),
-                        };
-                    }
-                    ButtonType::Switch => match button_info.note_state {
-                        NoteState::On => {
-                            effects.insert(effect, button_info.effect_rate);
-                        }
-                        NoteState::Off => {}
-                    },
-                    ButtonType::Toggle => match button_info.note_state {
-                        NoteState::On => {
-                            if GroupToggleState::On(button_info.button.note)
-                                == group_info.toggle_state
-                            {
-                                effects.insert(effect, button_info.effect_rate);
-                            }
-                        }
-                        NoteState::Off => {}
-                    },
-                }
-            }
-        }
-
-        effects
+        active_effects(self.button_states(), |action| match action {
+            ButtonAction::ActivateBeamEffect(effect) => Some(effect),
+            _ => None,
+        })
     }
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
         let clock_snapshot = self.clock.snapshot().with_rate(self.global_clock_rate);
