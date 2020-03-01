@@ -14,7 +14,8 @@ use crate::{
         fader::{FaderCurve, FaderType, MidiFaderMapping},
     },
     effect::{
-        ColorEffect, ColorModulation, ColorModulator, DimmerEffect, DimmerModulator, Waveform,
+        BeamEffect, BeamModulator, ColorEffect, ColorModulation, ColorModulator, DimmerEffect,
+        DimmerModulator, Waveform,
     },
     lighting_engine::{LightingEvent, SceneId},
     project::FixtureGroupId,
@@ -434,6 +435,22 @@ impl MidiController {
                         )),
                     }
                     .into_group(ButtonType::Toggle),
+                    // Beam effects
+                    ButtonGroup::new(
+                        ButtonType::Toggle,
+                        vec![ButtonMapping {
+                            note: Note::new(60),
+                            on_action: ButtonAction::ActivateBeamEffect(BeamEffect::new(
+                                vec![
+                                    BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
+                                    BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
+                                    BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
+                                    BeamModulator::new(Waveform::HalfRootUp, Beats::new(1.0)),
+                                ],
+                                None,
+                            )),
+                        }],
+                    ),
                 ],
                 vec![
                     MetaButtonMapping {

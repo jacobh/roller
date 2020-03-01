@@ -297,7 +297,6 @@ impl<'a> EngineState<'a> {
     fn active_dimmer_effects(&self) -> FxHashMap<&DimmerEffect, Rate> {
         let mut effects = FxHashMap::default();
 
-        // TODO button groups
         for (group_info, button_info) in self.button_states() {
             if let ButtonAction::ActivateDimmerEffect(effect) = &button_info.button.on_action {
                 match group_info.button_type {
@@ -364,22 +363,47 @@ impl<'a> EngineState<'a> {
 
         effects
     }
+    fn active_beam_effects(&self) -> FxHashMap<&BeamEffect, Rate> {
+        let mut effects = FxHashMap::default();
+
+        for (group_info, button_info) in self.button_states() {
+            if let ButtonAction::ActivateBeamEffect(effect) = &button_info.button.on_action {
+                match group_info.button_type {
+                    ButtonType::Flash => {
+                        match button_info.note_state {
+                            NoteState::On => effects.insert(effect, button_info.effect_rate),
+                            NoteState::Off => effects.remove(&effect),
+                        };
+                    }
+                    ButtonType::Switch => match button_info.note_state {
+                        NoteState::On => {
+                            effects.insert(effect, button_info.effect_rate);
+                        }
+                        NoteState::Off => {}
+                    },
+                    ButtonType::Toggle => match button_info.note_state {
+                        NoteState::On => {
+                            if GroupToggleState::On(button_info.button.note)
+                                == group_info.toggle_state
+                            {
+                                effects.insert(effect, button_info.effect_rate);
+                            }
+                        }
+                        NoteState::Off => {}
+                    },
+                }
+            }
+        }
+
+        effects
+    }
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
         let clock_snapshot = self.clock.snapshot().with_rate(self.global_clock_rate);
         let global_color = self.global_color();
         let secondary_color = self.secondary_color().unwrap_or(global_color);
         let active_dimmer_effects = self.active_dimmer_effects();
         let active_color_effects = self.active_color_effects();
-
-        let beam_effect = BeamEffect::new(
-            vec![
-                BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
-                BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
-                BeamModulator::new(Waveform::SawDown, Beats::new(1.0)),
-                BeamModulator::new(Waveform::HalfRootUp, Beats::new(1.0)),
-            ],
-            None,
-        );
+        let active_beam_effects = self.active_beam_effects();
 
         let fixture_values = fixtures
             .iter()
@@ -422,7 +446,10 @@ impl<'a> EngineState<'a> {
                 );
 
                 let beam_range: Option<BeamRange> = if fixture.profile.beam_count() > 1 {
-                    Some(beam_effect.offset_beam(&clock_snapshot, &fixture, &fixtures))
+                    // TODO only using first active beam effect
+                    active_beam_effects.iter().nth(0).map(|(effect, rate)| {
+                        effect.offset_beam(&clock_snapshot.with_rate(*rate), &fixture, &fixtures)
+                    })
                 } else {
                     None
                 };
@@ -441,8 +468,13 @@ impl<'a> EngineState<'a> {
             fixture.set_dimmer(dimmer);
             fixture.set_color(color).unwrap();
 
-            if let Some(beam_range) = beam_range {
-                fixture.set_beam_dimmers(&beam_range.beam_dimmers(fixture.profile.beam_count()))
+            if fixture.profile.beam_count() > 1 {
+                if let Some(beam_range) = beam_range {
+                    fixture.set_beam_dimmers(&beam_range.beam_dimmers(fixture.profile.beam_count()))
+                } else {
+                    // If there's no active beam effect, reset beams
+                    fixture.set_all_beam_dimmers(1.0);
+                }
             }
         }
     }

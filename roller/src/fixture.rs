@@ -241,23 +241,28 @@ impl Fixture {
     fn global_beam_mut(&mut self) -> Option<&mut FixtureBeam> {
         self.beams.get_mut(&None)
     }
-    fn beams_mut(&mut self) -> impl Iterator<Item = (BeamId, &mut FixtureBeam)> {
+    fn beams_mut(&mut self) -> impl Iterator<Item = &mut FixtureBeam> {
         self.beams
             .iter_mut()
-            .filter_map(|(beam_id, beam)| beam_id.map(|beam_id| (beam_id, beam)))
+            .filter_map(|(beam_id, beam)| beam_id.map(|_| beam))
     }
     pub fn set_dimmer(&mut self, dimmer: f64) {
         if let Some(beam) = self.global_beam_mut() {
             beam.dimmer = dimmer;
         } else {
-            for (_, beam) in self.beams_mut() {
+            for beam in self.beams_mut() {
                 beam.dimmer = dimmer;
             }
         }
     }
     pub fn set_beam_dimmers(&mut self, dimmers: &[f64]) {
-        for ((_, beam), dimmer) in self.beams_mut().zip(dimmers) {
+        for (beam, dimmer) in self.beams_mut().zip(dimmers) {
             beam.dimmer = *dimmer;
+        }
+    }
+    pub fn set_all_beam_dimmers(&mut self, dimmer: f64) {
+        for beam in self.beams_mut() {
+            beam.dimmer = dimmer;
         }
     }
     pub fn set_color(
