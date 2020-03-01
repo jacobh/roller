@@ -1,4 +1,4 @@
-use derive_more::Constructor;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use midi::Note;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
@@ -13,11 +13,19 @@ use crate::{
     utils::shift_remove_vec,
 };
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize)]
+lazy_static::lazy_static! {
+    static ref BUTTON_GROUP_ID_SEQ: AtomicUsize = AtomicUsize::new(0);
+    static ref CLOCK_RATE_GROUP_ID: ButtonGroupId = ButtonGroupId::new();
+    static ref SCENE_GROUP_ID: ButtonGroupId = ButtonGroupId::new();
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd)]
 pub struct ButtonGroupId(usize);
 impl ButtonGroupId {
-    fn new_random() -> ButtonGroupId {
-        ButtonGroupId(rand::random())
+    fn new() -> ButtonGroupId {
+        let id = BUTTON_GROUP_ID_SEQ.fetch_add(1, Ordering::Relaxed);
+
+        ButtonGroupId(id)
     }
 }
 
@@ -119,7 +127,7 @@ impl ButtonGroup {
         buttons: impl IntoIterator<Item = ButtonMapping>,
     ) -> ButtonGroup {
         ButtonGroup {
-            id: ButtonGroupId::new_random(),
+            id: ButtonGroupId::new(),
             buttons: buttons
                 .into_iter()
                 .map(|button| (button.note, button))
@@ -275,8 +283,8 @@ impl<'a> PadMapping<'a> {
             PadMapping::Standard(_, group_id, _) => Some(*group_id),
             PadMapping::Meta(mapping) => match mapping.on_action {
                 MetaButtonAction::TapTempo => None,
-                MetaButtonAction::UpdateClockRate(_) => Some(ButtonGroupId::new(100_001)),
-                MetaButtonAction::ActivateScene(_) => Some(ButtonGroupId::new(100_002)),
+                MetaButtonAction::UpdateClockRate(_) => Some(*CLOCK_RATE_GROUP_ID),
+                MetaButtonAction::ActivateScene(_) => Some(*SCENE_GROUP_ID),
             },
         }
     }
