@@ -4,7 +4,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 
 use crate::{
-    clock::{Beats, Clock, Rate},
+    clock::{Clock, Rate},
     color::Color,
     control::{
         button::{
@@ -13,7 +13,7 @@ use crate::{
         },
         midi::{MidiMapping, NoteState},
     },
-    effect::{self, BeamEffect, BeamModulator, BeamRange, ColorEffect, DimmerEffect, Waveform},
+    effect::{self, BeamEffect, BeamRange, ColorEffect, DimmerEffect},
     fixture::Fixture,
     project::FixtureGroupId,
     utils::{shift_remove_vec, FxIndexMap},
