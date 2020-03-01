@@ -4,9 +4,10 @@ use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
 use crate::project::FixtureGroupId;
+use crate::utils::FxIndexMap;
 
 #[derive(
-    Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize, From, Into,
+    Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Constructor, Deserialize, From, Into,
 )]
 pub struct BeamId(usize);
 
@@ -100,7 +101,7 @@ impl FixtureBeamProfile {
 pub struct FixtureProfile {
     data: FixtureProfileData,
 
-    beams: FxHashMap<Option<BeamId>, FixtureBeamProfile>,
+    beams: FxIndexMap<Option<BeamId>, FixtureBeamProfile>,
     pan_channel: Option<FixtureProfileChannel>,
     tilt_channel: Option<FixtureProfileChannel>,
 }
@@ -117,10 +118,10 @@ impl FixtureProfile {
             .map(|channel| (channel.parameter, channel.clone()))
             .collect();
 
-        let beams: FxHashMap<Option<BeamId>, FixtureBeamProfile> = profile_data
+        let mut beams: FxIndexMap<Option<BeamId>, FixtureBeamProfile> = profile_data
             .channels
             .iter()
-            .fold(FxHashMap::default(), |mut beams, channel| {
+            .fold(FxIndexMap::default(), |mut beams, channel| {
                 let mut beam = beams.entry(channel.beam).or_default();
 
                 match channel.parameter {
@@ -142,6 +143,8 @@ impl FixtureProfile {
                 beams
             });
 
+        beams.sort_keys();
+
         // Ensure channel count is correct
         assert_eq!(profile_data.channel_count, profile_data.channels.len());
 
@@ -153,6 +156,11 @@ impl FixtureProfile {
             tilt_channel: parameters.get(&FixtureParameter::Tilt).cloned(),
             data: profile_data,
         })
+    }
+    pub fn beam_count(&self) -> usize {
+        let beam_count = self.beams.keys().filter(|id| id.is_some()).count();
+
+        usize::max(beam_count, 1)
     }
     pub fn is_dimmable(&self) -> bool {
         self.beams.values().any(FixtureBeamProfile::is_dimmable)
@@ -205,7 +213,7 @@ pub struct Fixture {
     start_channel: usize,
     pub group_id: Option<FixtureGroupId>,
 
-    beams: FxHashMap<Option<BeamId>, FixtureBeam>,
+    beams: FxIndexMap<Option<BeamId>, FixtureBeam>,
     position: Option<(f64, f64)>, // -1.0 - +1.0
 }
 impl Fixture {
@@ -245,6 +253,11 @@ impl Fixture {
             for (_, beam) in self.beams_mut() {
                 beam.dimmer = dimmer;
             }
+        }
+    }
+    pub fn set_beam_dimmers(&mut self, dimmers: &[f64]) {
+        for ((_, beam), dimmer) in self.beams_mut().zip(dimmers) {
+            beam.dimmer = *dimmer;
         }
     }
     pub fn set_color(
