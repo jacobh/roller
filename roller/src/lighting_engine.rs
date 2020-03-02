@@ -13,7 +13,7 @@ use crate::{
         },
         midi::{MidiMapping, NoteState},
     },
-    effect::{self, BeamEffect, BeamRange, ColorEffect, DimmerEffect},
+    effect::{self, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet},
     fixture::Fixture,
     project::FixtureGroupId,
     utils::{shift_remove_vec, FxIndexMap},
@@ -347,9 +347,9 @@ impl<'a> EngineState<'a> {
             _ => None,
         })
     }
-    fn active_beam_effects(&self) -> FxHashMap<&BeamEffect, Rate> {
+    fn active_pixel_effects(&self) -> FxHashMap<&PixelEffect, Rate> {
         active_effects(self.button_states(), |action| match action {
-            ButtonAction::ActivateBeamEffect(effect) => Some(effect),
+            ButtonAction::ActivatePixelEffect(effect) => Some(effect),
             _ => None,
         })
     }
@@ -359,7 +359,7 @@ impl<'a> EngineState<'a> {
         let secondary_color = self.secondary_color().unwrap_or(global_color);
         let active_dimmer_effects = self.active_dimmer_effects();
         let active_color_effects = self.active_color_effects();
-        let active_beam_effects = self.active_beam_effects();
+        let active_pixel_effects = self.active_pixel_effects();
 
         let fixture_values = fixtures
             .iter()
@@ -401,10 +401,14 @@ impl<'a> EngineState<'a> {
                     self.color_effect_intensity,
                 );
 
-                let beam_range: Option<BeamRange> = if fixture.profile.beam_count() > 1 {
-                    // TODO only using first active beam effect
-                    active_beam_effects.iter().nth(0).map(|(effect, rate)| {
-                        effect.offset_beam(&clock_snapshot.with_rate(*rate), &fixture, &fixtures)
+                let pixel_range_set: Option<PixelRangeSet> = if fixture.profile.beam_count() > 1 {
+                    // TODO only using first active pixel effect
+                    active_pixel_effects.iter().nth(0).map(|(effect, rate)| {
+                        effect.offset_pixel_range_set(
+                            &clock_snapshot.with_rate(*rate),
+                            &fixture,
+                            &fixtures,
+                        )
                     })
                 } else {
                     None
@@ -416,19 +420,20 @@ impl<'a> EngineState<'a> {
                     .unwrap_or(1.0);
 
                 let dimmer = self.master_dimmer * group_dimmer * effect_dimmer;
-                (dimmer, color, beam_range)
+                (dimmer, color, pixel_range_set)
             })
             .collect::<Vec<_>>();
 
-        for (fixture, (dimmer, color, beam_range)) in fixtures.iter_mut().zip(fixture_values) {
+        for (fixture, (dimmer, color, pixel_range)) in fixtures.iter_mut().zip(fixture_values) {
             fixture.set_dimmer(dimmer);
             fixture.set_color(color).unwrap();
 
             if fixture.profile.beam_count() > 1 {
-                if let Some(beam_range) = beam_range {
-                    fixture.set_beam_dimmers(&beam_range.beam_dimmers(fixture.profile.beam_count()))
+                if let Some(pixel_range) = pixel_range {
+                    fixture
+                        .set_beam_dimmers(&pixel_range.pixel_dimmers(fixture.profile.beam_count()))
                 } else {
-                    // If there's no active beam effect, reset beams
+                    // If there's no active pixel effect, reset pixels
                     fixture.set_all_beam_dimmers(1.0);
                 }
             }

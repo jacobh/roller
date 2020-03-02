@@ -1,14 +1,14 @@
-use std::sync::atomic::{AtomicUsize, Ordering};
 use midi::Note;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
 use crate::{
     clock::Rate,
     color::Color,
     control::midi::NoteState,
-    effect::{BeamEffect, ColorEffect, DimmerEffect},
+    effect::{ColorEffect, DimmerEffect, PixelEffect},
     lighting_engine::{ButtonGroupInfo, ButtonInfo, LightingEvent, SceneId},
     utils::shift_remove_vec,
 };
@@ -57,7 +57,7 @@ pub enum ButtonAction {
     UpdateGlobalSecondaryColor(Color),
     ActivateDimmerEffect(DimmerEffect),
     ActivateColorEffect(ColorEffect),
-    ActivateBeamEffect(BeamEffect),
+    ActivatePixelEffect(PixelEffect),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

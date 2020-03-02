@@ -1,14 +1,14 @@
 use crate::color::Hsl64;
 use palette::Mix;
 
-mod beam;
 mod color;
 mod dimmer;
+mod pixel;
 mod waveform;
 
-pub use beam::{BeamEffect, BeamModulator, BeamRange};
 pub use color::{ColorEffect, ColorModulation, ColorModulator};
 pub use dimmer::{DimmerEffect, DimmerModulator};
+pub use pixel::{PixelEffect, PixelModulator, PixelRangeSet};
 pub use waveform::Waveform;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

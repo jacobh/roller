@@ -14,8 +14,8 @@ use crate::{
         fader::{FaderCurve, FaderType, MidiFaderMapping},
     },
     effect::{
-        BeamEffect, BeamModulator, ColorEffect, ColorModulation, ColorModulator, DimmerEffect,
-        DimmerModulator, EffectDirection, Waveform,
+        ColorEffect, ColorModulation, ColorModulator, DimmerEffect, DimmerModulator,
+        EffectDirection, PixelEffect, PixelModulator, Waveform,
     },
     lighting_engine::{LightingEvent, SceneId},
     project::FixtureGroupId,
@@ -464,30 +464,30 @@ impl MidiController {
                         )),
                     }
                     .into_group(ButtonType::Toggle),
-                    // Beam effects
+                    // Pixel effects
                     ButtonGroup::new(
                         ButtonType::Toggle,
                         vec![
                             ButtonMapping {
                                 note: Note::new(60),
-                                on_action: ButtonAction::ActivateBeamEffect(BeamEffect::new(
+                                on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
                                     vec![
-                                        BeamModulator::new(
+                                        PixelModulator::new(
                                             Waveform::SawDown,
                                             Beats::new(1.0),
                                             EffectDirection::ToCenter,
                                         ),
-                                        BeamModulator::new(
+                                        PixelModulator::new(
                                             Waveform::SawDown,
                                             Beats::new(1.0),
                                             EffectDirection::ToCenter,
                                         ),
-                                        BeamModulator::new(
+                                        PixelModulator::new(
                                             Waveform::SawDown,
                                             Beats::new(1.0),
                                             EffectDirection::ToCenter,
                                         ),
-                                        BeamModulator::new(
+                                        PixelModulator::new(
                                             Waveform::HalfRootUp,
                                             Beats::new(1.0),
                                             EffectDirection::ToCenter,
@@ -498,8 +498,8 @@ impl MidiController {
                             },
                             ButtonMapping {
                                 note: Note::new(52),
-                                on_action: ButtonAction::ActivateBeamEffect(
-                                    BeamModulator::new(
+                                on_action: ButtonAction::ActivatePixelEffect(
+                                    PixelModulator::new(
                                         Waveform::SineDown,
                                         Beats::new(2.0),
                                         EffectDirection::FromCenter,
@@ -509,8 +509,8 @@ impl MidiController {
                             },
                             ButtonMapping {
                                 note: Note::new(44),
-                                on_action: ButtonAction::ActivateBeamEffect(
-                                    BeamModulator::new(
+                                on_action: ButtonAction::ActivatePixelEffect(
+                                    PixelModulator::new(
                                         Waveform::SigmoidWaveDown,
                                         Beats::new(2.0),
                                         EffectDirection::BottomToTop,
@@ -520,8 +520,8 @@ impl MidiController {
                             },
                             ButtonMapping {
                                 note: Note::new(36),
-                                on_action: ButtonAction::ActivateBeamEffect(
-                                    BeamModulator::new(
+                                on_action: ButtonAction::ActivatePixelEffect(
+                                    PixelModulator::new(
                                         Waveform::OnePointFiveRootDown,
                                         Beats::new(1.0),
                                         EffectDirection::FromCenter,
@@ -531,14 +531,14 @@ impl MidiController {
                             },
                             ButtonMapping {
                                 note: Note::new(28),
-                                on_action: ButtonAction::ActivateBeamEffect(BeamEffect::new(
+                                on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
                                     vec![
-                                        BeamModulator::new(
+                                        PixelModulator::new(
                                             Waveform::OnePointFiveRootDown,
                                             Beats::new(1.0),
                                             EffectDirection::BottomToTop,
                                         ),
-                                        BeamModulator::new(
+                                        PixelModulator::new(
                                             Waveform::OnePointFiveRootUp,
                                             Beats::new(1.0),
                                             EffectDirection::BottomToTop,
