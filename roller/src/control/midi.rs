@@ -435,6 +435,35 @@ impl MidiController {
                         )),
                     }
                     .into_group(ButtonType::Toggle),
+                    ButtonMapping {
+                        note: Note::new(18),
+                        on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
+                            vec![
+                                ColorModulator::new(
+                                    ColorModulation::HueShift(180.0.into()),
+                                    Waveform::HalfRootUp,
+                                    Beats::new(1.0),
+                                ),
+                                ColorModulator::new(
+                                    ColorModulation::HueShift(180.0.into()),
+                                    Waveform::HalfRootDown,
+                                    Beats::new(0.5),
+                                ),
+                                ColorModulator::new(
+                                    ColorModulation::HueShift(180.0.into()),
+                                    Waveform::HalfRootUp,
+                                    Beats::new(1.5),
+                                ),
+                                ColorModulator::new(
+                                    ColorModulation::HueShift(180.0.into()),
+                                    Waveform::HalfRootDown,
+                                    Beats::new(1.0),
+                                ),
+                            ],
+                            Some(ClockOffset::new(ClockOffsetMode::Random, Beats::new(2.0))),
+                        )),
+                    }
+                    .into_group(ButtonType::Toggle),
                     // Beam effects
                     ButtonGroup::new(
                         ButtonType::Toggle,
@@ -506,36 +535,6 @@ impl MidiController {
                                     vec![
                                         BeamModulator::new(
                                             Waveform::OnePointFiveRootDown,
-                                            Beats::new(1.0),
-                                            EffectDirection::BottomToTop,
-                                        ),
-                                        BeamModulator::new(
-                                            Waveform::OnePointFiveRootDown,
-                                            Beats::new(1.0),
-                                            EffectDirection::BottomToTop,
-                                        ),
-                                        BeamModulator::new(
-                                            Waveform::OnePointFiveRootDown,
-                                            Beats::new(1.0),
-                                            EffectDirection::BottomToTop,
-                                        ),
-                                        BeamModulator::new(
-                                            Waveform::OnePointFiveRootDown,
-                                            Beats::new(1.0),
-                                            EffectDirection::BottomToTop,
-                                        ),
-                                        BeamModulator::new(
-                                            Waveform::OnePointFiveRootUp,
-                                            Beats::new(1.0),
-                                            EffectDirection::BottomToTop,
-                                        ),
-                                        BeamModulator::new(
-                                            Waveform::OnePointFiveRootUp,
-                                            Beats::new(1.0),
-                                            EffectDirection::BottomToTop,
-                                        ),
-                                        BeamModulator::new(
-                                            Waveform::OnePointFiveRootUp,
                                             Beats::new(1.0),
                                             EffectDirection::BottomToTop,
                                         ),
