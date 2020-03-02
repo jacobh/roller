@@ -334,12 +334,19 @@ impl Fixture {
     }
 }
 
-pub fn fold_fixture_dmx_data<'a>(fixtures: impl IntoIterator<Item = &'a Fixture>) -> [u8; 512] {
-    let mut dmx_data = [0; 512];
+pub fn fold_fixture_dmx_data<'a>(
+    fixtures: impl IntoIterator<Item = &'a Fixture>,
+) -> FxHashMap<usize, [u8; 512]> {
+    let mut universe_dmx_data = FxHashMap::default();
+    universe_dmx_data.reserve(1);
 
     for fixture in fixtures {
-        fixture.write_dmx(&mut dmx_data);
+        let dmx_data = universe_dmx_data
+            .entry(fixture.universe)
+            .or_insert_with(|| [0u8; 512]);
+
+        fixture.write_dmx(dmx_data);
     }
 
-    dmx_data
+    universe_dmx_data
 }

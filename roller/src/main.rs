@@ -77,8 +77,9 @@ async fn main() -> Result<(), async_std::io::Error> {
         match event {
             Event::Tick => {
                 state.update_fixtures(&mut fixtures);
-                let dmx_data = fixture::fold_fixture_dmx_data(&fixtures);
-                dmx_sender.send((10, dmx_data)).await;
+                for (universe, dmx_data) in fixture::fold_fixture_dmx_data(&fixtures).into_iter() {
+                    dmx_sender.send((universe as i32, dmx_data)).await;
+                }
 
                 let new_pad_states = pad_states(
                     midi_controller.midi_mapping.pad_mappings().collect(),
