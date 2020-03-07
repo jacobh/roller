@@ -25,17 +25,17 @@ pub fn default_midi_mapping() -> MidiMapping {
             MidiFaderMapping {
                 control_channel: ControlChannel::new(48),
                 fader_type: FaderType::GroupDimmer(FixtureGroupId::new(1)),
-                fader_curve: FaderCurve::root(1.25),
+                fader_curve: FaderCurve::root(0.8),
             },
             MidiFaderMapping {
                 control_channel: ControlChannel::new(49),
                 fader_type: FaderType::GroupDimmer(FixtureGroupId::new(2)),
-                fader_curve: FaderCurve::root(1.25),
+                fader_curve: FaderCurve::root(0.8),
             },
             MidiFaderMapping {
                 control_channel: ControlChannel::new(50),
                 fader_type: FaderType::GroupDimmer(FixtureGroupId::new(3)),
-                fader_curve: FaderCurve::root(1.25),
+                fader_curve: FaderCurve::root(0.8),
             },
             MidiFaderMapping {
                 control_channel: ControlChannel::new(54),
@@ -50,7 +50,7 @@ pub fn default_midi_mapping() -> MidiMapping {
             MidiFaderMapping {
                 control_channel: ControlChannel::new(56),
                 fader_type: FaderType::MasterDimmer,
-                fader_curve: FaderCurve::root(1.25),
+                fader_curve: FaderCurve::root(0.8),
             },
         ],
         vec![
