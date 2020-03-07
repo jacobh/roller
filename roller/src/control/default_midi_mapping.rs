@@ -349,14 +349,17 @@ pub fn default_midi_mapping() -> MidiMapping {
                     },
                     ButtonMapping {
                         note: Note::new(44),
-                        on_action: ButtonAction::ActivatePixelEffect(
-                            PixelModulator::new(
+                        on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
+                            vec![PixelModulator::new(
                                 Waveform::SigmoidWaveDown,
                                 Beats::new(2.0),
                                 EffectDirection::BottomToTop,
-                            )
-                            .into(),
-                        ),
+                            )],
+                            Some(ClockOffset::new(
+                                ClockOffsetMode::FixtureIndex,
+                                Beats::new(1.0),
+                            )),
+                        )),
                     },
                     ButtonMapping {
                         note: Note::new(36),
@@ -384,7 +387,10 @@ pub fn default_midi_mapping() -> MidiMapping {
                                     EffectDirection::BottomToTop,
                                 ),
                             ],
-                            None,
+                            Some(ClockOffset::new(
+                                ClockOffsetMode::FixtureIndex,
+                                Beats::new(1.0),
+                            )),
                         )),
                     },
                 ],
