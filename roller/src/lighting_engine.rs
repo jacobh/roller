@@ -364,7 +364,7 @@ impl<'a> EngineState<'a> {
         let fixture_values = fixtures
             .iter()
             .map(|fixture| {
-                let effect_dimmer =
+                let effect_dimmer = if fixture.dimmer_effects_enabled() {
                     active_dimmer_effects
                         .iter()
                         .fold(1.0, |dimmer, (effect, rate)| {
@@ -377,37 +377,43 @@ impl<'a> EngineState<'a> {
                                     ),
                                     self.dimmer_effect_intensity,
                                 )
-                        });
+                        })
+                } else {
+                    1.0
+                };
 
                 let (base_color, secondary_color) =
                     if fixture.group_id == Some(FixtureGroupId::new(1)) {
-                        (global_color, secondary_color)
+                        (global_color.to_hsl(), secondary_color.map(Color::to_hsl))
                     } else {
                         if let Some(secondary_color) = secondary_color {
-                            (secondary_color, Some(global_color))
+                            (secondary_color.to_hsl(), Some(global_color.to_hsl()))
                         } else {
-                            (global_color, None)
+                            (global_color.to_hsl(), None)
                         }
                     };
 
-                let color = effect::color_intensity(
-                    base_color.to_hsl(),
-                    active_color_effects.iter().fold(
-                        base_color.to_hsl(),
-                        |color, (effect, rate)| {
-                            effect.offset_color(
-                                color,
-                                secondary_color.map(Color::to_hsl),
-                                &clock_snapshot.with_rate(*rate),
-                                &fixture,
-                                &fixtures,
-                            )
-                        },
-                    ),
-                    self.color_effect_intensity,
-                );
+                let color = if fixture.color_effects_enabled() {
+                    effect::color_intensity(
+                        base_color,
+                        active_color_effects
+                            .iter()
+                            .fold(base_color, |color, (effect, rate)| {
+                                effect.offset_color(
+                                    color,
+                                    secondary_color,
+                                    &clock_snapshot.with_rate(*rate),
+                                    &fixture,
+                                    &fixtures,
+                                )
+                            }),
+                        self.color_effect_intensity,
+                    )
+                } else {
+                    base_color
+                };
 
-                let pixel_range_set: Option<PixelRangeSet> = if fixture.profile.beam_count() > 1 {
+                let pixel_range_set: Option<PixelRangeSet> = if fixture.pixel_effects_enabled() {
                     // TODO only using first active pixel effect
                     active_pixel_effects.iter().nth(0).map(|(effect, rate)| {
                         effect.offset_pixel_range_set(

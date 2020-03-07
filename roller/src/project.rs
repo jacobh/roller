@@ -1,7 +1,8 @@
 use derive_more::{Constructor, From, Into};
+use rustc_hash::FxHashSet;
 use serde::Deserialize;
 
-use crate::fixture::Fixture;
+use crate::fixture::{Fixture, FixtureEffectType};
 
 #[derive(
     Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize, From, Into,
@@ -14,6 +15,8 @@ struct ProjectFixture {
     group_id: Option<FixtureGroupId>,
     #[serde(rename = "fixture_profile")]
     fixture_profile_slug: String,
+    #[serde(default = "FixtureEffectType::all")]
+    enabled_effects: FxHashSet<FixtureEffectType>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -42,20 +45,25 @@ impl Project {
         let fixtures = self
             .universes
             .iter()
+            .cloned()
             .flat_map(|universe| {
+                let universe_id = universe.universe_id;
+
                 universe
                     .fixtures
-                    .iter()
+                    .into_iter()
                     .map(|project_fixture| {
                         let profile = fixture_profiles
                             .get(&project_fixture.fixture_profile_slug)
                             .unwrap()
                             .clone();
+
                         Fixture::new(
                             profile,
-                            universe.universe_id,
+                            universe_id,
                             project_fixture.start_channel,
                             project_fixture.group_id,
+                            project_fixture.enabled_effects,
                         )
                     })
                     .collect::<Vec<_>>()

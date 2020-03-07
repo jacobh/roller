@@ -1,6 +1,7 @@
 slug = "ave_quad_pro_flat_4ch"
 label = "AVE Quad Pro Flat 4ch"
 channel_count = 4
+supported_effects = ["color", "dimmer"]
 
 [[channels]]
 channel = 1

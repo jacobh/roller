@@ -42,8 +42,10 @@ universe_id = 10
     start_channel = 61
     fixture_profile = "ave_ledbar_24_29ch"
     group_id = 3
+    enabled_effects = ["pixel"]
 
     [[universes.fixtures]]
     start_channel = 90
     fixture_profile = "ave_ledbar_24_29ch"
     group_id = 3
+    enabled_effects = ["pixel"]

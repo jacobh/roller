@@ -1,6 +1,7 @@
 slug = "ebay_par_can"
 label = "eBay Par Can"
 channel_count = 8
+supported_effects = ["color", "dimmer"]
 
 [[channels]]
 channel = 1

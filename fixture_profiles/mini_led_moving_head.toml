@@ -1,6 +1,7 @@
 slug = "mini_led_moving_head"
 label = "Mini LED Moving Head"
 channel_count = 14
+supported_effects = ["color", "dimmer", "position"]
 
 [[channels]]
 channel = 1

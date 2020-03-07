@@ -1,6 +1,6 @@
 use async_std::prelude::*;
 use derive_more::{Constructor, From, Into};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
 use crate::project::FixtureGroupId;
@@ -10,6 +10,27 @@ use crate::utils::FxIndexMap;
     Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Constructor, Deserialize, From, Into,
 )]
 pub struct BeamId(usize);
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Hash)]
+#[serde(rename_all = "snake_case")]
+pub enum FixtureEffectType {
+    Color,
+    Dimmer,
+    Pixel,
+    Position,
+}
+impl FixtureEffectType {
+    pub fn all() -> FxHashSet<FixtureEffectType> {
+        vec![
+            FixtureEffectType::Color,
+            FixtureEffectType::Dimmer,
+            FixtureEffectType::Pixel,
+            FixtureEffectType::Position,
+        ]
+        .into_iter()
+        .collect()
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Hash)]
 #[serde(rename_all = "snake_case")]
@@ -58,6 +79,7 @@ struct FixtureProfileData {
     label: String,
     channel_count: usize,
     channels: Vec<FixtureProfileChannel>,
+    supported_effects: FxHashSet<FixtureEffectType>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
@@ -212,6 +234,7 @@ pub struct Fixture {
     universe: usize,
     start_channel: usize,
     pub group_id: Option<FixtureGroupId>,
+    enabled_effects: FxHashSet<FixtureEffectType>,
 
     beams: FxIndexMap<Option<BeamId>, FixtureBeam>,
     position: Option<(f64, f64)>, // -1.0 - +1.0
@@ -222,6 +245,7 @@ impl Fixture {
         universe: usize,
         start_channel: usize,
         group_id: Option<FixtureGroupId>,
+        enabled_effects: FxHashSet<FixtureEffectType>,
     ) -> Fixture {
         let beams = profile
             .beams
@@ -234,9 +258,32 @@ impl Fixture {
             universe,
             start_channel,
             group_id,
+            enabled_effects,
             beams,
             position: None,
         }
+    }
+    fn enabled_effects(&self) -> impl Iterator<Item = &FixtureEffectType> {
+        self.profile
+            .data
+            .supported_effects
+            .intersection(&self.enabled_effects)
+    }
+    pub fn dimmer_effects_enabled(&self) -> bool {
+        self.enabled_effects()
+            .any(|x| x == &FixtureEffectType::Dimmer)
+    }
+    pub fn color_effects_enabled(&self) -> bool {
+        self.enabled_effects()
+            .any(|x| x == &FixtureEffectType::Color)
+    }
+    pub fn pixel_effects_enabled(&self) -> bool {
+        self.enabled_effects()
+            .any(|x| x == &FixtureEffectType::Pixel)
+    }
+    pub fn position_effects_enabled(&self) -> bool {
+        self.enabled_effects()
+            .any(|x| x == &FixtureEffectType::Position)
     }
     fn global_beam_mut(&mut self) -> Option<&mut FixtureBeam> {
         self.beams.get_mut(&None)

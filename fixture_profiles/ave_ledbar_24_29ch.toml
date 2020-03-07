@@ -1,6 +1,7 @@
 slug = "ave_ledbar_24_29ch"
 label = "AVE LEDBAR-24"
 channel_count = 29
+supported_effects = ["color", "dimmer", "pixel"]
 
 [[channels]]
 channel = 1
