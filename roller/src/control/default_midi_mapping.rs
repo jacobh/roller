@@ -312,10 +312,7 @@ pub fn default_midi_mapping() -> MidiMapping {
                         Waveform::SineUp,
                         Beats::new(2.0),
                     )],
-                    Some(ClockOffset::new(
-                        ClockOffsetMode::FixtureIndex,
-                        Beats::new(1.0),
-                    )),
+                    None,
                 )),
             }
             .into_group(ButtonType::Toggle),
