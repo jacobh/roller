@@ -356,7 +356,7 @@ impl<'a> EngineState<'a> {
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
         let clock_snapshot = self.clock.snapshot().with_rate(self.global_clock_rate);
         let global_color = self.global_color();
-        let secondary_color = self.secondary_color().unwrap_or(global_color);
+        let secondary_color = self.secondary_color();
         let active_dimmer_effects = self.active_dimmer_effects();
         let active_color_effects = self.active_color_effects();
         let active_pixel_effects = self.active_pixel_effects();
@@ -379,11 +379,16 @@ impl<'a> EngineState<'a> {
                                 )
                         });
 
-                let base_color = if fixture.group_id == Some(FixtureGroupId::new(1)) {
-                    global_color
-                } else {
-                    secondary_color
-                };
+                let (base_color, secondary_color) =
+                    if fixture.group_id == Some(FixtureGroupId::new(1)) {
+                        (global_color, secondary_color)
+                    } else {
+                        if let Some(secondary_color) = secondary_color {
+                            (secondary_color, Some(global_color))
+                        } else {
+                            (global_color, None)
+                        }
+                    };
 
                 let color = effect::color_intensity(
                     base_color.to_hsl(),
@@ -392,6 +397,7 @@ impl<'a> EngineState<'a> {
                         |color, (effect, rate)| {
                             effect.offset_color(
                                 color,
+                                secondary_color.map(Color::to_hsl),
                                 &clock_snapshot.with_rate(*rate),
                                 &fixture,
                                 &fixtures,

@@ -1,5 +1,5 @@
 use ordered_float::OrderedFloat;
-use palette::{Hue, Mix, RgbHue};
+use palette::{Hue, Mix};
 
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
@@ -26,7 +26,12 @@ impl ColorEffect {
             .map(|modulator| modulator.meter_length)
             .sum()
     }
-    pub fn color(&self, color: Hsl64, clock: &ClockSnapshot) -> Hsl64 {
+    pub fn color(
+        &self,
+        color: Hsl64,
+        secondary_color: Option<Hsl64>,
+        clock: &ClockSnapshot,
+    ) -> Hsl64 {
         let length = self.total_length();
         let elapsed_percent = clock.meter_elapsed_percent(length);
         let mut elapsed_beats = length * elapsed_percent;
@@ -35,6 +40,7 @@ impl ColorEffect {
             if step.meter_length >= elapsed_beats {
                 return step.color_for_elapsed_percent(
                     color,
+                    secondary_color,
                     1.0 / f64::from(step.meter_length) * f64::from(elapsed_beats),
                 );
             } else {
@@ -48,6 +54,7 @@ impl ColorEffect {
     pub fn offset_color(
         &self,
         color: Hsl64,
+        secondary_color: Option<Hsl64>,
         clock: &ClockSnapshot,
         fixture: &Fixture,
         fixtures: &[Fixture],
@@ -55,9 +62,10 @@ impl ColorEffect {
         match &self.clock_offset {
             Some(clock_offset) => self.color(
                 color,
+                secondary_color,
                 &clock.shift(clock_offset.offset_for_fixture(fixture, fixtures)),
             ),
-            None => self.color(color, clock),
+            None => self.color(color, secondary_color, clock),
         }
     }
 }
@@ -71,6 +79,7 @@ impl From<ColorModulator> for ColorEffect {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ColorModulation {
     HueShift(OrderedFloat<f64>),
+    ToSecondaryColor,
     White,
     NoOp,
 }
@@ -100,12 +109,22 @@ impl ColorModulator {
             waveform: Waveform::On,
         }
     }
-    fn color_for_elapsed_percent(&self, color: Hsl64, elapsed_percent: f64) -> Hsl64 {
+    fn color_for_elapsed_percent(
+        &self,
+        color: Hsl64,
+        secondary_color: Option<Hsl64>,
+        elapsed_percent: f64,
+    ) -> Hsl64 {
         match self.modulation {
             ColorModulation::HueShift(shift_degrees) => {
-                color.shift_hue(RgbHue::<f64>::from_degrees(
-                    self.waveform.apply(elapsed_percent) * shift_degrees.into_inner(),
-                ))
+                color.shift_hue(self.waveform.apply(elapsed_percent) * shift_degrees.into_inner())
+            }
+            ColorModulation::ToSecondaryColor => {
+                let degrees_to_secondary = secondary_color
+                    .map(|secondary_color| (secondary_color.hue - color.hue).to_degrees())
+                    .unwrap_or(0.0);
+
+                color.shift_hue(degrees_to_secondary * self.waveform.apply(elapsed_percent))
             }
             ColorModulation::White => {
                 color.mix(&Color::White.to_hsl(), self.waveform.apply(elapsed_percent))

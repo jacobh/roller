@@ -304,6 +304,21 @@ pub fn default_midi_mapping() -> MidiMapping {
                 )),
             }
             .into_group(ButtonType::Toggle),
+            ButtonMapping {
+                note: Note::new(10),
+                on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
+                    vec![ColorModulator::new(
+                        ColorModulation::ToSecondaryColor,
+                        Waveform::SineUp,
+                        Beats::new(2.0),
+                    )],
+                    Some(ClockOffset::new(
+                        ClockOffsetMode::FixtureIndex,
+                        Beats::new(1.0),
+                    )),
+                )),
+            }
+            .into_group(ButtonType::Toggle),
             // Pixel effects
             ButtonGroup::new(
                 ButtonType::Toggle,
