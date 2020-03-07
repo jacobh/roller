@@ -393,6 +393,51 @@ pub fn default_midi_mapping() -> MidiMapping {
                             )),
                         )),
                     },
+                    ButtonMapping {
+                        note: Note::new(20),
+                        on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
+                            vec![
+                                PixelModulator::new(
+                                    Waveform::OnePointFiveRootUp,
+                                    Beats::new(1.0),
+                                    EffectDirection::BottomToTop,
+                                ),
+                                PixelModulator::new(
+                                    Waveform::OnePointFiveRootUp,
+                                    Beats::new(1.0),
+                                    EffectDirection::BottomToTop,
+                                ),
+                                PixelModulator::new(
+                                    Waveform::OnePointFiveRootDown,
+                                    Beats::new(1.0),
+                                    EffectDirection::BottomToTop,
+                                ),
+                                PixelModulator::new(
+                                    Waveform::OnePointFiveRootDown,
+                                    Beats::new(1.0),
+                                    EffectDirection::BottomToTop,
+                                ),
+                            ],
+                            Some(ClockOffset::new(
+                                ClockOffsetMode::FixtureIndex,
+                                Beats::new(2.0),
+                            )),
+                        )),
+                    },
+                    ButtonMapping {
+                        note: Note::new(12),
+                        on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
+                            vec![PixelModulator::new(
+                                Waveform::SigmoidWaveDown,
+                                Beats::new(2.0),
+                                EffectDirection::BottomToTop,
+                            )],
+                            Some(ClockOffset::new(
+                                ClockOffsetMode::FixtureIndex,
+                                Beats::new(0.667),
+                            )),
+                        )),
+                    },
                 ],
             ),
         ],
