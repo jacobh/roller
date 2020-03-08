@@ -10,7 +10,7 @@ use crate::{
 pub struct PositionEffect {
     pan: Option<PositionModulator>,
     tilt: Option<PositionModulator>,
-    clock_offset: Option<ClockOffset>,
+    pub clock_offset: Option<ClockOffset>,
 }
 impl PositionEffect {
     pub fn new(
@@ -33,20 +33,6 @@ impl PositionEffect {
             .unwrap_or(0.0);
 
         (pan, tilt)
-    }
-    pub fn offset_position(
-        &self,
-        clock: &ClockSnapshot,
-        fixture: &Fixture,
-        fixtures: &[Fixture],
-    ) -> (f64, f64) {
-        match &self.clock_offset {
-            Some(clock_offset) => {
-                let offset = clock_offset.offset_for_fixture(fixture, fixtures);
-                self.position(&clock.shift(offset))
-            }
-            None => self.position(clock),
-        }
     }
 }
 

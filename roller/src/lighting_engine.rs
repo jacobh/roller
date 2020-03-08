@@ -413,12 +413,15 @@ impl<'a> EngineState<'a> {
                         active_color_effects
                             .iter()
                             .fold(base_color, |color, (effect, rate)| {
-                                effect.offset_color(
+                                effect.color(
                                     color,
                                     secondary_color,
-                                    &clock_snapshot.with_rate(*rate),
-                                    &fixture,
-                                    &fixtures,
+                                    &offsetted(
+                                        &clock_snapshot.with_rate(*rate),
+                                        effect.clock_offset.as_ref(),
+                                        &fixture,
+                                        &fixtures,
+                                    ),
                                 )
                             }),
                         self.color_effect_intensity,
@@ -430,11 +433,12 @@ impl<'a> EngineState<'a> {
                 let pixel_range_set: Option<PixelRangeSet> = if fixture.pixel_effects_enabled() {
                     // TODO only using first active pixel effect
                     active_pixel_effects.iter().nth(0).map(|(effect, rate)| {
-                        effect.offset_pixel_range_set(
+                        effect.pixel_range_set(&offsetted(
                             &clock_snapshot.with_rate(*rate),
+                            effect.clock_offset.as_ref(),
                             &fixture,
                             &fixtures,
-                        )
+                        ))
                     })
                 } else {
                     None
@@ -445,11 +449,12 @@ impl<'a> EngineState<'a> {
                         active_position_effects
                             .iter()
                             .map(|(effect, rate)| {
-                                effect.offset_position(
+                                effect.position(&offsetted(
                                     &clock_snapshot.with_rate(*rate),
+                                    effect.clock_offset.as_ref(),
                                     &fixture,
                                     &fixtures,
-                                )
+                                ))
                             })
                             .fold(DEFAULT_POSITION, |(pan1, tilt1), (pan2, tilt2)| {
                                 (pan1 + pan2, tilt1 + tilt2)

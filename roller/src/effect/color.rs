@@ -11,7 +11,7 @@ use crate::{
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ColorEffect {
     steps: Vec<ColorModulator>,
-    clock_offset: Option<ClockOffset>,
+    pub clock_offset: Option<ClockOffset>,
 }
 impl ColorEffect {
     pub fn new(steps: Vec<ColorModulator>, clock_offset: Option<ClockOffset>) -> ColorEffect {
@@ -49,24 +49,6 @@ impl ColorEffect {
         }
 
         unreachable!()
-    }
-
-    pub fn offset_color(
-        &self,
-        color: Hsl64,
-        secondary_color: Option<Hsl64>,
-        clock: &ClockSnapshot,
-        fixture: &Fixture,
-        fixtures: &[Fixture],
-    ) -> Hsl64 {
-        match &self.clock_offset {
-            Some(clock_offset) => self.color(
-                color,
-                secondary_color,
-                &clock.shift(clock_offset.offset_for_fixture(fixture, fixtures)),
-            ),
-            None => self.color(color, secondary_color, clock),
-        }
     }
 }
 

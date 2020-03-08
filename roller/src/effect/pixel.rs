@@ -75,7 +75,7 @@ impl PixelRangeSet {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PixelEffect {
     steps: Vec<PixelModulator>,
-    clock_offset: Option<ClockOffset>,
+    pub clock_offset: Option<ClockOffset>,
 }
 impl PixelEffect {
     pub fn new(steps: Vec<PixelModulator>, clock_offset: Option<ClockOffset>) -> PixelEffect {
@@ -106,20 +106,6 @@ impl PixelEffect {
         }
 
         unreachable!()
-    }
-    pub fn offset_pixel_range_set(
-        &self,
-        clock: &ClockSnapshot,
-        fixture: &Fixture,
-        fixtures: &[Fixture],
-    ) -> PixelRangeSet {
-        match &self.clock_offset {
-            Some(clock_offset) => {
-                let offset = clock_offset.offset_for_fixture(fixture, fixtures);
-                self.pixel_range_set(&clock.shift(offset))
-            }
-            None => self.pixel_range_set(clock),
-        }
     }
 }
 
