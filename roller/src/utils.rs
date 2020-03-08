@@ -35,7 +35,10 @@ where
     }
 }
 
-pub fn clamp<T>(x: T, min: T, max: T) -> T where T: PartialOrd {
+pub fn clamp<T>(x: T, min: T, max: T) -> T
+where
+    T: PartialOrd,
+{
     if x > min {
         if x > max {
             max

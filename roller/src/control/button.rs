@@ -8,7 +8,7 @@ use crate::{
     clock::Rate,
     color::Color,
     control::midi::NoteState,
-    effect::{ColorEffect, DimmerEffect, PixelEffect},
+    effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
     lighting_engine::{ButtonGroupInfo, ButtonInfo, LightingEvent, SceneId},
     utils::shift_remove_vec,
 };
@@ -58,6 +58,7 @@ pub enum ButtonAction {
     ActivateDimmerEffect(DimmerEffect),
     ActivateColorEffect(ColorEffect),
     ActivatePixelEffect(PixelEffect),
+    ActivatePositionEffect(PositionEffect),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

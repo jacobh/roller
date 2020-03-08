@@ -4,7 +4,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 
 use crate::{
-    clock::{Beats, Clock, Rate, ClockOffset, ClockOffsetMode},
+    clock::{Clock, Rate},
     color::Color,
     control::{
         button::{
@@ -15,7 +15,6 @@ use crate::{
     },
     effect::{
         self, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet, PositionEffect,
-        PositionModulator, Waveform,
     },
     fixture::Fixture,
     project::FixtureGroupId,
@@ -356,6 +355,12 @@ impl<'a> EngineState<'a> {
             _ => None,
         })
     }
+    fn active_position_effects(&self) -> FxHashMap<&PositionEffect, Rate> {
+        active_effects(self.button_states(), |action| match action {
+            ButtonAction::ActivatePositionEffect(effect) => Some(effect),
+            _ => None,
+        })
+    }
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
         let clock_snapshot = self.clock.snapshot().with_rate(self.global_clock_rate);
         let global_color = self.global_color();
@@ -363,21 +368,9 @@ impl<'a> EngineState<'a> {
         let active_dimmer_effects = self.active_dimmer_effects();
         let active_color_effects = self.active_color_effects();
         let active_pixel_effects = self.active_pixel_effects();
+        let active_position_effects = self.active_position_effects();
 
         const DEFAULT_POSITION: (f64, f64) = (0.0, 65.0);
-        let position_effect = PositionEffect::new(
-            Some(PositionModulator::new(
-                Waveform::TriangleDown,
-                Beats::new(8.0),
-                240.0,
-            )),
-            Some(PositionModulator::new(
-                Waveform::SigmoidWaveUp,
-                Beats::new(4.0),
-                50.0,
-            )),
-            Some(ClockOffset::new(ClockOffsetMode::FixtureIndex, Beats::new(4.0))),
-        );
 
         let fixture_values = fixtures
             .iter()
@@ -400,16 +393,18 @@ impl<'a> EngineState<'a> {
                     1.0
                 };
 
-                let (base_color, secondary_color) =
-                    if fixture.group_id == Some(FixtureGroupId::new(1)) || fixture.group_id == Some(FixtureGroupId::new(2)) {
-                        (global_color.to_hsl(), secondary_color.map(Color::to_hsl))
+                let (base_color, secondary_color) = if fixture.group_id
+                    == Some(FixtureGroupId::new(1))
+                    || fixture.group_id == Some(FixtureGroupId::new(2))
+                {
+                    (global_color.to_hsl(), secondary_color.map(Color::to_hsl))
+                } else {
+                    if let Some(secondary_color) = secondary_color {
+                        (secondary_color.to_hsl(), Some(global_color.to_hsl()))
                     } else {
-                        if let Some(secondary_color) = secondary_color {
-                            (secondary_color.to_hsl(), Some(global_color.to_hsl()))
-                        } else {
-                            (global_color.to_hsl(), None)
-                        }
-                    };
+                        (global_color.to_hsl(), None)
+                    }
+                };
 
                 let color = if fixture.color_effects_enabled() {
                     effect::color_intensity(
@@ -445,12 +440,20 @@ impl<'a> EngineState<'a> {
                 };
 
                 let position = if fixture.position_effects_enabled() {
-                    let effect_position =
-                        position_effect.offset_position(&clock_snapshot, &fixture, &fixtures);
-                    Some((
-                        DEFAULT_POSITION.0 + effect_position.0,
-                        DEFAULT_POSITION.1 + effect_position.1,
-                    ))
+                    Some(
+                        active_position_effects
+                            .iter()
+                            .map(|(effect, rate)| {
+                                effect.offset_position(
+                                    &clock_snapshot.with_rate(*rate),
+                                    &fixture,
+                                    &fixtures,
+                                )
+                            })
+                            .fold(DEFAULT_POSITION, |(pan1, tilt1), (pan2, tilt2)| {
+                                (pan1 + pan2, tilt1 + tilt2)
+                            }),
+                    )
                 } else {
                     None
                 };

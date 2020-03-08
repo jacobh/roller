@@ -4,7 +4,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
 use crate::project::FixtureGroupId;
-use crate::utils::{FxIndexMap, clamp};
+use crate::utils::{clamp, FxIndexMap};
 
 #[derive(
     Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Constructor, Deserialize, From, Into,
