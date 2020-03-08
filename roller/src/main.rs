@@ -16,6 +16,9 @@ use crate::clock::{Clock, Rate};
 use crate::control::button::pad_states;
 use crate::lighting_engine::{EngineState, LightingEvent, SceneId};
 
+#[global_allocator]
+static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
+
 #[async_std::main]
 async fn main() -> Result<(), async_std::io::Error> {
     let project = project::Project::load("./roller_project.toml").await?;
