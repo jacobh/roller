@@ -13,6 +13,11 @@ pub use pixel::{PixelEffect, PixelModulator, PixelRangeSet};
 pub use position::{PositionEffect, PositionModulator};
 pub use waveform::Waveform;
 
+use crate::{
+    clock::{Beats, Clock, ClockOffset, ClockSnapshot},
+    fixture::Fixture,
+};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum EffectDirection {
     BottomToTop,
@@ -45,4 +50,25 @@ pub fn compress(x: f64, intensity: f64) -> f64 {
 // Adapted from https://math.stackexchange.com/a/3253471
 pub fn sigmoid(x: f64, tilt: f64) -> f64 {
     1.0 - (1.0 / (1.0 + f64::powf(1.0 / x - 1.0, -tilt)))
+}
+
+pub fn offset(
+    clock: &ClockSnapshot,
+    clock_offset: Option<&ClockOffset>,
+    fixture: &Fixture,
+    fixtures: &[Fixture],
+) -> Beats {
+    match clock_offset {
+        Some(clock_offset) => clock_offset.offset_for_fixture(fixture, fixtures),
+        None => Beats::zero(),
+    }
+}
+
+pub fn offsetted(
+    clock: &ClockSnapshot,
+    clock_offset: Option<&ClockOffset>,
+    fixture: &Fixture,
+    fixtures: &[Fixture],
+) -> ClockSnapshot {
+    clock.shift(offset(clock, clock_offset, fixture, fixtures))
 }

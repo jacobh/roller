@@ -14,7 +14,7 @@ use crate::{
         midi::{MidiMapping, NoteState},
     },
     effect::{
-        self, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet, PositionEffect,
+        self, offsetted, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet, PositionEffect,
     },
     fixture::Fixture,
     project::FixtureGroupId,
@@ -381,11 +381,12 @@ impl<'a> EngineState<'a> {
                         .fold(1.0, |dimmer, (effect, rate)| {
                             dimmer
                                 * effect::compress(
-                                    effect.offset_dimmer(
+                                    effect.dimmer(&offsetted(
                                         &clock_snapshot.with_rate(*rate),
+                                        effect.clock_offset.as_ref(),
                                         &fixture,
                                         &fixtures,
-                                    ),
+                                    )),
                                     self.dimmer_effect_intensity,
                                 )
                         })

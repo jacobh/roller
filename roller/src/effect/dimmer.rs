@@ -9,7 +9,7 @@ use crate::{
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DimmerEffect {
     steps: Vec<DimmerModulator>,
-    clock_offset: Option<ClockOffset>,
+    pub clock_offset: Option<ClockOffset>,
 }
 impl DimmerEffect {
     pub fn new(steps: Vec<DimmerModulator>, clock_offset: Option<ClockOffset>) -> DimmerEffect {
@@ -40,20 +40,6 @@ impl DimmerEffect {
         }
 
         unreachable!()
-    }
-    pub fn offset_dimmer(
-        &self,
-        clock: &ClockSnapshot,
-        fixture: &Fixture,
-        fixtures: &[Fixture],
-    ) -> f64 {
-        match &self.clock_offset {
-            Some(clock_offset) => {
-                let offset = clock_offset.offset_for_fixture(fixture, fixtures);
-                self.dimmer(&clock.shift(offset))
-            }
-            None => self.dimmer(clock),
-        }
     }
 }
 
