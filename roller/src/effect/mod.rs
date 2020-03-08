@@ -4,11 +4,13 @@ use palette::Mix;
 mod color;
 mod dimmer;
 mod pixel;
+mod position;
 mod waveform;
 
 pub use color::{ColorEffect, ColorModulation, ColorModulator};
 pub use dimmer::{DimmerEffect, DimmerModulator};
 pub use pixel::{PixelEffect, PixelModulator, PixelRangeSet};
+pub use position::{PositionEffect, PositionModulator};
 pub use waveform::Waveform;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

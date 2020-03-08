@@ -4,7 +4,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
 use crate::project::FixtureGroupId;
-use crate::utils::FxIndexMap;
+use crate::utils::{FxIndexMap, clamp};
 
 #[derive(
     Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Constructor, Deserialize, From, Into,
@@ -237,7 +237,7 @@ pub struct Fixture {
     enabled_effects: FxHashSet<FixtureEffectType>,
 
     beams: FxIndexMap<Option<BeamId>, FixtureBeam>,
-    position: Option<(f64, f64)>, // -1.0 - +1.0
+    position: Option<(f64, f64)>, // degrees from home position
 }
 impl Fixture {
     pub fn new(
@@ -363,13 +363,20 @@ impl Fixture {
             }
         }
 
-        if let (Some(position), Some(tilt_channel), Some(pan_channel)) = (
+        if let (Some((pan, tilt)), Some(tilt_channel), Some(pan_channel)) = (
             self.position,
             &self.profile.tilt_channel,
             &self.profile.pan_channel,
         ) {
-            dmx[tilt_channel.channel_index()] = tilt_channel.encode_value((position.1 + 1.0) / 2.0);
-            dmx[pan_channel.channel_index()] = pan_channel.encode_value((position.0 + 1.0) / 2.0);
+            // TODO move to fixture profile
+            const PAN_RANGE: f64 = 540.0;
+            const TILT_RANGE: f64 = 180.0;
+
+            let pan_value = clamp((1.0 / (PAN_RANGE / 2.0) * pan + 1.0) / 2.0, 0.0, 1.0);
+            let tilt_value = clamp((1.0 / (TILT_RANGE / 2.0) * tilt + 1.0) / 2.0, 0.0, 1.0);
+
+            dmx[pan_channel.channel_index()] = pan_channel.encode_value(pan_value);
+            dmx[tilt_channel.channel_index()] = tilt_channel.encode_value(tilt_value);
         }
 
         dmx

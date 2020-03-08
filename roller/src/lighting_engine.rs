@@ -4,7 +4,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 
 use crate::{
-    clock::{Clock, Rate},
+    clock::{Beats, Clock, Rate, ClockOffset, ClockOffsetMode},
     color::Color,
     control::{
         button::{
@@ -13,7 +13,10 @@ use crate::{
         },
         midi::{MidiMapping, NoteState},
     },
-    effect::{self, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet},
+    effect::{
+        self, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet, PositionEffect,
+        PositionModulator, Waveform,
+    },
     fixture::Fixture,
     project::FixtureGroupId,
     utils::{shift_remove_vec, FxIndexMap},
@@ -361,6 +364,21 @@ impl<'a> EngineState<'a> {
         let active_color_effects = self.active_color_effects();
         let active_pixel_effects = self.active_pixel_effects();
 
+        const DEFAULT_POSITION: (f64, f64) = (0.0, 65.0);
+        let position_effect = PositionEffect::new(
+            Some(PositionModulator::new(
+                Waveform::TriangleDown,
+                Beats::new(8.0),
+                240.0,
+            )),
+            Some(PositionModulator::new(
+                Waveform::SigmoidWaveUp,
+                Beats::new(4.0),
+                50.0,
+            )),
+            Some(ClockOffset::new(ClockOffsetMode::FixtureIndex, Beats::new(4.0))),
+        );
+
         let fixture_values = fixtures
             .iter()
             .map(|fixture| {
@@ -383,7 +401,7 @@ impl<'a> EngineState<'a> {
                 };
 
                 let (base_color, secondary_color) =
-                    if fixture.group_id == Some(FixtureGroupId::new(1)) {
+                    if fixture.group_id == Some(FixtureGroupId::new(1)) || fixture.group_id == Some(FixtureGroupId::new(2)) {
                         (global_color.to_hsl(), secondary_color.map(Color::to_hsl))
                     } else {
                         if let Some(secondary_color) = secondary_color {
@@ -426,17 +444,30 @@ impl<'a> EngineState<'a> {
                     None
                 };
 
+                let position = if fixture.position_effects_enabled() {
+                    let effect_position =
+                        position_effect.offset_position(&clock_snapshot, &fixture, &fixtures);
+                    Some((
+                        DEFAULT_POSITION.0 + effect_position.0,
+                        DEFAULT_POSITION.1 + effect_position.1,
+                    ))
+                } else {
+                    None
+                };
+
                 let group_dimmer = fixture
                     .group_id
                     .and_then(|group_id| self.group_dimmers.get(&group_id).copied())
                     .unwrap_or(1.0);
 
                 let dimmer = self.master_dimmer * group_dimmer * effect_dimmer;
-                (dimmer, color, pixel_range_set)
+                (dimmer, color, pixel_range_set, position)
             })
             .collect::<Vec<_>>();
 
-        for (fixture, (dimmer, color, pixel_range)) in fixtures.iter_mut().zip(fixture_values) {
+        for (fixture, (dimmer, color, pixel_range, position)) in
+            fixtures.iter_mut().zip(fixture_values)
+        {
             fixture.set_dimmer(dimmer);
             fixture.set_color(color).unwrap();
 
@@ -448,6 +479,10 @@ impl<'a> EngineState<'a> {
                     // If there's no active pixel effect, reset pixels
                     fixture.set_all_beam_dimmers(1.0);
                 }
+            }
+
+            if let Some(position) = position {
+                fixture.set_position(position).unwrap();
             }
         }
     }
