@@ -179,11 +179,21 @@ impl FixtureProfile {
             .entry(None)
             .and_modify(|beam| beam.dimmer_channel = None);
 
-        // Flatten out beams hashmap
-        let beams: FxIndexMap<_, _> = beams
-            .into_iter()
-            .map(|(id, beam)| (id.unwrap_or(BeamId(0)), beam))
-            .collect();
+        // If beams have been configured, use those, otherwise, give the default beam an ID
+        let (default_beam, beams): (Vec<_>, Vec<_>) =
+            beams.into_iter().partition(|(id, _)| id.is_none());
+
+        let beams: FxIndexMap<_, _> = if beams.len() > 0 {
+            beams
+                .into_iter()
+                .map(|(id, beam)| (id.unwrap(), beam))
+                .collect()
+        } else {
+            default_beam
+                .into_iter()
+                .map(|(_, beam)| (BeamId::new(0), beam))
+                .collect()
+        };
 
         // Ensure channel count is correct
         assert_eq!(profile_data.channel_count, profile_data.channels.len());
@@ -268,8 +278,9 @@ impl Fixture {
     ) -> Fixture {
         let beams = profile
             .beams
-            .iter()
-            .map(|(beam_id, profile)| (*beam_id, FixtureBeam::new(profile.clone())))
+            .clone()
+            .into_iter()
+            .map(|(beam_id, profile)| (beam_id, FixtureBeam::new(profile)))
             .collect();
 
         Fixture {
