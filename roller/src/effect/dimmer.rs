@@ -2,7 +2,7 @@ use ordered_float::OrderedFloat;
 
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
-    effect::{ModulatorSteps, Modulator, Waveform},
+    effect::{Modulator, ModulatorSteps, Waveform},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

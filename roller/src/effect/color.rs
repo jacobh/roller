@@ -4,7 +4,7 @@ use palette::{Hue, Mix};
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
     color::{Color, Hsl64},
-    effect::{ModulatorSteps, Modulator, Waveform},
+    effect::{Modulator, ModulatorSteps, Waveform},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

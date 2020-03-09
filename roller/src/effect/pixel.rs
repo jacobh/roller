@@ -1,6 +1,6 @@
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
-    effect::{ModulatorSteps, EffectDirection, Modulator, Waveform},
+    effect::{EffectDirection, Modulator, ModulatorSteps, Waveform},
 };
 
 fn percent_contained(a: (f64, f64), b: (f64, f64)) -> f64 {
