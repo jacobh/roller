@@ -49,3 +49,8 @@ where
         min
     }
 }
+
+pub fn degrees_to_percent(x: f64, range: f64) -> f64 {
+    let percent = (1.0 / (range / 2.0) * x + 1.0) / 2.0;
+    clamp(percent, 0.0, 1.0)
+}

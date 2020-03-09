@@ -4,7 +4,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
 use crate::project::FixtureGroupId;
-use crate::utils::{clamp, FxIndexMap};
+use crate::utils::{degrees_to_percent, FxIndexMap};
 
 #[derive(
     Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Constructor, Deserialize, From, Into,
@@ -372,8 +372,8 @@ impl Fixture {
             const PAN_RANGE: f64 = 540.0;
             const TILT_RANGE: f64 = 180.0;
 
-            let pan_value = clamp((1.0 / (PAN_RANGE / 2.0) * pan + 1.0) / 2.0, 0.0, 1.0);
-            let tilt_value = clamp((1.0 / (TILT_RANGE / 2.0) * tilt + 1.0) / 2.0, 0.0, 1.0);
+            let pan_value = degrees_to_percent(pan, PAN_RANGE);
+            let tilt_value = degrees_to_percent(tilt, TILT_RANGE);
 
             dmx[pan_channel.channel_index()] = pan_channel.encode_value(pan_value);
             dmx[tilt_channel.channel_index()] = tilt_channel.encode_value(tilt_value);
