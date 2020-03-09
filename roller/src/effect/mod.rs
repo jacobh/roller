@@ -14,8 +14,7 @@ pub use position::{PositionEffect, PositionModulator};
 pub use waveform::Waveform;
 
 use crate::{
-    clock::{Beats, Clock, ClockOffset, ClockSnapshot},
-    fixture::Fixture,
+    clock::{Beats, ClockSnapshot},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
