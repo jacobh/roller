@@ -52,25 +52,16 @@ pub fn sigmoid(x: f64, tilt: f64) -> f64 {
     1.0 - (1.0 / (1.0 + f64::powf(1.0 / x - 1.0, -tilt)))
 }
 
-pub fn offset(
-    clock: &ClockSnapshot,
-    clock_offset: Option<&ClockOffset>,
-    fixture: &Fixture,
-    fixtures: &[Fixture],
-) -> Beats {
-    match clock_offset {
-        Some(clock_offset) => clock_offset.offset_for_fixture(fixture, fixtures),
-        None => Beats::zero(),
-    }
-}
-
 pub fn offsetted(
     clock: &ClockSnapshot,
     clock_offset: Option<&ClockOffset>,
     fixture: &Fixture,
     fixtures: &[Fixture],
 ) -> ClockSnapshot {
-    clock.shift(offset(clock, clock_offset, fixture, fixtures))
+    match clock_offset {
+        Some(clock_offset) => clock_offset.offsetted_for_fixture(clock, fixture, fixtures),
+        None => clock.clone()
+    }
 }
 
 pub trait Modulator {

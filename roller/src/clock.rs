@@ -72,6 +72,7 @@ impl From<Rate> for f64 {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Clock {
     started_at: Instant,
     bpm: f64,
@@ -122,6 +123,7 @@ impl Clock {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct ClockSnapshot {
     secs_elapsed: f64,
     bpm: f64,
@@ -200,5 +202,13 @@ impl ClockOffset {
                 self.offset * self.seed[fixture_idx % 32] as f64
             }
         }
+    }
+    pub fn offsetted_for_fixture(
+        &self,
+        clock: &ClockSnapshot,
+        fixture: &Fixture,
+        fixtures: &[Fixture],
+    ) -> ClockSnapshot {
+        clock.shift(self.offset_for_fixture(fixture, fixtures))
     }
 }
