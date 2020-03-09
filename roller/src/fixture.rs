@@ -3,8 +3,11 @@ use derive_more::{Constructor, From, Into};
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
-use crate::project::FixtureGroupId;
-use crate::utils::{degrees_to_percent, FxIndexMap};
+use crate::{
+    position::{degrees_to_percent, Position},
+    project::FixtureGroupId,
+    utils::FxIndexMap,
+};
 
 #[derive(
     Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Constructor, Deserialize, From, Into,
@@ -266,7 +269,7 @@ pub struct Fixture {
 
     beams: FxIndexMap<BeamId, FixtureBeam>,
     dimmer: f64,
-    position: Option<(f64, f64)>, // degrees from home position
+    position: Option<Position>, // degrees from home position
 }
 impl Fixture {
     pub fn new(
@@ -346,7 +349,7 @@ impl Fixture {
             Err("Unable to set color. profile does not support it")
         }
     }
-    pub fn set_position(&mut self, position: (f64, f64)) -> Result<(), &'static str> {
+    pub fn set_position(&mut self, position: Position) -> Result<(), &'static str> {
         if self.profile.is_positionable() {
             self.position = Some(position);
             Ok(())
@@ -391,7 +394,7 @@ impl Fixture {
             }
         }
 
-        if let (Some((pan, tilt)), Some(tilt_channel), Some(pan_channel)) = (
+        if let (Some(position), Some(tilt_channel), Some(pan_channel)) = (
             self.position,
             &self.profile.tilt_channel,
             &self.profile.pan_channel,
@@ -400,8 +403,8 @@ impl Fixture {
             const PAN_RANGE: f64 = 540.0;
             const TILT_RANGE: f64 = 180.0;
 
-            let pan_value = degrees_to_percent(pan, PAN_RANGE);
-            let tilt_value = degrees_to_percent(tilt, TILT_RANGE);
+            let pan_value = degrees_to_percent(position.pan(), PAN_RANGE);
+            let tilt_value = degrees_to_percent(position.tilt(), TILT_RANGE);
 
             dmx[pan_channel.channel_index()] = pan_channel.encode_value(pan_value);
             dmx[tilt_channel.channel_index()] = tilt_channel.encode_value(tilt_value);

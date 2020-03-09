@@ -9,6 +9,7 @@ mod control;
 mod effect;
 mod fixture;
 mod lighting_engine;
+mod position;
 mod project;
 mod utils;
 
@@ -49,12 +50,6 @@ async fn main() -> Result<(), async_std::io::Error> {
                 .unwrap();
         }
     });
-
-    for fixture in fixtures.iter_mut() {
-        if fixture.profile.is_positionable() {
-            fixture.set_position((0.0, 1.0)).unwrap();
-        }
-    }
 
     enum Event {
         Tick,

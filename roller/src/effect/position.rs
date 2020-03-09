@@ -3,6 +3,7 @@ use ordered_float::OrderedFloat;
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
     effect::Waveform,
+    position::Position,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -23,7 +24,7 @@ impl PositionEffect {
             clock_offset,
         }
     }
-    pub fn position(&self, clock: &ClockSnapshot) -> (f64, f64) {
+    pub fn position(&self, clock: &ClockSnapshot) -> Position {
         let pan = self.pan.as_ref().map(|pan| pan.axis(clock)).unwrap_or(0.0);
         let tilt = self
             .tilt
@@ -31,7 +32,7 @@ impl PositionEffect {
             .map(|tilt| tilt.axis(clock))
             .unwrap_or(0.0);
 
-        (pan, tilt)
+        Position::new(pan, tilt)
     }
 }
 

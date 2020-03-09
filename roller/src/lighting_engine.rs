@@ -15,6 +15,7 @@ use crate::{
     },
     effect::{self, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet, PositionEffect},
     fixture::Fixture,
+    position::Position,
     project::FixtureGroupId,
     utils::{shift_remove_vec, FxIndexMap},
 };
@@ -335,6 +336,9 @@ impl<'a> EngineState<'a> {
             })
             .last()
     }
+    fn base_position(&self) -> Position {
+        Position::new(0.0, 65.0)
+    }
     fn active_dimmer_effects(&self) -> FxHashMap<&DimmerEffect, Rate> {
         active_effects(self.button_states(), |action| match action {
             ButtonAction::ActivateDimmerEffect(effect) => Some(effect),
@@ -367,8 +371,6 @@ impl<'a> EngineState<'a> {
         let active_color_effects = self.active_color_effects();
         let active_pixel_effects = self.active_pixel_effects();
         let active_position_effects = self.active_position_effects();
-
-        const DEFAULT_POSITION: (f64, f64) = (0.0, 65.0);
 
         let fixture_values = fixtures
             .iter()
@@ -450,8 +452,8 @@ impl<'a> EngineState<'a> {
                                     &fixtures,
                                 ))
                             })
-                            .fold(DEFAULT_POSITION, |(pan1, tilt1), (pan2, tilt2)| {
-                                (pan1 + pan2, tilt1 + tilt2)
+                            .fold(self.base_position(), |position1, position2| {
+                                position1 + position2
                             }),
                     )
                 } else {
