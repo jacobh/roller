@@ -10,6 +10,7 @@ use crate::{
     control::midi::NoteState,
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
     lighting_engine::{ButtonGroupInfo, ButtonInfo, LightingEvent, SceneId},
+    position::Position,
     utils::shift_remove_vec,
 };
 
@@ -55,6 +56,7 @@ impl GroupToggleState {
 pub enum ButtonAction {
     UpdateGlobalColor(Color),
     UpdateGlobalSecondaryColor(Color),
+    UpdateBasePosition(Position),
     ActivateDimmerEffect(DimmerEffect),
     ActivateColorEffect(ColorEffect),
     ActivatePixelEffect(PixelEffect),

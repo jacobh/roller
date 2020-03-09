@@ -53,12 +53,12 @@ pub struct ButtonInfo<'a> {
 fn active_effects<'a, T, F>(
     button_states: impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'a>)>,
     extract_effect_fn: F,
-) -> FxHashMap<&'a T, Rate>
+) -> FxIndexMap<&'a T, Rate>
 where
     T: Eq + std::hash::Hash,
     F: Fn(&ButtonAction) -> Option<&T>,
 {
-    let mut effects = FxHashMap::default();
+    let mut effects = FxIndexMap::default();
 
     for (group_info, button_info) in button_states {
         if let Some(effect) = extract_effect_fn(&button_info.button.on_action) {
@@ -66,11 +66,12 @@ where
                 ButtonType::Flash => {
                     match button_info.note_state {
                         NoteState::On => effects.insert(effect, button_info.effect_rate),
-                        NoteState::Off => effects.remove(&effect),
+                        NoteState::Off => effects.shift_remove(&effect),
                     };
                 }
                 ButtonType::Switch => match button_info.note_state {
                     NoteState::On => {
+                        effects.shift_remove(&effect);
                         effects.insert(effect, button_info.effect_rate);
                     }
                     NoteState::Off => {}
@@ -337,27 +338,34 @@ impl<'a> EngineState<'a> {
             .last()
     }
     fn base_position(&self) -> Position {
-        Position::new(0.0, 65.0)
+        active_effects(self.button_states(), |action| match action {
+            ButtonAction::UpdateBasePosition(position) => Some(position),
+            _ => None,
+        })
+        .keys()
+        .last()
+        .map(|position| **position)
+        .unwrap_or_else(|| Position::new(0.0, 90.0))
     }
-    fn active_dimmer_effects(&self) -> FxHashMap<&DimmerEffect, Rate> {
+    fn active_dimmer_effects(&self) -> FxIndexMap<&DimmerEffect, Rate> {
         active_effects(self.button_states(), |action| match action {
             ButtonAction::ActivateDimmerEffect(effect) => Some(effect),
             _ => None,
         })
     }
-    fn active_color_effects(&self) -> FxHashMap<&ColorEffect, Rate> {
+    fn active_color_effects(&self) -> FxIndexMap<&ColorEffect, Rate> {
         active_effects(self.button_states(), |action| match action {
             ButtonAction::ActivateColorEffect(effect) => Some(effect),
             _ => None,
         })
     }
-    fn active_pixel_effects(&self) -> FxHashMap<&PixelEffect, Rate> {
+    fn active_pixel_effects(&self) -> FxIndexMap<&PixelEffect, Rate> {
         active_effects(self.button_states(), |action| match action {
             ButtonAction::ActivatePixelEffect(effect) => Some(effect),
             _ => None,
         })
     }
-    fn active_position_effects(&self) -> FxHashMap<&PositionEffect, Rate> {
+    fn active_position_effects(&self) -> FxIndexMap<&PositionEffect, Rate> {
         active_effects(self.button_states(), |action| match action {
             ButtonAction::ActivatePositionEffect(effect) => Some(effect),
             _ => None,
