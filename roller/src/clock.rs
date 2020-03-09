@@ -72,7 +72,7 @@ impl From<Rate> for f64 {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Clock {
     started_at: Instant,
     bpm: f64,
@@ -210,5 +210,30 @@ impl ClockOffset {
         fixtures: &[Fixture],
     ) -> ClockSnapshot {
         clock.shift(self.offset_for_fixture(fixture, fixtures))
+    }
+}
+
+/// Convenience trait so that `offsetted_for_fixture` works on Option<ClockOffset>'s as well as
+/// on clock offsets themselves
+pub trait ClockOffsetOptionExt {
+    fn offsetted_for_fixture(
+        &self,
+        clock: &ClockSnapshot,
+        fixture: &Fixture,
+        fixtures: &[Fixture],
+    ) -> ClockSnapshot;
+}
+
+impl ClockOffsetOptionExt for Option<ClockOffset> {
+    fn offsetted_for_fixture(
+        &self,
+        clock: &ClockSnapshot,
+        fixture: &Fixture,
+        fixtures: &[Fixture],
+    ) -> ClockSnapshot {
+        match self {
+            Some(clock_offset) => clock_offset.offsetted_for_fixture(clock, fixture, fixtures),
+            None => clock.clone(),
+        }
     }
 }

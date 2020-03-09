@@ -4,7 +4,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 
 use crate::{
-    clock::{Clock, Rate},
+    clock::{Clock, ClockOffsetOptionExt, Rate},
     color::Color,
     control::{
         button::{
@@ -13,9 +13,7 @@ use crate::{
         },
         midi::{MidiMapping, NoteState},
     },
-    effect::{
-        self, offsetted, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet, PositionEffect,
-    },
+    effect::{self, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet, PositionEffect},
     fixture::Fixture,
     project::FixtureGroupId,
     utils::{shift_remove_vec, FxIndexMap},
@@ -381,9 +379,8 @@ impl<'a> EngineState<'a> {
                         .fold(1.0, |dimmer, (effect, rate)| {
                             dimmer
                                 * effect::compress(
-                                    effect.dimmer(&offsetted(
+                                    effect.dimmer(&effect.clock_offset.offsetted_for_fixture(
                                         &clock_snapshot.with_rate(*rate),
-                                        effect.clock_offset.as_ref(),
                                         &fixture,
                                         &fixtures,
                                     )),
@@ -416,9 +413,8 @@ impl<'a> EngineState<'a> {
                                 effect.color(
                                     color,
                                     secondary_color,
-                                    &offsetted(
+                                    &effect.clock_offset.offsetted_for_fixture(
                                         &clock_snapshot.with_rate(*rate),
-                                        effect.clock_offset.as_ref(),
                                         &fixture,
                                         &fixtures,
                                     ),
@@ -433,9 +429,8 @@ impl<'a> EngineState<'a> {
                 let pixel_range_set: Option<PixelRangeSet> = if fixture.pixel_effects_enabled() {
                     // TODO only using first active pixel effect
                     active_pixel_effects.iter().nth(0).map(|(effect, rate)| {
-                        effect.pixel_range_set(&offsetted(
+                        effect.pixel_range_set(&effect.clock_offset.offsetted_for_fixture(
                             &clock_snapshot.with_rate(*rate),
-                            effect.clock_offset.as_ref(),
                             &fixture,
                             &fixtures,
                         ))
@@ -449,9 +444,8 @@ impl<'a> EngineState<'a> {
                         active_position_effects
                             .iter()
                             .map(|(effect, rate)| {
-                                effect.position(&offsetted(
+                                effect.position(&effect.clock_offset.offsetted_for_fixture(
                                     &clock_snapshot.with_rate(*rate),
-                                    effect.clock_offset.as_ref(),
                                     &fixture,
                                     &fixtures,
                                 ))
