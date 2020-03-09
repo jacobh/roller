@@ -2,23 +2,23 @@ use ordered_float::OrderedFloat;
 
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
-    effect::{current_modulator_step, Modulator, Waveform},
+    effect::{ModulatorSteps, Modulator, Waveform},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DimmerEffect {
-    steps: Vec<DimmerModulator>,
+    steps: ModulatorSteps<DimmerModulator>,
     pub clock_offset: Option<ClockOffset>,
 }
 impl DimmerEffect {
     pub fn new(steps: Vec<DimmerModulator>, clock_offset: Option<ClockOffset>) -> DimmerEffect {
         DimmerEffect {
-            steps,
+            steps: ModulatorSteps::new(steps),
             clock_offset,
         }
     }
     pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
-        let (step, elapsed_percent) = current_modulator_step(&self.steps, clock);
+        let (step, elapsed_percent) = self.steps.current_step(clock);
         step.dimmer_for_elapsed_percent(elapsed_percent)
     }
 }

@@ -1,6 +1,6 @@
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
-    effect::{current_modulator_step, EffectDirection, Modulator, Waveform},
+    effect::{ModulatorSteps, EffectDirection, Modulator, Waveform},
 };
 
 fn percent_contained(a: (f64, f64), b: (f64, f64)) -> f64 {
@@ -73,18 +73,18 @@ impl PixelRangeSet {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PixelEffect {
-    steps: Vec<PixelModulator>,
+    steps: ModulatorSteps<PixelModulator>,
     pub clock_offset: Option<ClockOffset>,
 }
 impl PixelEffect {
     pub fn new(steps: Vec<PixelModulator>, clock_offset: Option<ClockOffset>) -> PixelEffect {
         PixelEffect {
-            steps,
+            steps: ModulatorSteps::new(steps),
             clock_offset,
         }
     }
     pub fn pixel_range_set(&self, clock: &ClockSnapshot) -> PixelRangeSet {
-        let (step, elapsed_percent) = current_modulator_step(&self.steps, clock);
+        let (step, elapsed_percent) = self.steps.current_step(clock);
         step.pixel_range_set_for_elapsed_percent(elapsed_percent)
     }
 }

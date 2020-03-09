@@ -4,18 +4,18 @@ use palette::{Hue, Mix};
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
     color::{Color, Hsl64},
-    effect::{current_modulator_step, Modulator, Waveform},
+    effect::{ModulatorSteps, Modulator, Waveform},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ColorEffect {
-    steps: Vec<ColorModulator>,
+    steps: ModulatorSteps<ColorModulator>,
     pub clock_offset: Option<ClockOffset>,
 }
 impl ColorEffect {
     pub fn new(steps: Vec<ColorModulator>, clock_offset: Option<ClockOffset>) -> ColorEffect {
         ColorEffect {
-            steps,
+            steps: ModulatorSteps::new(steps),
             clock_offset,
         }
     }
@@ -25,7 +25,7 @@ impl ColorEffect {
         secondary_color: Option<Hsl64>,
         clock: &ClockSnapshot,
     ) -> Hsl64 {
-        let (step, elapsed_percent) = current_modulator_step(&self.steps, clock);
+        let (step, elapsed_percent) = self.steps.current_step(clock);
         step.color_for_elapsed_percent(color, secondary_color, elapsed_percent)
     }
 }
