@@ -13,9 +13,7 @@ pub use pixel::{PixelEffect, PixelModulator, PixelRangeSet};
 pub use position::{PositionEffect, PositionModulator};
 pub use waveform::Waveform;
 
-use crate::{
-    clock::{Beats, ClockSnapshot},
-};
+use crate::clock::{Beats, ClockSnapshot};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum EffectDirection {
@@ -55,7 +53,7 @@ pub trait Modulator {
     fn meter_length(&self) -> Beats;
 }
 
-fn current_modulator_step<'a, T>(steps: &'a Vec<T>, clock: &ClockSnapshot) -> (&'a T, f64)
+fn current_modulator_step<'a, T>(steps: &'a [T], clock: &ClockSnapshot) -> (&'a T, f64)
 where
     T: Modulator,
 {
