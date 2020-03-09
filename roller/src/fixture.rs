@@ -123,7 +123,8 @@ impl FixtureBeamProfile {
 pub struct FixtureProfile {
     data: FixtureProfileData,
 
-    beams: FxIndexMap<Option<BeamId>, FixtureBeamProfile>,
+    beams: FxIndexMap<BeamId, FixtureBeamProfile>,
+    dimmer_channel: Option<FixtureProfileChannel>,
     pan_channel: Option<FixtureProfileChannel>,
     tilt_channel: Option<FixtureProfileChannel>,
 }
@@ -148,15 +149,19 @@ impl FixtureProfile {
 
                 match channel.parameter {
                     FixtureParameter::Dimmer => {
+                        assert!(beam.dimmer_channel.is_none());
                         beam.dimmer_channel = Some(channel.clone());
                     }
                     FixtureParameter::Red => {
+                        assert!(beam.red_channel.is_none());
                         beam.red_channel = Some(channel.clone());
                     }
                     FixtureParameter::Green => {
+                        assert!(beam.green_channel.is_none());
                         beam.green_channel = Some(channel.clone());
                     }
                     FixtureParameter::Blue => {
+                        assert!(beam.blue_channel.is_none());
                         beam.blue_channel = Some(channel.clone());
                     }
                     _ => {}
@@ -164,25 +169,38 @@ impl FixtureProfile {
 
                 beams
             });
-
         beams.sort_keys();
+
+        // Pluck out the default dimmer channel
+        let dimmer_channel = beams
+            .get(&None)
+            .and_then(|beam| beam.dimmer_channel.clone());
+        beams
+            .entry(None)
+            .and_modify(|beam| beam.dimmer_channel = None);
+
+        // Flatten out beams hashmap
+        let beams: FxIndexMap<_, _> = beams
+            .into_iter()
+            .map(|(id, beam)| (id.unwrap_or(BeamId(0)), beam))
+            .collect();
 
         // Ensure channel count is correct
         assert_eq!(profile_data.channel_count, profile_data.channels.len());
 
         // assert have at least 1 beam
         assert!(beams.len() > 0);
+
         Ok(FixtureProfile {
             beams,
+            dimmer_channel,
             pan_channel: parameters.get(&FixtureParameter::Pan).cloned(),
             tilt_channel: parameters.get(&FixtureParameter::Tilt).cloned(),
             data: profile_data,
         })
     }
     pub fn beam_count(&self) -> usize {
-        let beam_count = self.beams.keys().filter(|id| id.is_some()).count();
-
-        usize::max(beam_count, 1)
+        self.beams.len()
     }
     pub fn is_dimmable(&self) -> bool {
         self.beams.values().any(FixtureBeamProfile::is_dimmable)
@@ -236,7 +254,8 @@ pub struct Fixture {
     pub group_id: Option<FixtureGroupId>,
     enabled_effects: FxHashSet<FixtureEffectType>,
 
-    beams: FxIndexMap<Option<BeamId>, FixtureBeam>,
+    beams: FxIndexMap<BeamId, FixtureBeam>,
+    dimmer: f64,
     position: Option<(f64, f64)>, // degrees from home position
 }
 impl Fixture {
@@ -260,6 +279,7 @@ impl Fixture {
             group_id,
             enabled_effects,
             beams,
+            dimmer: 1.0,
             position: None,
         }
     }
@@ -285,30 +305,16 @@ impl Fixture {
         self.enabled_effects()
             .any(|x| x == &FixtureEffectType::Position)
     }
-    fn global_beam_mut(&mut self) -> Option<&mut FixtureBeam> {
-        self.beams.get_mut(&None)
-    }
-    fn beams_mut(&mut self) -> impl Iterator<Item = &mut FixtureBeam> {
-        self.beams
-            .iter_mut()
-            .filter_map(|(beam_id, beam)| beam_id.map(|_| beam))
-    }
     pub fn set_dimmer(&mut self, dimmer: f64) {
-        if let Some(beam) = self.global_beam_mut() {
-            beam.dimmer = dimmer;
-        } else {
-            for beam in self.beams_mut() {
-                beam.dimmer = dimmer;
-            }
-        }
+        self.dimmer = dimmer;
     }
     pub fn set_beam_dimmers(&mut self, dimmers: &[f64]) {
-        for (beam, dimmer) in self.beams_mut().zip(dimmers) {
+        for (beam, dimmer) in self.beams.values_mut().zip(dimmers) {
             beam.dimmer = *dimmer;
         }
     }
     pub fn set_all_beam_dimmers(&mut self, dimmer: f64) {
-        for beam in self.beams_mut() {
+        for beam in self.beams.values_mut() {
             beam.dimmer = dimmer;
         }
     }
@@ -340,9 +346,20 @@ impl Fixture {
     pub fn relative_dmx(&self) -> Vec<u8> {
         let mut dmx: Vec<u8> = vec![0; self.profile.data.channel_count];
 
+        if let Some(dimmer_channel) = &self.profile.dimmer_channel {
+            dmx[dimmer_channel.channel_index()] = dimmer_channel.encode_value(self.dimmer)
+        }
+
         for beam in self.beams.values() {
+            // If fixture has a global dimmer, use that, otherwise dim on a per beam basis
+            let beam_dimmer = if self.profile.dimmer_channel.is_some() {
+                beam.dimmer
+            } else {
+                beam.dimmer * self.dimmer
+            };
+
             if let Some(channel) = &beam.profile.dimmer_channel {
-                dmx[channel.channel_index()] = channel.encode_value(beam.dimmer);
+                dmx[channel.channel_index()] = channel.encode_value(beam_dimmer);
             }
 
             if let (Some(color), Some((red_channel, green_channel, blue_channel))) =
@@ -352,9 +369,9 @@ impl Fixture {
 
                 // If light doesn't have dimmer control, scale the color values instead
                 if !beam.profile.is_dimmable() {
-                    red *= beam.dimmer;
-                    green *= beam.dimmer;
-                    blue *= beam.dimmer;
+                    red *= beam_dimmer;
+                    green *= beam_dimmer;
+                    blue *= beam_dimmer;
                 }
 
                 dmx[red_channel.channel_index()] = red_channel.encode_value(red);
