@@ -2,8 +2,7 @@ use ordered_float::OrderedFloat;
 
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
-    effect::Waveform,
-    fixture::Fixture,
+    effect::{current_modulator_step, Modulator, Waveform},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -18,28 +17,9 @@ impl DimmerEffect {
             clock_offset,
         }
     }
-    fn total_length(&self) -> Beats {
-        self.steps
-            .iter()
-            .map(|modulator| modulator.meter_length)
-            .sum()
-    }
     pub fn dimmer(&self, clock: &ClockSnapshot) -> f64 {
-        let length = self.total_length();
-        let elapsed_percent = clock.meter_elapsed_percent(length);
-        let mut elapsed_beats = length * elapsed_percent;
-
-        for step in self.steps.iter() {
-            if step.meter_length >= elapsed_beats {
-                return step.dimmer_for_elapsed_percent(
-                    1.0 / f64::from(step.meter_length) * f64::from(elapsed_beats),
-                );
-            } else {
-                elapsed_beats = elapsed_beats - step.meter_length;
-            }
-        }
-
-        unreachable!()
+        let (step, elapsed_percent) = current_modulator_step(&self.steps, clock);
+        step.dimmer_for_elapsed_percent(elapsed_percent)
     }
 }
 
@@ -99,5 +79,10 @@ impl DimmerModulator {
     }
     fn dimmer_for_elapsed_percent(&self, elapsed_percent: f64) -> f64 {
         self.scale.scale(self.waveform.apply(elapsed_percent))
+    }
+}
+impl Modulator for DimmerModulator {
+    fn meter_length(&self) -> Beats {
+        self.meter_length
     }
 }

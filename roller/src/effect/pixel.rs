@@ -1,7 +1,6 @@
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
-    effect::{EffectDirection, Waveform},
-    fixture::Fixture,
+    effect::{current_modulator_step, EffectDirection, Modulator, Waveform},
 };
 
 fn percent_contained(a: (f64, f64), b: (f64, f64)) -> f64 {
@@ -84,28 +83,9 @@ impl PixelEffect {
             clock_offset,
         }
     }
-    fn total_length(&self) -> Beats {
-        self.steps
-            .iter()
-            .map(|modulator| modulator.meter_length)
-            .sum()
-    }
     pub fn pixel_range_set(&self, clock: &ClockSnapshot) -> PixelRangeSet {
-        let length = self.total_length();
-        let elapsed_percent = clock.meter_elapsed_percent(length);
-        let mut elapsed_beats = length * elapsed_percent;
-
-        for step in self.steps.iter() {
-            if step.meter_length >= elapsed_beats {
-                return step.pixel_range_set_for_elapsed_percent(
-                    1.0 / f64::from(step.meter_length) * f64::from(elapsed_beats),
-                );
-            } else {
-                elapsed_beats = elapsed_beats - step.meter_length;
-            }
-        }
-
-        unreachable!()
+        let (step, elapsed_percent) = current_modulator_step(&self.steps, clock);
+        step.pixel_range_set_for_elapsed_percent(elapsed_percent)
     }
 }
 
@@ -153,5 +133,10 @@ impl PixelModulator {
                 PixelRangeSet::new(&[(low, high), (1.0 - low, 1.0 - high)])
             }
         }
+    }
+}
+impl Modulator for PixelModulator {
+    fn meter_length(&self) -> Beats {
+        self.meter_length
     }
 }

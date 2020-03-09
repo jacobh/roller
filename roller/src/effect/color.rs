@@ -4,8 +4,7 @@ use palette::{Hue, Mix};
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
     color::{Color, Hsl64},
-    effect::Waveform,
-    fixture::Fixture,
+    effect::{current_modulator_step, Modulator, Waveform},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -20,35 +19,14 @@ impl ColorEffect {
             clock_offset,
         }
     }
-    fn total_length(&self) -> Beats {
-        self.steps
-            .iter()
-            .map(|modulator| modulator.meter_length)
-            .sum()
-    }
     pub fn color(
         &self,
         color: Hsl64,
         secondary_color: Option<Hsl64>,
         clock: &ClockSnapshot,
     ) -> Hsl64 {
-        let length = self.total_length();
-        let elapsed_percent = clock.meter_elapsed_percent(length);
-        let mut elapsed_beats = length * elapsed_percent;
-
-        for step in self.steps.iter() {
-            if step.meter_length >= elapsed_beats {
-                return step.color_for_elapsed_percent(
-                    color,
-                    secondary_color,
-                    1.0 / f64::from(step.meter_length) * f64::from(elapsed_beats),
-                );
-            } else {
-                elapsed_beats = elapsed_beats - step.meter_length;
-            }
-        }
-
-        unreachable!()
+        let (step, elapsed_percent) = current_modulator_step(&self.steps, clock);
+        step.color_for_elapsed_percent(color, secondary_color, elapsed_percent)
     }
 }
 
@@ -113,6 +91,11 @@ impl ColorModulator {
             }
             ColorModulation::NoOp => color,
         }
+    }
+}
+impl Modulator for ColorModulator {
+    fn meter_length(&self) -> Beats {
+        self.meter_length
     }
 }
 

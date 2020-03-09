@@ -72,3 +72,29 @@ pub fn offsetted(
 ) -> ClockSnapshot {
     clock.shift(offset(clock, clock_offset, fixture, fixtures))
 }
+
+pub trait Modulator {
+    fn meter_length(&self) -> Beats;
+}
+
+fn current_modulator_step<'a, T>(steps: &'a Vec<T>, clock: &ClockSnapshot) -> (&'a T, f64)
+where
+    T: Modulator,
+{
+    let total_length: Beats = steps.iter().map(|modulator| modulator.meter_length()).sum();
+    let elapsed_percent = clock.meter_elapsed_percent(total_length);
+    let mut elapsed_beats = total_length * elapsed_percent;
+
+    for step in steps.iter() {
+        if step.meter_length() >= elapsed_beats {
+            return (
+                step,
+                1.0 / f64::from(step.meter_length()) * f64::from(elapsed_beats),
+            );
+        } else {
+            elapsed_beats = elapsed_beats - step.meter_length();
+        }
+    }
+
+    unreachable!()
+}
