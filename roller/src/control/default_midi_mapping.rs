@@ -499,6 +499,25 @@ pub fn default_midi_mapping() -> MidiMapping {
                             Beats::new(4.0),
                         )),
                     )),
+                },
+                ButtonMapping {
+                    note: Note::new(11),
+                    on_action: ButtonAction::ActivatePositionEffect(PositionEffect::new(
+                        Some(PositionModulator::new(
+                            Waveform::TriangleDown,
+                            Beats::new(8.0),
+                            180.0,
+                        )),
+                        Some(PositionModulator::new(
+                            Waveform::TriangleDown,
+                            Beats::new(4.0),
+                            180.0,
+                        )),
+                        Some(ClockOffset::new(
+                            ClockOffsetMode::FixtureIndex,
+                            Beats::new(2.0),
+                        )),
+                    )),
                 }],
             ),
         ],
