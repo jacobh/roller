@@ -16,7 +16,7 @@ use crate::{
         EffectDirection, PixelEffect, PixelModulator, PositionEffect, PositionModulator, Waveform,
     },
     lighting_engine::SceneId,
-    position::Position,
+    position::BasePositionMode,
     project::FixtureGroupId,
 };
 
@@ -459,15 +459,23 @@ pub fn default_midi_mapping() -> MidiMapping {
                 vec![
                     ButtonMapping {
                         note: Note::new(59),
-                        on_action: ButtonAction::UpdateBasePosition(Position::new(0.0, 90.0)),
+                        on_action: ButtonAction::UpdateBasePosition((0.0, 90.0).into()),
                     },
                     ButtonMapping {
                         note: Note::new(51),
-                        on_action: ButtonAction::UpdateBasePosition(Position::new(0.0, 45.0)),
+                        on_action: ButtonAction::UpdateBasePosition((0.0, 45.0).into()),
                     },
                     ButtonMapping {
                         note: Note::new(43),
-                        on_action: ButtonAction::UpdateBasePosition(Position::new(30.0, 70.0)),
+                        on_action: ButtonAction::UpdateBasePosition(
+                            ((30.0, 70.0), BasePositionMode::MirrorPan).into(),
+                        ),
+                    },
+                    ButtonMapping {
+                        note: Note::new(35),
+                        on_action: ButtonAction::UpdateBasePosition(
+                            ((-50.0, 75.0), BasePositionMode::MirrorPan).into(),
+                        ),
                     },
                 ],
             ),

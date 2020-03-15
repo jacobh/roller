@@ -15,7 +15,7 @@ use crate::{
     },
     effect::{self, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet, PositionEffect},
     fixture::Fixture,
-    position::Position,
+    position::BasePosition,
     project::FixtureGroupId,
     utils::{shift_remove_vec, FxIndexMap},
 };
@@ -337,7 +337,7 @@ impl<'a> EngineState<'a> {
             })
             .last()
     }
-    fn base_position(&self) -> Position {
+    fn base_position(&self) -> BasePosition {
         active_effects(self.button_states(), |action| match action {
             ButtonAction::UpdateBasePosition(position) => Some(position),
             _ => None,
@@ -345,7 +345,7 @@ impl<'a> EngineState<'a> {
         .keys()
         .last()
         .map(|position| **position)
-        .unwrap_or_else(|| Position::new(0.0, 90.0))
+        .unwrap_or_default()
     }
     fn active_dimmer_effects(&self) -> FxIndexMap<&DimmerEffect, Rate> {
         active_effects(self.button_states(), |action| match action {
@@ -379,6 +379,7 @@ impl<'a> EngineState<'a> {
         let active_color_effects = self.active_color_effects();
         let active_pixel_effects = self.active_pixel_effects();
         let active_position_effects = self.active_position_effects();
+        let base_position = self.base_position();
 
         let fixture_values = fixtures
             .iter()
@@ -460,9 +461,10 @@ impl<'a> EngineState<'a> {
                                     &fixtures,
                                 ))
                             })
-                            .fold(self.base_position(), |position1, position2| {
-                                position1 + position2
-                            }),
+                            .fold(
+                                base_position.for_fixture(&fixture, &fixtures),
+                                |position1, position2| position1 + position2,
+                            ),
                     )
                 } else {
                     None
