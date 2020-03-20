@@ -527,19 +527,19 @@ pub fn default_midi_mapping() -> MidiMapping {
                 on_action: MetaButtonAction::TapTempo,
             },
             MetaButtonMapping {
-                note: Note::new(64),
+                note: Note::new(68),
                 on_action: MetaButtonAction::ActivateScene(SceneId::new(1)),
             },
             MetaButtonMapping {
-                note: Note::new(65),
+                note: Note::new(69),
                 on_action: MetaButtonAction::ActivateScene(SceneId::new(2)),
             },
             MetaButtonMapping {
-                note: Note::new(66),
+                note: Note::new(70),
                 on_action: MetaButtonAction::ActivateScene(SceneId::new(3)),
             },
             MetaButtonMapping {
-                note: Note::new(67),
+                note: Note::new(71),
                 on_action: MetaButtonAction::ActivateScene(SceneId::new(4)),
             },
             MetaButtonMapping {
