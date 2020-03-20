@@ -16,6 +16,7 @@ mod utils;
 use crate::clock::{Clock, Rate};
 use crate::control::button::pad_states;
 use crate::lighting_engine::{EngineState, LightingEvent, SceneId};
+use crate::project::FixtureGroupId;
 
 #[global_allocator]
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
@@ -36,8 +37,8 @@ async fn main() -> Result<(), async_std::io::Error> {
         color_effect_intensity: 1.0,
         global_clock_rate: Rate::new(1.0),
         active_scene_id: SceneId::new(1),
-        active_fixture_group_control: None,
-        scene_group_button_states: FxHashMap::default(),
+        active_fixture_group_control: FixtureGroupId::new(1), // TODO this is an assumption that there will always be a group id 1
+        scene_fixture_group_button_states: FxHashMap::default(),
     };
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
