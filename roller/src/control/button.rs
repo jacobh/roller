@@ -11,8 +11,8 @@ use crate::{
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
     lighting_engine::{ButtonGroupInfo, ButtonInfo, LightingEvent, SceneId},
     position::BasePosition,
+    project::FixtureGroupId,
     utils::shift_remove_vec,
-    project::FixtureGroupId
 };
 
 lazy_static::lazy_static! {
@@ -114,7 +114,9 @@ impl MetaButtonMapping {
             MetaButtonAction::TapTempo => LightingEvent::TapTempo(now),
             MetaButtonAction::UpdateClockRate(rate) => LightingEvent::UpdateClockRate(rate),
             MetaButtonAction::ActivateScene(scene_id) => LightingEvent::ActivateScene(scene_id),
-            MetaButtonAction::ToggleFixtureGroupControl(group_id) => LightingEvent::ToggleFixtureGroupControl(group_id),
+            MetaButtonAction::ToggleFixtureGroupControl(group_id) => {
+                LightingEvent::ToggleFixtureGroupControl(group_id)
+            }
         }
     }
 }
