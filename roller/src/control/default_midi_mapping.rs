@@ -481,44 +481,46 @@ pub fn default_midi_mapping() -> MidiMapping {
             ),
             ButtonGroup::new(
                 ButtonType::Toggle,
-                vec![ButtonMapping {
-                    note: Note::new(3),
-                    on_action: ButtonAction::ActivatePositionEffect(PositionEffect::new(
-                        Some(PositionModulator::new(
-                            Waveform::TriangleDown,
-                            Beats::new(8.0),
-                            240.0,
+                vec![
+                    ButtonMapping {
+                        note: Note::new(3),
+                        on_action: ButtonAction::ActivatePositionEffect(PositionEffect::new(
+                            Some(PositionModulator::new(
+                                Waveform::TriangleDown,
+                                Beats::new(8.0),
+                                240.0,
+                            )),
+                            Some(PositionModulator::new(
+                                Waveform::SigmoidWaveUp,
+                                Beats::new(4.0),
+                                50.0,
+                            )),
+                            Some(ClockOffset::new(
+                                ClockOffsetMode::FixtureIndex,
+                                Beats::new(4.0),
+                            )),
                         )),
-                        Some(PositionModulator::new(
-                            Waveform::SigmoidWaveUp,
-                            Beats::new(4.0),
-                            50.0,
+                    },
+                    ButtonMapping {
+                        note: Note::new(11),
+                        on_action: ButtonAction::ActivatePositionEffect(PositionEffect::new(
+                            Some(PositionModulator::new(
+                                Waveform::TriangleDown,
+                                Beats::new(8.0),
+                                180.0,
+                            )),
+                            Some(PositionModulator::new(
+                                Waveform::TriangleDown,
+                                Beats::new(4.0),
+                                180.0,
+                            )),
+                            Some(ClockOffset::new(
+                                ClockOffsetMode::FixtureIndex,
+                                Beats::new(2.0),
+                            )),
                         )),
-                        Some(ClockOffset::new(
-                            ClockOffsetMode::FixtureIndex,
-                            Beats::new(4.0),
-                        )),
-                    )),
-                },
-                ButtonMapping {
-                    note: Note::new(11),
-                    on_action: ButtonAction::ActivatePositionEffect(PositionEffect::new(
-                        Some(PositionModulator::new(
-                            Waveform::TriangleDown,
-                            Beats::new(8.0),
-                            180.0,
-                        )),
-                        Some(PositionModulator::new(
-                            Waveform::TriangleDown,
-                            Beats::new(4.0),
-                            180.0,
-                        )),
-                        Some(ClockOffset::new(
-                            ClockOffsetMode::FixtureIndex,
-                            Beats::new(2.0),
-                        )),
-                    )),
-                }],
+                    },
+                ],
             ),
         ],
         vec![
