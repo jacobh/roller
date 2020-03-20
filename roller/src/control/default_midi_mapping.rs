@@ -529,6 +529,18 @@ pub fn default_midi_mapping() -> MidiMapping {
                 on_action: MetaButtonAction::TapTempo,
             },
             MetaButtonMapping {
+                note: Note::new(64),
+                on_action: MetaButtonAction::ToggleFixtureGroupControl(FixtureGroupId::new(1)),
+            },
+            MetaButtonMapping {
+                note: Note::new(65),
+                on_action: MetaButtonAction::ToggleFixtureGroupControl(FixtureGroupId::new(2)),
+            },
+            MetaButtonMapping {
+                note: Note::new(66),
+                on_action: MetaButtonAction::ToggleFixtureGroupControl(FixtureGroupId::new(3)),
+            },
+            MetaButtonMapping {
                 note: Note::new(68),
                 on_action: MetaButtonAction::ActivateScene(SceneId::new(1)),
             },

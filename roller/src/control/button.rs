@@ -12,12 +12,14 @@ use crate::{
     lighting_engine::{ButtonGroupInfo, ButtonInfo, LightingEvent, SceneId},
     position::BasePosition,
     utils::shift_remove_vec,
+    project::FixtureGroupId
 };
 
 lazy_static::lazy_static! {
     static ref BUTTON_GROUP_ID_SEQ: AtomicUsize = AtomicUsize::new(0);
     static ref CLOCK_RATE_GROUP_ID: ButtonGroupId = ButtonGroupId::new();
     static ref SCENE_GROUP_ID: ButtonGroupId = ButtonGroupId::new();
+    static ref TOGGLE_FIXTURE_GROUP_ID: ButtonGroupId = ButtonGroupId::new();
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd)]
@@ -98,6 +100,7 @@ pub enum MetaButtonAction {
     TapTempo,
     UpdateClockRate(Rate),
     ActivateScene(SceneId),
+    ToggleFixtureGroupControl(FixtureGroupId),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -111,6 +114,7 @@ impl MetaButtonMapping {
             MetaButtonAction::TapTempo => LightingEvent::TapTempo(now),
             MetaButtonAction::UpdateClockRate(rate) => LightingEvent::UpdateClockRate(rate),
             MetaButtonAction::ActivateScene(scene_id) => LightingEvent::ActivateScene(scene_id),
+            MetaButtonAction::ToggleFixtureGroupControl(group_id) => LightingEvent::ToggleFixtureGroupControl(group_id),
         }
     }
 }
@@ -288,6 +292,7 @@ impl<'a> PadMapping<'a> {
                 MetaButtonAction::TapTempo => None,
                 MetaButtonAction::UpdateClockRate(_) => Some(*CLOCK_RATE_GROUP_ID),
                 MetaButtonAction::ActivateScene(_) => Some(*SCENE_GROUP_ID),
+                MetaButtonAction::ToggleFixtureGroupControl(_) => Some(*TOGGLE_FIXTURE_GROUP_ID),
             },
         }
     }
@@ -298,6 +303,7 @@ impl<'a> PadMapping<'a> {
                 MetaButtonAction::TapTempo => ButtonType::Flash,
                 MetaButtonAction::UpdateClockRate(_) => ButtonType::Switch,
                 MetaButtonAction::ActivateScene(_) => ButtonType::Switch,
+                MetaButtonAction::ToggleFixtureGroupControl(_) => ButtonType::Toggle,
             },
         }
     }

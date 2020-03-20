@@ -36,6 +36,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         color_effect_intensity: 1.0,
         global_clock_rate: Rate::new(1.0),
         active_scene_id: SceneId::new(1),
+        active_fixture_group_control: None,
         scene_group_button_states: FxHashMap::default(),
     };
 

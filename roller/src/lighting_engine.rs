@@ -100,6 +100,7 @@ pub enum LightingEvent {
     UpdateColorEffectIntensity(f64),
     UpdateClockRate(Rate),
     ActivateScene(SceneId),
+    ToggleFixtureGroupControl(FixtureGroupId),
     UpdateButton(ButtonGroup, ButtonMapping, NoteState, Instant),
     TapTempo(Instant),
 }
@@ -113,6 +114,7 @@ pub struct EngineState<'a> {
     pub color_effect_intensity: f64,
     pub global_clock_rate: Rate,
     pub active_scene_id: SceneId,
+    pub active_fixture_group_control: Option<FixtureGroupId>,
     pub scene_group_button_states: FxHashMap<
         SceneId,
         FxHashMap<ButtonGroupId, (ButtonType, GroupToggleState, ButtonStateMap)>,
@@ -267,6 +269,13 @@ impl<'a> EngineState<'a> {
             }
             LightingEvent::ActivateScene(scene_id) => {
                 self.active_scene_id = scene_id;
+            }
+            LightingEvent::ToggleFixtureGroupControl(group_id) => {
+                if Some(group_id) == self.active_fixture_group_control {
+                    self.active_fixture_group_control = None;
+                } else {
+                    self.active_fixture_group_control = Some(group_id);
+                }
             }
             LightingEvent::UpdateGroupDimmer(group_id, dimmer) => {
                 self.group_dimmers.insert(group_id, dimmer);
@@ -511,6 +520,17 @@ impl<'a> EngineState<'a> {
             })
             .unwrap();
 
+        let active_fixture_group_toggle_button = self.active_fixture_group_control.map(|fixture_group_id| {
+            self
+            .midi_mapping
+            .meta_buttons
+            .values()
+            .find(|button| {
+                button.on_action == MetaButtonAction::ToggleFixtureGroupControl(fixture_group_id)
+            })
+            .unwrap()
+        });
+
         let pressed_button_rate: Option<Rate> =
             self.pressed_buttons().values().map(|(_, rate)| *rate).max();
 
@@ -527,10 +547,12 @@ impl<'a> EngineState<'a> {
             .unwrap();
 
         vec![
-            PadEvent::new_on(active_scene_button),
-            PadEvent::new_on(active_clock_rate_button),
+            Some(PadEvent::new_on(active_scene_button)),
+            Some(PadEvent::new_on(active_clock_rate_button)),
+            active_fixture_group_toggle_button.map(PadEvent::new_on),
         ]
         .into_iter()
+        .flatten()
     }
     pub fn pad_events(&self) -> impl Iterator<Item = PadEvent<'_>> {
         self.button_states()
