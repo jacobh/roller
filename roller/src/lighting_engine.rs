@@ -61,6 +61,16 @@ impl SceneState {
                 button_group_states_info(*group_id, *button_type, *toggle_state, button_states)
             })
     }
+    fn button_group_states_mut(
+        &mut self,
+        fixture_group_id: Option<FixtureGroupId>,
+    ) -> &mut ButtonGroupStateMap {
+        if let Some(group_id) = fixture_group_id {
+            self.fixture_groups.entry(group_id).or_default()
+        } else {
+            &mut self.base
+        }
+    }
     fn pressed_buttons(
         &self,
         active_fixture_group_control: Option<FixtureGroupId>,
@@ -249,14 +259,7 @@ impl<'a> EngineState<'a> {
             .entry(self.active_scene_id)
             .or_default();
 
-        if let Some(group_id) = self.active_fixture_group_control {
-            active_scene_state
-                .fixture_groups
-                .entry(group_id)
-                .or_default()
-        } else {
-            &mut active_scene_state.base
-        }
+        active_scene_state.button_group_states_mut(self.active_fixture_group_control)
     }
     fn pressed_buttons(&self) -> FxHashMap<&ButtonMapping, ButtonStateValue> {
         self.active_scene_state()
