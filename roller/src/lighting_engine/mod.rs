@@ -8,7 +8,7 @@ use crate::{
     color::Color,
     control::{
         button::{
-            ButtonAction, ButtonGroup, ButtonGroupId, ButtonMapping, ButtonType, GroupToggleState,
+            ButtonGroup, ButtonGroupId, ButtonMapping, ButtonType, GroupToggleState,
             MetaButtonAction, PadEvent,
         },
         midi::{MidiMapping, NoteState},
@@ -17,7 +17,7 @@ use crate::{
     fixture::Fixture,
     position::BasePosition,
     project::FixtureGroupId,
-    utils::{shift_remove_vec, FxIndexMap},
+    utils::FxIndexMap,
 };
 
 mod button_states;
@@ -85,48 +85,6 @@ impl<'a> Default for FixtureGroupValue<'a> {
             base_position: None,
         }
     }
-}
-
-fn active_effects<'a, T, F>(
-    button_states: impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'a>)>,
-    extract_effect_fn: F,
-) -> FxIndexMap<&'a T, Rate>
-where
-    T: Eq + std::hash::Hash,
-    F: Fn(&ButtonAction) -> Option<&T>,
-{
-    let mut effects = FxIndexMap::default();
-
-    for (group_info, button_info) in button_states {
-        if let Some(effect) = extract_effect_fn(&button_info.button.on_action) {
-            match group_info.button_type {
-                ButtonType::Flash => {
-                    match button_info.note_state {
-                        NoteState::On => effects.insert(effect, button_info.effect_rate),
-                        NoteState::Off => effects.shift_remove(&effect),
-                    };
-                }
-                ButtonType::Switch => match button_info.note_state {
-                    NoteState::On => {
-                        effects.shift_remove(&effect);
-                        effects.insert(effect, button_info.effect_rate);
-                    }
-                    NoteState::Off => {}
-                },
-                ButtonType::Toggle => match button_info.note_state {
-                    NoteState::On => {
-                        if GroupToggleState::On(button_info.button.note) == group_info.toggle_state
-                        {
-                            effects.insert(effect, button_info.effect_rate);
-                        }
-                    }
-                    NoteState::Off => {}
-                },
-            }
-        }
-    }
-
-    effects
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -284,129 +242,51 @@ impl<'a> EngineState<'a> {
         }
     }
     pub fn global_color(&self, fixture_group_id: Option<FixtureGroupId>) -> Option<Color> {
-        let mut on_colors: Vec<(Note, Color)> = Vec::new();
-        let mut last_off: Option<(Note, Color)> = None;
-
-        let color_buttons = self
-            .active_scene_state()
-            .iter_group_button_info(fixture_group_id)
-            .flat_map(
-                |(group_info, button_info)| match button_info.button.on_action {
-                    ButtonAction::UpdateGlobalColor(color) => match group_info.button_type {
-                        ButtonType::Switch => {
-                            Some((button_info.button.note, button_info.note_state, color))
-                        }
-                        _ => panic!("only switch button type implemented for colors"),
-                    },
-                    _ => None,
-                },
-            );
-
-        for (note, state, color) in color_buttons {
-            match state {
-                NoteState::On => {
-                    on_colors.push((note, color));
-                }
-                NoteState::Off => {
-                    shift_remove_vec(&mut on_colors, &(note, color));
-                    last_off = Some((note, color));
-                }
-            }
-        }
-
-        on_colors
-            .last()
-            .or_else(|| last_off.as_ref())
-            .map(|(_, color)| *color)
+        self.active_scene_state()
+            .button_group_states(fixture_group_id)
+            .global_color()
     }
     pub fn secondary_color(&self, fixture_group_id: Option<FixtureGroupId>) -> Option<Color> {
         self.active_scene_state()
-            .iter_group_button_info(fixture_group_id)
-            .filter_map(
-                |(group_info, button_info)| match button_info.button.on_action {
-                    ButtonAction::UpdateGlobalSecondaryColor(color) => match group_info.button_type
-                    {
-                        ButtonType::Toggle => {
-                            Some((button_info.button.note, group_info.toggle_state, color))
-                        }
-                        _ => panic!("only toggle button type implemented for secondary colors"),
-                    },
-                    _ => None,
-                },
-            )
-            .filter_map(|(note, toggle_state, color)| {
-                if GroupToggleState::On(note) == toggle_state {
-                    Some(color)
-                } else {
-                    None
-                }
-            })
-            .last()
+            .button_group_states(fixture_group_id)
+            .secondary_color()
     }
     fn base_position(&self, fixture_group_id: Option<FixtureGroupId>) -> Option<BasePosition> {
-        active_effects(
-            self.active_scene_state()
-                .iter_group_button_info(fixture_group_id),
-            |action| match action {
-                ButtonAction::UpdateBasePosition(position) => Some(position),
-                _ => None,
-            },
-        )
-        .keys()
-        .last()
-        .map(|position| **position)
+        self.active_scene_state()
+            .button_group_states(fixture_group_id)
+            .base_position()
     }
     fn active_dimmer_effects(
         &self,
         fixture_group_id: Option<FixtureGroupId>,
     ) -> FxIndexMap<&DimmerEffect, Rate> {
-        active_effects(
-            self.active_scene_state()
-                .iter_group_button_info(fixture_group_id),
-            |action| match action {
-                ButtonAction::ActivateDimmerEffect(effect) => Some(effect),
-                _ => None,
-            },
-        )
+        self.active_scene_state()
+            .button_group_states(fixture_group_id)
+            .active_dimmer_effects()
     }
     fn active_color_effects(
         &self,
         fixture_group_id: Option<FixtureGroupId>,
     ) -> FxIndexMap<&ColorEffect, Rate> {
-        active_effects(
-            self.active_scene_state()
-                .iter_group_button_info(fixture_group_id),
-            |action| match action {
-                ButtonAction::ActivateColorEffect(effect) => Some(effect),
-                _ => None,
-            },
-        )
+        self.active_scene_state()
+            .button_group_states(fixture_group_id)
+            .active_color_effects()
     }
     fn active_pixel_effects(
         &self,
         fixture_group_id: Option<FixtureGroupId>,
     ) -> FxIndexMap<&PixelEffect, Rate> {
-        active_effects(
-            self.active_scene_state()
-                .iter_group_button_info(fixture_group_id),
-            |action| match action {
-                ButtonAction::ActivatePixelEffect(effect) => Some(effect),
-                _ => None,
-            },
-        )
+        self.active_scene_state()
+            .button_group_states(fixture_group_id)
+            .active_pixel_effects()
     }
     fn active_position_effects(
         &self,
         fixture_group_id: Option<FixtureGroupId>,
     ) -> FxIndexMap<&PositionEffect, Rate> {
-        active_effects(
-            self.active_scene_state()
-                .iter_group_button_info(fixture_group_id),
-            |action| match action {
-                ButtonAction::ActivatePositionEffect(effect) => Some(effect),
-                _ => None,
-            },
-        )
+        self.active_scene_state()
+            .button_group_states(fixture_group_id)
+            .active_position_effects()
     }
     fn fixture_group_value(
         &'a self,
