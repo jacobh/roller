@@ -1,6 +1,6 @@
 use derive_more::Constructor;
 use midi::Note;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 use std::time::Instant;
 
 use crate::{
@@ -118,15 +118,11 @@ impl<'a> EngineState<'a> {
             .get(&self.active_scene_id)
             .unwrap_or_else(|| &*EMPTY_SCENE_STATE)
     }
-    pub fn active_button_states(&self) -> &ButtonGroupStates {
-        if let Some(group_id) = self.active_fixture_group_control {
-            self.active_scene_state()
-                .fixture_group_button_states(group_id)
-        } else {
-            self.active_scene_state().base_button_states()
-        }
+    pub fn control_button_group_states(&self) -> &ButtonGroupStates {
+        self.active_scene_state()
+            .button_group_states(self.active_fixture_group_control)
     }
-    pub fn active_button_group_states_mut(&mut self) -> &mut ButtonGroupStates {
+    pub fn control_button_group_states_mut(&mut self) -> &mut ButtonGroupStates {
         let active_scene_state = self
             .scene_fixture_group_button_states
             .entry(self.active_scene_id)
@@ -134,20 +130,9 @@ impl<'a> EngineState<'a> {
 
         active_scene_state.button_group_states_mut(self.active_fixture_group_control)
     }
-    fn pressed_buttons(&self) -> FxHashMap<&ButtonMapping, ButtonStateValue> {
-        self.active_scene_state()
-            .button_group_states(self.active_fixture_group_control)
-            .pressed_buttons()
-    }
-    fn pressed_notes(&self) -> FxHashSet<Note> {
-        self.active_scene_state()
-            .button_group_states(self.active_fixture_group_control)
-            .pressed_notes()
-    }
     fn update_pressed_button_rates(&mut self, rate: Rate) {
-        let pressed_notes = self.pressed_notes();
-
-        let button_states = self.active_button_group_states_mut().iter_states_mut();
+        let pressed_notes = self.control_button_group_states().pressed_notes();
+        let button_states = self.control_button_group_states_mut().iter_states_mut();
 
         for button_states in button_states {
             for ((button, _), (_, button_rate)) in button_states.iter_mut() {
@@ -162,11 +147,11 @@ impl<'a> EngineState<'a> {
         button_group_id: ButtonGroupId,
         button_type: ButtonType,
     ) -> &mut ButtonStateMap {
-        self.active_button_group_states_mut()
+        self.control_button_group_states_mut()
             .button_group_state_mut(button_group_id, button_type)
     }
     fn toggle_button_group(&mut self, id: ButtonGroupId, button_type: ButtonType, note: Note) {
-        self.active_button_group_states_mut()
+        self.control_button_group_states_mut()
             .entry(id)
             .and_modify(|(_, toggle_state, _)| {
                 toggle_state.toggle_mut(note);
@@ -210,7 +195,7 @@ impl<'a> EngineState<'a> {
                 self.color_effect_intensity = intensity;
             }
             LightingEvent::UpdateClockRate(rate) => {
-                let pressed_notes = self.pressed_notes();
+                let pressed_notes = self.control_button_group_states().pressed_notes();
 
                 // If there are any buttons currently pressed, update the rate of those buttons, note the global rate
                 if !pressed_notes.is_empty() {
@@ -409,8 +394,12 @@ impl<'a> EngineState<'a> {
                         .unwrap()
                 });
 
-        let pressed_button_rate: Option<Rate> =
-            self.pressed_buttons().values().map(|(_, rate)| *rate).max();
+        let pressed_button_rate: Option<Rate> = self
+            .control_button_group_states()
+            .pressed_buttons()
+            .values()
+            .map(|(_, rate)| *rate)
+            .max();
 
         let active_clock_rate_button = self
             .midi_mapping
