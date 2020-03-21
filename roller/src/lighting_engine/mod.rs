@@ -35,17 +35,17 @@ lazy_static::lazy_static! {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor)]
 pub struct SceneId(usize);
 
-struct FixtureGroupValue<'a> {
-    global_color: Option<Color>,
-    secondary_color: Option<Color>,
-    base_position: Option<BasePosition>,
-    active_dimmer_effects: FxIndexMap<&'a DimmerEffect, Rate>,
-    active_color_effects: FxIndexMap<&'a ColorEffect, Rate>,
-    active_pixel_effects: FxIndexMap<&'a PixelEffect, Rate>,
-    active_position_effects: FxIndexMap<&'a PositionEffect, Rate>,
+pub struct FixtureGroupValue<'a> {
+    pub global_color: Option<Color>,
+    pub secondary_color: Option<Color>,
+    pub base_position: Option<BasePosition>,
+    pub active_dimmer_effects: FxIndexMap<&'a DimmerEffect, Rate>,
+    pub active_color_effects: FxIndexMap<&'a ColorEffect, Rate>,
+    pub active_pixel_effects: FxIndexMap<&'a PixelEffect, Rate>,
+    pub active_position_effects: FxIndexMap<&'a PositionEffect, Rate>,
 }
 impl<'a> FixtureGroupValue<'a> {
-    fn merge(mut self, other: &FixtureGroupValue<'a>) -> FixtureGroupValue<'a> {
+    pub fn merge(mut self, other: &FixtureGroupValue<'a>) -> FixtureGroupValue<'a> {
         if self.global_color == None {
             self.global_color = other.global_color;
         }
@@ -66,10 +66,10 @@ impl<'a> FixtureGroupValue<'a> {
 
         self
     }
-    fn global_color(&self) -> Color {
+    pub fn global_color(&self) -> Color {
         self.global_color.unwrap_or(Color::Violet)
     }
-    fn base_position(&self) -> BasePosition {
+    pub fn base_position(&self) -> BasePosition {
         self.base_position.unwrap_or_default()
     }
 }
@@ -241,66 +241,13 @@ impl<'a> EngineState<'a> {
             }
         }
     }
-    pub fn global_color(&self, fixture_group_id: Option<FixtureGroupId>) -> Option<Color> {
-        self.active_scene_state()
-            .button_group_states(fixture_group_id)
-            .global_color()
-    }
-    pub fn secondary_color(&self, fixture_group_id: Option<FixtureGroupId>) -> Option<Color> {
-        self.active_scene_state()
-            .button_group_states(fixture_group_id)
-            .secondary_color()
-    }
-    fn base_position(&self, fixture_group_id: Option<FixtureGroupId>) -> Option<BasePosition> {
-        self.active_scene_state()
-            .button_group_states(fixture_group_id)
-            .base_position()
-    }
-    fn active_dimmer_effects(
-        &self,
-        fixture_group_id: Option<FixtureGroupId>,
-    ) -> FxIndexMap<&DimmerEffect, Rate> {
-        self.active_scene_state()
-            .button_group_states(fixture_group_id)
-            .active_dimmer_effects()
-    }
-    fn active_color_effects(
-        &self,
-        fixture_group_id: Option<FixtureGroupId>,
-    ) -> FxIndexMap<&ColorEffect, Rate> {
-        self.active_scene_state()
-            .button_group_states(fixture_group_id)
-            .active_color_effects()
-    }
-    fn active_pixel_effects(
-        &self,
-        fixture_group_id: Option<FixtureGroupId>,
-    ) -> FxIndexMap<&PixelEffect, Rate> {
-        self.active_scene_state()
-            .button_group_states(fixture_group_id)
-            .active_pixel_effects()
-    }
-    fn active_position_effects(
-        &self,
-        fixture_group_id: Option<FixtureGroupId>,
-    ) -> FxIndexMap<&PositionEffect, Rate> {
-        self.active_scene_state()
-            .button_group_states(fixture_group_id)
-            .active_position_effects()
-    }
     fn fixture_group_value(
         &'a self,
         fixture_group_id: Option<FixtureGroupId>,
     ) -> FixtureGroupValue<'a> {
-        FixtureGroupValue {
-            global_color: self.global_color(fixture_group_id),
-            secondary_color: self.secondary_color(fixture_group_id),
-            active_dimmer_effects: self.active_dimmer_effects(fixture_group_id),
-            active_color_effects: self.active_color_effects(fixture_group_id),
-            active_pixel_effects: self.active_pixel_effects(fixture_group_id),
-            active_position_effects: self.active_position_effects(fixture_group_id),
-            base_position: self.base_position(fixture_group_id),
-        }
+        self.active_scene_state()
+            .button_group_states(fixture_group_id)
+            .fixture_group_value()
     }
     fn fixture_group_values(
         &'a self,

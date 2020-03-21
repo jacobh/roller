@@ -11,6 +11,7 @@ use crate::{
         midi::NoteState,
     },
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
+    lighting_engine::FixtureGroupValue,
     position::BasePosition,
     project::FixtureGroupId,
     utils::{shift_remove_vec, FxIndexMap},
@@ -270,6 +271,17 @@ impl ButtonGroupStates {
             ButtonAction::ActivatePositionEffect(effect) => Some(effect),
             _ => None,
         })
+    }
+    pub fn fixture_group_value(&self) -> FixtureGroupValue<'_> {
+        FixtureGroupValue {
+            global_color: self.global_color(),
+            secondary_color: self.secondary_color(),
+            active_dimmer_effects: self.active_dimmer_effects(),
+            active_color_effects: self.active_color_effects(),
+            active_pixel_effects: self.active_pixel_effects(),
+            active_position_effects: self.active_position_effects(),
+            base_position: self.base_position(),
+        }
     }
     pub fn entry(&mut self, group_id: ButtonGroupId) -> Entry<'_, ButtonGroupId, GroupStatesValue> {
         self.group_states.entry(group_id)
