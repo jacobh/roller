@@ -180,6 +180,9 @@ impl<'a> EngineState<'a> {
             .get(&self.active_scene_id)
             .unwrap_or_else(|| &*EMPTY_SCENE_BUTTON_STATES)
     }
+    fn active_scene_base_button_states(&self) -> &ButtonGroupStateMap {
+        &self.active_scene_button_states().base
+    }
     fn active_scene_fixture_group_button_states(
         &self,
         fixture_group_id: FixtureGroupId,
@@ -191,28 +194,31 @@ impl<'a> EngineState<'a> {
     }
     pub fn button_states(
         &self,
-        fixture_group_id: FixtureGroupId,
+        fixture_group_id: Option<FixtureGroupId>,
     ) -> impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'_>)> {
-        self.active_scene_fixture_group_button_states(fixture_group_id)
+        fixture_group_id
+            .map(|group_id| self.active_scene_fixture_group_button_states(group_id))
+            .unwrap_or_else(|| self.active_scene_base_button_states())
             .iter()
             .flat_map(|(group_id, (button_type, toggle_state, button_states))| {
                 button_group_states_info(*group_id, *button_type, *toggle_state, button_states)
             })
     }
     fn pressed_buttons(&self) -> FxHashMap<&ButtonMapping, ButtonStateValue> {
-        self.button_states(self.active_fixture_group_control).fold(
-            FxHashMap::default(),
-            |mut pressed_buttons, (_, button_info)| {
-                match button_info.note_state {
-                    NoteState::On => pressed_buttons.insert(
-                        button_info.button,
-                        (button_info.triggered_at, button_info.effect_rate),
-                    ),
-                    NoteState::Off => pressed_buttons.remove(button_info.button),
-                };
-                pressed_buttons
-            },
-        )
+        self.button_states(Some(self.active_fixture_group_control))
+            .fold(
+                FxHashMap::default(),
+                |mut pressed_buttons, (_, button_info)| {
+                    match button_info.note_state {
+                        NoteState::On => pressed_buttons.insert(
+                            button_info.button,
+                            (button_info.triggered_at, button_info.effect_rate),
+                        ),
+                        NoteState::Off => pressed_buttons.remove(button_info.button),
+                    };
+                    pressed_buttons
+                },
+            )
     }
     fn pressed_notes(&self) -> FxHashSet<Note> {
         self.pressed_buttons()
@@ -350,7 +356,7 @@ impl<'a> EngineState<'a> {
             }
         }
     }
-    pub fn global_color(&self, fixture_group_id: FixtureGroupId) -> Color {
+    pub fn global_color(&self, fixture_group_id: Option<FixtureGroupId>) -> Color {
         let mut on_colors: Vec<(Note, Color)> = Vec::new();
         let mut last_off: Option<(Note, Color)> = None;
 
@@ -386,7 +392,7 @@ impl<'a> EngineState<'a> {
             .map(|(_, color)| *color)
             .unwrap_or_else(|| Color::Violet)
     }
-    pub fn secondary_color(&self, fixture_group_id: FixtureGroupId) -> Option<Color> {
+    pub fn secondary_color(&self, fixture_group_id: Option<FixtureGroupId>) -> Option<Color> {
         self.button_states(fixture_group_id)
             .filter_map(
                 |(group_info, button_info)| match button_info.button.on_action {
@@ -409,7 +415,7 @@ impl<'a> EngineState<'a> {
             })
             .last()
     }
-    fn base_position(&self, fixture_group_id: FixtureGroupId) -> BasePosition {
+    fn base_position(&self, fixture_group_id: Option<FixtureGroupId>) -> BasePosition {
         active_effects(
             self.button_states(fixture_group_id),
             |action| match action {
@@ -424,7 +430,7 @@ impl<'a> EngineState<'a> {
     }
     fn active_dimmer_effects(
         &self,
-        fixture_group_id: FixtureGroupId,
+        fixture_group_id: Option<FixtureGroupId>,
     ) -> FxIndexMap<&DimmerEffect, Rate> {
         active_effects(
             self.button_states(fixture_group_id),
@@ -436,7 +442,7 @@ impl<'a> EngineState<'a> {
     }
     fn active_color_effects(
         &self,
-        fixture_group_id: FixtureGroupId,
+        fixture_group_id: Option<FixtureGroupId>,
     ) -> FxIndexMap<&ColorEffect, Rate> {
         active_effects(
             self.button_states(fixture_group_id),
@@ -448,7 +454,7 @@ impl<'a> EngineState<'a> {
     }
     fn active_pixel_effects(
         &self,
-        fixture_group_id: FixtureGroupId,
+        fixture_group_id: Option<FixtureGroupId>,
     ) -> FxIndexMap<&PixelEffect, Rate> {
         active_effects(
             self.button_states(fixture_group_id),
@@ -460,7 +466,7 @@ impl<'a> EngineState<'a> {
     }
     fn active_position_effects(
         &self,
-        fixture_group_id: FixtureGroupId,
+        fixture_group_id: Option<FixtureGroupId>,
     ) -> FxIndexMap<&PositionEffect, Rate> {
         active_effects(
             self.button_states(fixture_group_id),
@@ -470,7 +476,10 @@ impl<'a> EngineState<'a> {
             },
         )
     }
-    fn fixture_group_value(&'a self, fixture_group_id: FixtureGroupId) -> FixtureGroupValue<'a> {
+    fn fixture_group_value(
+        &'a self,
+        fixture_group_id: Option<FixtureGroupId>,
+    ) -> FixtureGroupValue<'a> {
         FixtureGroupValue {
             global_color: self.global_color(fixture_group_id),
             secondary_color: self.secondary_color(fixture_group_id),
@@ -488,7 +497,7 @@ impl<'a> EngineState<'a> {
             .map(|fixture_group_id| {
                 (
                     *fixture_group_id,
-                    self.fixture_group_value(*fixture_group_id),
+                    self.fixture_group_value(Some(*fixture_group_id)),
                 )
             })
             .collect()
@@ -677,7 +686,7 @@ impl<'a> EngineState<'a> {
         .into_iter()
     }
     pub fn pad_events(&self) -> impl Iterator<Item = PadEvent<'_>> {
-        self.button_states(self.active_fixture_group_control)
+        self.button_states(Some(self.active_fixture_group_control))
             .map(PadEvent::from)
             .chain(self.meta_pad_events())
     }
