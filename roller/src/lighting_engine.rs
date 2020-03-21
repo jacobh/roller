@@ -180,6 +180,9 @@ impl<'a> EngineState<'a> {
             .get(&self.active_scene_id)
             .unwrap_or_else(|| &*EMPTY_SCENE_BUTTON_STATES)
     }
+    fn active_scene_fixture_group_ids(&self) -> impl Iterator<Item=FixtureGroupId> + '_ {
+        self.active_scene_button_states().fixture_groups.keys().copied()
+    }
     fn active_scene_base_button_states(&self) -> &ButtonGroupStateMap {
         &self.active_scene_button_states().base
     }
@@ -491,13 +494,11 @@ impl<'a> EngineState<'a> {
         }
     }
     fn fixture_group_values(&'a self) -> FxHashMap<FixtureGroupId, FixtureGroupValue<'a>> {
-        let fixture_group_ids = self.active_scene_button_states().fixture_groups.keys();
-
-        fixture_group_ids
+        self.active_scene_fixture_group_ids()
             .map(|fixture_group_id| {
                 (
-                    *fixture_group_id,
-                    self.fixture_group_value(Some(*fixture_group_id)),
+                    fixture_group_id,
+                    self.fixture_group_value(Some(fixture_group_id)),
                 )
             })
             .collect()
