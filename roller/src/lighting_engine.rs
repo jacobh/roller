@@ -34,6 +34,34 @@ pub struct SceneState {
     // precedence over any effects set in the `default` state
     pub fixture_groups: FixtureGroupStateMap,
 }
+impl SceneState {
+    fn fixture_group_ids(&self) -> impl Iterator<Item = FixtureGroupId> + '_ {
+        self.fixture_groups.keys().copied()
+    }
+    fn base_button_states(&self) -> &ButtonGroupStateMap {
+        &self.base
+    }
+    fn fixture_group_button_states(
+        &self,
+        fixture_group_id: FixtureGroupId,
+    ) -> &ButtonGroupStateMap {
+        self.fixture_groups
+            .get(&fixture_group_id)
+            .unwrap_or_else(|| &*EMPTY_BUTTON_GROUP_STATES)
+    }
+    pub fn button_states(
+        &self,
+        fixture_group_id: Option<FixtureGroupId>,
+    ) -> impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'_>)> {
+        fixture_group_id
+            .map(|group_id| self.fixture_group_button_states(group_id))
+            .unwrap_or_else(|| self.base_button_states())
+            .iter()
+            .flat_map(|(group_id, (button_type, toggle_state, button_states))| {
+                button_group_states_info(*group_id, *button_type, *toggle_state, button_states)
+            })
+    }
+}
 
 // This is just for the case where no buttons have been activated yet
 lazy_static::lazy_static! {
@@ -180,39 +208,13 @@ impl<'a> EngineState<'a> {
             .get(&self.active_scene_id)
             .unwrap_or_else(|| &*EMPTY_SCENE_BUTTON_STATES)
     }
-    fn active_scene_fixture_group_ids(&self) -> impl Iterator<Item = FixtureGroupId> + '_ {
-        self.active_scene_state().fixture_groups.keys().copied()
-    }
-    fn active_scene_base_button_states(&self) -> &ButtonGroupStateMap {
-        &self.active_scene_state().base
-    }
-    fn active_scene_fixture_group_button_states(
-        &self,
-        fixture_group_id: FixtureGroupId,
-    ) -> &ButtonGroupStateMap {
-        self.active_scene_state()
-            .fixture_groups
-            .get(&fixture_group_id)
-            .unwrap_or_else(|| &*EMPTY_BUTTON_GROUP_STATES)
-    }
     fn active_button_states(&self) -> &ButtonGroupStateMap {
         if let Some(group_id) = self.active_fixture_group_control {
-            self.active_scene_fixture_group_button_states(group_id)
+            self.active_scene_state()
+                .fixture_group_button_states(group_id)
         } else {
-            self.active_scene_base_button_states()
+            self.active_scene_state().base_button_states()
         }
-    }
-    pub fn button_states(
-        &self,
-        fixture_group_id: Option<FixtureGroupId>,
-    ) -> impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'_>)> {
-        fixture_group_id
-            .map(|group_id| self.active_scene_fixture_group_button_states(group_id))
-            .unwrap_or_else(|| self.active_scene_base_button_states())
-            .iter()
-            .flat_map(|(group_id, (button_type, toggle_state, button_states))| {
-                button_group_states_info(*group_id, *button_type, *toggle_state, button_states)
-            })
     }
     pub fn active_button_group_states_mut(&mut self) -> &mut ButtonGroupStateMap {
         let active_scene_state = self
@@ -230,19 +232,21 @@ impl<'a> EngineState<'a> {
         }
     }
     fn pressed_buttons(&self) -> FxHashMap<&ButtonMapping, ButtonStateValue> {
-        self.button_states(self.active_fixture_group_control).fold(
-            FxHashMap::default(),
-            |mut pressed_buttons, (_, button_info)| {
-                match button_info.note_state {
-                    NoteState::On => pressed_buttons.insert(
-                        button_info.button,
-                        (button_info.triggered_at, button_info.effect_rate),
-                    ),
-                    NoteState::Off => pressed_buttons.remove(button_info.button),
-                };
-                pressed_buttons
-            },
-        )
+        self.active_scene_state()
+            .button_states(self.active_fixture_group_control)
+            .fold(
+                FxHashMap::default(),
+                |mut pressed_buttons, (_, button_info)| {
+                    match button_info.note_state {
+                        NoteState::On => pressed_buttons.insert(
+                            button_info.button,
+                            (button_info.triggered_at, button_info.effect_rate),
+                        ),
+                        NoteState::Off => pressed_buttons.remove(button_info.button),
+                    };
+                    pressed_buttons
+                },
+            )
     }
     fn pressed_notes(&self) -> FxHashSet<Note> {
         self.pressed_buttons()
@@ -365,19 +369,20 @@ impl<'a> EngineState<'a> {
         let mut on_colors: Vec<(Note, Color)> = Vec::new();
         let mut last_off: Option<(Note, Color)> = None;
 
-        let color_buttons =
-            self.button_states(fixture_group_id)
-                .flat_map(
-                    |(group_info, button_info)| match button_info.button.on_action {
-                        ButtonAction::UpdateGlobalColor(color) => match group_info.button_type {
-                            ButtonType::Switch => {
-                                Some((button_info.button.note, button_info.note_state, color))
-                            }
-                            _ => panic!("only switch button type implemented for colors"),
-                        },
-                        _ => None,
+        let color_buttons = self
+            .active_scene_state()
+            .button_states(fixture_group_id)
+            .flat_map(
+                |(group_info, button_info)| match button_info.button.on_action {
+                    ButtonAction::UpdateGlobalColor(color) => match group_info.button_type {
+                        ButtonType::Switch => {
+                            Some((button_info.button.note, button_info.note_state, color))
+                        }
+                        _ => panic!("only switch button type implemented for colors"),
                     },
-                );
+                    _ => None,
+                },
+            );
 
         for (note, state, color) in color_buttons {
             match state {
@@ -398,7 +403,8 @@ impl<'a> EngineState<'a> {
             .unwrap_or_else(|| Color::Violet)
     }
     pub fn secondary_color(&self, fixture_group_id: Option<FixtureGroupId>) -> Option<Color> {
-        self.button_states(fixture_group_id)
+        self.active_scene_state()
+            .button_states(fixture_group_id)
             .filter_map(
                 |(group_info, button_info)| match button_info.button.on_action {
                     ButtonAction::UpdateGlobalSecondaryColor(color) => match group_info.button_type
@@ -422,7 +428,7 @@ impl<'a> EngineState<'a> {
     }
     fn base_position(&self, fixture_group_id: Option<FixtureGroupId>) -> BasePosition {
         active_effects(
-            self.button_states(fixture_group_id),
+            self.active_scene_state().button_states(fixture_group_id),
             |action| match action {
                 ButtonAction::UpdateBasePosition(position) => Some(position),
                 _ => None,
@@ -438,7 +444,7 @@ impl<'a> EngineState<'a> {
         fixture_group_id: Option<FixtureGroupId>,
     ) -> FxIndexMap<&DimmerEffect, Rate> {
         active_effects(
-            self.button_states(fixture_group_id),
+            self.active_scene_state().button_states(fixture_group_id),
             |action| match action {
                 ButtonAction::ActivateDimmerEffect(effect) => Some(effect),
                 _ => None,
@@ -450,7 +456,7 @@ impl<'a> EngineState<'a> {
         fixture_group_id: Option<FixtureGroupId>,
     ) -> FxIndexMap<&ColorEffect, Rate> {
         active_effects(
-            self.button_states(fixture_group_id),
+            self.active_scene_state().button_states(fixture_group_id),
             |action| match action {
                 ButtonAction::ActivateColorEffect(effect) => Some(effect),
                 _ => None,
@@ -462,7 +468,7 @@ impl<'a> EngineState<'a> {
         fixture_group_id: Option<FixtureGroupId>,
     ) -> FxIndexMap<&PixelEffect, Rate> {
         active_effects(
-            self.button_states(fixture_group_id),
+            self.active_scene_state().button_states(fixture_group_id),
             |action| match action {
                 ButtonAction::ActivatePixelEffect(effect) => Some(effect),
                 _ => None,
@@ -474,7 +480,7 @@ impl<'a> EngineState<'a> {
         fixture_group_id: Option<FixtureGroupId>,
     ) -> FxIndexMap<&PositionEffect, Rate> {
         active_effects(
-            self.button_states(fixture_group_id),
+            self.active_scene_state().button_states(fixture_group_id),
             |action| match action {
                 ButtonAction::ActivatePositionEffect(effect) => Some(effect),
                 _ => None,
@@ -496,7 +502,8 @@ impl<'a> EngineState<'a> {
         }
     }
     fn fixture_group_values(&'a self) -> FxHashMap<FixtureGroupId, FixtureGroupValue<'a>> {
-        self.active_scene_fixture_group_ids()
+        self.active_scene_state()
+            .fixture_group_ids()
             .map(|fixture_group_id| {
                 (
                     fixture_group_id,
@@ -694,7 +701,8 @@ impl<'a> EngineState<'a> {
         .map(PadEvent::new_on)
     }
     pub fn pad_events(&self) -> impl Iterator<Item = PadEvent<'_>> {
-        self.button_states(self.active_fixture_group_control)
+        self.active_scene_state()
+            .button_states(self.active_fixture_group_control)
             .map(PadEvent::from)
             .chain(self.meta_pad_events())
     }
