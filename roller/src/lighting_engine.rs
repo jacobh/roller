@@ -26,6 +26,15 @@ type ButtonStateValue = (Instant, Rate);
 type ButtonGroupStateMap = FxHashMap<ButtonGroupId, (ButtonType, GroupToggleState, ButtonStateMap)>;
 type FixtureGroupStateMap = FxHashMap<FixtureGroupId, ButtonGroupStateMap>;
 
+#[derive(Default)]
+pub struct SceneButtonStates {
+    // contains base effect states, for all fixtures
+    pub base: ButtonGroupStateMap,
+    // Contains states for effects enabled for specific groups. These take
+    // precedence over any effects set in the `default` state
+    pub fixture_groups: FixtureGroupStateMap,
+}
+
 // This is just for the case where no buttons have been activated yet
 lazy_static::lazy_static! {
     static ref EMPTY_BUTTON_STATES: ButtonStateMap = {
@@ -33,6 +42,7 @@ lazy_static::lazy_static! {
     };
     static ref EMPTY_BUTTON_GROUP_STATES: ButtonGroupStateMap = FxHashMap::default();
     static ref EMPTY_FIXTURE_GROUP_STATES: FixtureGroupStateMap = FxHashMap::default();
+    static ref EMPTY_SCENE_BUTTON_STATES: SceneButtonStates = SceneButtonStates::default();
     static ref DEFAULT_FIXTURE_GROUP_VALUE: FixtureGroupValue<'static> = FixtureGroupValue::default();
 }
 
@@ -140,7 +150,7 @@ pub struct EngineState<'a> {
     pub global_clock_rate: Rate,
     pub active_scene_id: SceneId,
     pub active_fixture_group_control: FixtureGroupId,
-    pub scene_fixture_group_button_states: FxHashMap<SceneId, FixtureGroupStateMap>,
+    pub scene_fixture_group_button_states: FxHashMap<SceneId, SceneButtonStates>,
 }
 impl<'a> EngineState<'a> {
     pub fn button_states(
@@ -149,7 +159,8 @@ impl<'a> EngineState<'a> {
     ) -> impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'_>)> {
         self.scene_fixture_group_button_states
             .get(&self.active_scene_id)
-            .unwrap_or_else(|| &*EMPTY_FIXTURE_GROUP_STATES)
+            .unwrap_or_else(|| &*EMPTY_SCENE_BUTTON_STATES)
+            .fixture_groups
             .get(&fixture_group_id)
             .unwrap_or_else(|| &*EMPTY_BUTTON_GROUP_STATES)
             .iter()
@@ -201,6 +212,7 @@ impl<'a> EngineState<'a> {
             .scene_fixture_group_button_states
             .entry(self.active_scene_id)
             .or_default()
+            .fixture_groups
             .entry(self.active_fixture_group_control)
             .or_default()
             .values_mut()
@@ -223,6 +235,7 @@ impl<'a> EngineState<'a> {
             .scene_fixture_group_button_states
             .entry(self.active_scene_id)
             .or_default()
+            .fixture_groups
             .entry(self.active_fixture_group_control)
             .or_default()
             .entry(button_group_id)
@@ -235,7 +248,8 @@ impl<'a> EngineState<'a> {
     ) -> impl Iterator<Item = (ButtonGroupId, GroupToggleState)> + '_ {
         self.scene_fixture_group_button_states
             .get(&self.active_scene_id)
-            .unwrap_or_else(|| &*EMPTY_FIXTURE_GROUP_STATES)
+            .unwrap_or_else(|| &*EMPTY_SCENE_BUTTON_STATES)
+            .fixture_groups
             .get(&self.active_fixture_group_control)
             .unwrap_or_else(|| &*EMPTY_BUTTON_GROUP_STATES)
             .iter()
@@ -246,6 +260,7 @@ impl<'a> EngineState<'a> {
             .scene_fixture_group_button_states
             .entry(self.active_scene_id)
             .or_default()
+            .fixture_groups
             .entry(self.active_fixture_group_control)
             .or_default();
 
@@ -460,7 +475,8 @@ impl<'a> EngineState<'a> {
         let fixture_group_ids = self
             .scene_fixture_group_button_states
             .get(&self.active_scene_id)
-            .unwrap_or_else(|| &*EMPTY_FIXTURE_GROUP_STATES)
+            .unwrap_or_else(|| &*EMPTY_SCENE_BUTTON_STATES)
+            .fixture_groups
             .keys();
 
         fixture_group_ids
