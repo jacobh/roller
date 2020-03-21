@@ -150,7 +150,7 @@ pub struct ButtonInfo<'a> {
 }
 
 struct FixtureGroupValue<'a> {
-    global_color: Color,
+    global_color: Option<Color>,
     secondary_color: Option<Color>,
     active_dimmer_effects: FxIndexMap<&'a DimmerEffect, Rate>,
     active_color_effects: FxIndexMap<&'a ColorEffect, Rate>,
@@ -158,10 +158,15 @@ struct FixtureGroupValue<'a> {
     active_position_effects: FxIndexMap<&'a PositionEffect, Rate>,
     base_position: BasePosition,
 }
+impl<'a> FixtureGroupValue<'a> {
+    fn global_color(&self) -> Color {
+        self.global_color.unwrap_or(Color::Violet)
+    }
+}
 impl<'a> Default for FixtureGroupValue<'a> {
     fn default() -> FixtureGroupValue<'a> {
         FixtureGroupValue {
-            global_color: Color::Violet,
+            global_color: None,
             secondary_color: None,
             active_dimmer_effects: FxIndexMap::default(),
             active_color_effects: FxIndexMap::default(),
@@ -380,7 +385,7 @@ impl<'a> EngineState<'a> {
             }
         }
     }
-    pub fn global_color(&self, fixture_group_id: Option<FixtureGroupId>) -> Color {
+    pub fn global_color(&self, fixture_group_id: Option<FixtureGroupId>) -> Option<Color> {
         let mut on_colors: Vec<(Note, Color)> = Vec::new();
         let mut last_off: Option<(Note, Color)> = None;
 
@@ -415,7 +420,6 @@ impl<'a> EngineState<'a> {
             .last()
             .or_else(|| last_off.as_ref())
             .map(|(_, color)| *color)
-            .unwrap_or_else(|| Color::Violet)
     }
     pub fn secondary_color(&self, fixture_group_id: Option<FixtureGroupId>) -> Option<Color> {
         self.active_scene_state()
@@ -563,14 +567,14 @@ impl<'a> EngineState<'a> {
                     || fixture.group_id == Some(FixtureGroupId::new(2))
                 {
                     (
-                        values.global_color.to_hsl(),
+                        values.global_color().to_hsl(),
                         values.secondary_color.map(Color::to_hsl),
                     )
                 } else {
                     if let Some(secondary_color) = values.secondary_color {
-                        (secondary_color.to_hsl(), Some(values.global_color.to_hsl()))
+                        (secondary_color.to_hsl(), Some(values.global_color().to_hsl()))
                     } else {
-                        (values.global_color.to_hsl(), None)
+                        (values.global_color().to_hsl(), None)
                     }
                 };
 
