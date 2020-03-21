@@ -46,13 +46,18 @@ impl SceneState {
             .get(&fixture_group_id)
             .unwrap_or_else(|| &*EMPTY_BUTTON_GROUP_STATES)
     }
+    pub fn button_group_states(&self, fixture_group_id: Option<FixtureGroupId>) -> &ButtonGroupStates {
+        if let Some(group_id) = fixture_group_id {
+            self.fixture_group_button_states(group_id)
+        } else {
+            self.base_button_states()
+        }
+    }
     pub fn iter_group_button_info(
         &self,
         fixture_group_id: Option<FixtureGroupId>,
     ) -> impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'_>)> {
-        fixture_group_id
-            .map(|group_id| self.fixture_group_button_states(group_id))
-            .unwrap_or_else(|| self.base_button_states())
+        self.button_group_states(fixture_group_id)
             .iter_info()
     }
     pub fn button_group_states_mut(
@@ -64,34 +69,6 @@ impl SceneState {
         } else {
             &mut self.base
         }
-    }
-    pub fn pressed_buttons(
-        &self,
-        active_fixture_group_control: Option<FixtureGroupId>,
-    ) -> FxHashMap<&ButtonMapping, ButtonStateValue> {
-        self.iter_group_button_info(active_fixture_group_control)
-            .fold(
-                FxHashMap::default(),
-                |mut pressed_buttons, (_, button_info)| {
-                    match button_info.note_state {
-                        NoteState::On => pressed_buttons.insert(
-                            button_info.button,
-                            (button_info.triggered_at, button_info.effect_rate),
-                        ),
-                        NoteState::Off => pressed_buttons.remove(button_info.button),
-                    };
-                    pressed_buttons
-                },
-            )
-    }
-    pub fn pressed_notes(
-        &self,
-        active_fixture_group_control: Option<FixtureGroupId>,
-    ) -> FxHashSet<Note> {
-        self.pressed_buttons(active_fixture_group_control)
-            .into_iter()
-            .map(|(button, _)| button.note)
-            .collect()
     }
 }
 
@@ -138,6 +115,32 @@ impl ButtonGroupStates {
     ) -> impl Iterator<Item = (ButtonGroupId, GroupToggleState)> + '_ {
         self.iter()
             .map(|(group_id, _, toggle_state, _)| (group_id, toggle_state))
+    }
+    pub fn pressed_buttons(
+        &self,
+    ) -> FxHashMap<&ButtonMapping, ButtonStateValue> {
+        self.iter_info()
+            .fold(
+                FxHashMap::default(),
+                |mut pressed_buttons, (_, button_info)| {
+                    match button_info.note_state {
+                        NoteState::On => pressed_buttons.insert(
+                            button_info.button,
+                            (button_info.triggered_at, button_info.effect_rate),
+                        ),
+                        NoteState::Off => pressed_buttons.remove(button_info.button),
+                    };
+                    pressed_buttons
+                },
+            )
+    }
+    pub fn pressed_notes(
+        &self,
+    ) -> FxHashSet<Note> {
+        self.pressed_buttons()
+            .into_iter()
+            .map(|(button, _)| button.note)
+            .collect()
     }
     pub fn entry(&mut self, group_id: ButtonGroupId) -> Entry<'_, ButtonGroupId, GroupStatesValue> {
         self.group_states.entry(group_id)

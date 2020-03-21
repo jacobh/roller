@@ -178,11 +178,13 @@ impl<'a> EngineState<'a> {
     }
     fn pressed_buttons(&self) -> FxHashMap<&ButtonMapping, ButtonStateValue> {
         self.active_scene_state()
-            .pressed_buttons(self.active_fixture_group_control)
+            .button_group_states(self.active_fixture_group_control)
+            .pressed_buttons()
     }
     fn pressed_notes(&self) -> FxHashSet<Note> {
         self.active_scene_state()
-            .pressed_notes(self.active_fixture_group_control)
+            .button_group_states(self.active_fixture_group_control)
+            .pressed_notes()
     }
     fn update_pressed_button_rates(&mut self, rate: Rate) {
         let pressed_notes = self.pressed_notes();
