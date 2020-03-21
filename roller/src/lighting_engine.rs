@@ -27,7 +27,7 @@ type ButtonGroupStateMap = FxHashMap<ButtonGroupId, (ButtonType, GroupToggleStat
 type FixtureGroupStateMap = FxHashMap<FixtureGroupId, ButtonGroupStateMap>;
 
 #[derive(Default)]
-pub struct SceneButtonStates {
+pub struct SceneState {
     // contains base effect states, for all fixtures
     pub base: ButtonGroupStateMap,
     // Contains states for effects enabled for specific groups. These take
@@ -38,7 +38,7 @@ pub struct SceneButtonStates {
 // This is just for the case where no buttons have been activated yet
 lazy_static::lazy_static! {
     static ref EMPTY_BUTTON_GROUP_STATES: ButtonGroupStateMap = FxHashMap::default();
-    static ref EMPTY_SCENE_BUTTON_STATES: SceneButtonStates = SceneButtonStates::default();
+    static ref EMPTY_SCENE_BUTTON_STATES: SceneState = SceneState::default();
     static ref DEFAULT_FIXTURE_GROUP_VALUE: FixtureGroupValue<'static> = FixtureGroupValue::default();
 }
 
@@ -171,29 +171,36 @@ pub struct EngineState<'a> {
     pub color_effect_intensity: f64,
     pub global_clock_rate: Rate,
     pub active_scene_id: SceneId,
-    pub active_fixture_group_control: FixtureGroupId,
-    pub scene_fixture_group_button_states: FxHashMap<SceneId, SceneButtonStates>,
+    pub active_fixture_group_control: Option<FixtureGroupId>,
+    pub scene_fixture_group_button_states: FxHashMap<SceneId, SceneState>,
 }
 impl<'a> EngineState<'a> {
-    fn active_scene_button_states(&self) -> &SceneButtonStates {
+    fn active_scene_state(&self) -> &SceneState {
         self.scene_fixture_group_button_states
             .get(&self.active_scene_id)
             .unwrap_or_else(|| &*EMPTY_SCENE_BUTTON_STATES)
     }
-    fn active_scene_fixture_group_ids(&self) -> impl Iterator<Item=FixtureGroupId> + '_ {
-        self.active_scene_button_states().fixture_groups.keys().copied()
+    fn active_scene_fixture_group_ids(&self) -> impl Iterator<Item = FixtureGroupId> + '_ {
+        self.active_scene_state().fixture_groups.keys().copied()
     }
     fn active_scene_base_button_states(&self) -> &ButtonGroupStateMap {
-        &self.active_scene_button_states().base
+        &self.active_scene_state().base
     }
     fn active_scene_fixture_group_button_states(
         &self,
         fixture_group_id: FixtureGroupId,
     ) -> &ButtonGroupStateMap {
-        self.active_scene_button_states()
+        self.active_scene_state()
             .fixture_groups
             .get(&fixture_group_id)
             .unwrap_or_else(|| &*EMPTY_BUTTON_GROUP_STATES)
+    }
+    fn active_button_states(&self) -> &ButtonGroupStateMap {
+        if let Some(group_id) = self.active_fixture_group_control {
+            self.active_scene_fixture_group_button_states(group_id)
+        } else {
+            self.active_scene_base_button_states()
+        }
     }
     pub fn button_states(
         &self,
@@ -207,21 +214,35 @@ impl<'a> EngineState<'a> {
                 button_group_states_info(*group_id, *button_type, *toggle_state, button_states)
             })
     }
+    pub fn active_button_group_states_mut(&mut self) -> &mut ButtonGroupStateMap {
+        let active_scene_state = self
+            .scene_fixture_group_button_states
+            .entry(self.active_scene_id)
+            .or_default();
+
+        if let Some(group_id) = self.active_fixture_group_control {
+            active_scene_state
+                .fixture_groups
+                .entry(group_id)
+                .or_default()
+        } else {
+            &mut active_scene_state.base
+        }
+    }
     fn pressed_buttons(&self) -> FxHashMap<&ButtonMapping, ButtonStateValue> {
-        self.button_states(Some(self.active_fixture_group_control))
-            .fold(
-                FxHashMap::default(),
-                |mut pressed_buttons, (_, button_info)| {
-                    match button_info.note_state {
-                        NoteState::On => pressed_buttons.insert(
-                            button_info.button,
-                            (button_info.triggered_at, button_info.effect_rate),
-                        ),
-                        NoteState::Off => pressed_buttons.remove(button_info.button),
-                    };
-                    pressed_buttons
-                },
-            )
+        self.button_states(self.active_fixture_group_control).fold(
+            FxHashMap::default(),
+            |mut pressed_buttons, (_, button_info)| {
+                match button_info.note_state {
+                    NoteState::On => pressed_buttons.insert(
+                        button_info.button,
+                        (button_info.triggered_at, button_info.effect_rate),
+                    ),
+                    NoteState::Off => pressed_buttons.remove(button_info.button),
+                };
+                pressed_buttons
+            },
+        )
     }
     fn pressed_notes(&self) -> FxHashSet<Note> {
         self.pressed_buttons()
@@ -233,12 +254,7 @@ impl<'a> EngineState<'a> {
         let pressed_notes = self.pressed_notes();
 
         let button_states = self
-            .scene_fixture_group_button_states
-            .entry(self.active_scene_id)
-            .or_default()
-            .fixture_groups
-            .entry(self.active_fixture_group_control)
-            .or_default()
+            .active_button_group_states_mut()
             .values_mut()
             .map(|(_, _, states)| states);
 
@@ -256,12 +272,7 @@ impl<'a> EngineState<'a> {
         button_type: ButtonType,
     ) -> &mut ButtonStateMap {
         let (_, _, button_states) = self
-            .scene_fixture_group_button_states
-            .entry(self.active_scene_id)
-            .or_default()
-            .fixture_groups
-            .entry(self.active_fixture_group_control)
-            .or_default()
+            .active_button_group_states_mut()
             .entry(button_group_id)
             .or_insert_with(|| (button_type, GroupToggleState::Off, FxIndexMap::default()));
 
@@ -270,20 +281,12 @@ impl<'a> EngineState<'a> {
     pub fn button_group_toggle_states(
         &self,
     ) -> impl Iterator<Item = (ButtonGroupId, GroupToggleState)> + '_ {
-        self.active_scene_fixture_group_button_states(self.active_fixture_group_control)
+        self.active_button_states()
             .iter()
             .map(|(group_id, (_, toggle_state, _))| (*group_id, *toggle_state))
     }
     fn toggle_button_group(&mut self, id: ButtonGroupId, button_type: ButtonType, note: Note) {
-        let button_group_states = self
-            .scene_fixture_group_button_states
-            .entry(self.active_scene_id)
-            .or_default()
-            .fixture_groups
-            .entry(self.active_fixture_group_control)
-            .or_default();
-
-        button_group_states
+        self.active_button_group_states_mut()
             .entry(id)
             .and_modify(|(_, toggle_state, _)| {
                 toggle_state.toggle_mut(note);
@@ -340,12 +343,11 @@ impl<'a> EngineState<'a> {
                 self.active_scene_id = scene_id;
             }
             LightingEvent::ToggleFixtureGroupControl(group_id) => {
-                // if Some(group_id) == self.active_fixture_group_control {
-                //     self.active_fixture_group_control = None;
-                // } else {
-                //     self.active_fixture_group_control = Some(group_id);
-                // }
-                self.active_fixture_group_control = group_id;
+                if Some(group_id) == self.active_fixture_group_control {
+                    self.active_fixture_group_control = None;
+                } else {
+                    self.active_fixture_group_control = Some(group_id);
+                }
             }
             LightingEvent::UpdateGroupDimmer(group_id, dimmer) => {
                 self.group_dimmers.insert(group_id, dimmer);
@@ -652,17 +654,20 @@ impl<'a> EngineState<'a> {
             })
             .unwrap();
 
-        let active_fixture_group_toggle_button = self
-            .midi_mapping
-            .meta_buttons
-            .values()
-            .find(|button| {
-                button.on_action
-                    == MetaButtonAction::ToggleFixtureGroupControl(
-                        self.active_fixture_group_control,
-                    )
-            })
-            .unwrap();
+        let active_fixture_group_toggle_button =
+            self.active_fixture_group_control
+                .map(|control_fixture_group_id| {
+                    self.midi_mapping
+                        .meta_buttons
+                        .values()
+                        .find(|button| {
+                            button.on_action
+                                == MetaButtonAction::ToggleFixtureGroupControl(
+                                    control_fixture_group_id,
+                                )
+                        })
+                        .unwrap()
+                });
 
         let pressed_button_rate: Option<Rate> =
             self.pressed_buttons().values().map(|(_, rate)| *rate).max();
@@ -680,14 +685,16 @@ impl<'a> EngineState<'a> {
             .unwrap();
 
         vec![
-            PadEvent::new_on(active_scene_button),
-            PadEvent::new_on(active_clock_rate_button),
-            PadEvent::new_on(active_fixture_group_toggle_button),
+            Some(active_scene_button),
+            Some(active_clock_rate_button),
+            active_fixture_group_toggle_button,
         ]
         .into_iter()
+        .flatten()
+        .map(PadEvent::new_on)
     }
     pub fn pad_events(&self) -> impl Iterator<Item = PadEvent<'_>> {
-        self.button_states(Some(self.active_fixture_group_control))
+        self.button_states(self.active_fixture_group_control)
             .map(PadEvent::from)
             .chain(self.meta_pad_events())
     }
