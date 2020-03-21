@@ -49,6 +49,32 @@ lazy_static::lazy_static! {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor)]
 pub struct SceneId(usize);
 
+// Takes a button group and returns an iterator of `Info` summaries
+fn button_group_states_info(
+    group_id: ButtonGroupId,
+    button_type: ButtonType,
+    toggle_state: GroupToggleState,
+    button_states: &ButtonStateMap,
+) -> impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'_>)> {
+    button_states
+        .iter()
+        .map(move |((button, note_state), (triggered_at, effect_rate))| {
+            (
+                ButtonGroupInfo {
+                    id: group_id,
+                    button_type: button_type,
+                    toggle_state: toggle_state,
+                },
+                ButtonInfo {
+                    button: button,
+                    note_state: *note_state,
+                    triggered_at: *triggered_at,
+                    effect_rate: *effect_rate,
+                },
+            )
+        })
+}
+
 pub struct ButtonGroupInfo {
     pub id: ButtonGroupId,
     pub button_type: ButtonType,
@@ -165,23 +191,7 @@ impl<'a> EngineState<'a> {
             .unwrap_or_else(|| &*EMPTY_BUTTON_GROUP_STATES)
             .iter()
             .flat_map(|(group_id, (button_type, toggle_state, button_states))| {
-                button_states.iter().map(
-                    move |((button, note_state), (triggered_at, effect_rate))| {
-                        (
-                            ButtonGroupInfo {
-                                id: *group_id,
-                                button_type: *button_type,
-                                toggle_state: *toggle_state,
-                            },
-                            ButtonInfo {
-                                button: button,
-                                note_state: *note_state,
-                                triggered_at: *triggered_at,
-                                effect_rate: *effect_rate,
-                            },
-                        )
-                    },
-                )
+                button_group_states_info(*group_id, *button_type, *toggle_state, button_states)
             })
     }
     fn pressed_buttons(&self) -> FxHashMap<&ButtonMapping, ButtonStateValue> {
