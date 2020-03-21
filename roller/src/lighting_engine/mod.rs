@@ -241,33 +241,9 @@ impl<'a> EngineState<'a> {
             }
         }
     }
-    fn fixture_group_value(
-        &'a self,
-        fixture_group_id: Option<FixtureGroupId>,
-    ) -> FixtureGroupValue<'a> {
-        self.active_scene_state()
-            .button_group_states(fixture_group_id)
-            .fixture_group_value()
-    }
-    fn fixture_group_values(
-        &'a self,
-        base_values: &FixtureGroupValue<'a>,
-    ) -> FxHashMap<FixtureGroupId, FixtureGroupValue<'a>> {
-        self.active_scene_state()
-            .fixture_group_ids()
-            .map(|fixture_group_id| {
-                (
-                    fixture_group_id,
-                    self.fixture_group_value(Some(fixture_group_id))
-                        .merge(base_values),
-                )
-            })
-            .collect()
-    }
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
         let clock_snapshot = self.clock.snapshot().with_rate(self.global_clock_rate);
-        let base_values = self.fixture_group_value(None);
-        let fixture_group_values = self.fixture_group_values(&base_values);
+        let (base_values, fixture_group_values) = self.active_scene_state().fixture_group_values();
 
         let fixture_values = fixtures
             .iter()

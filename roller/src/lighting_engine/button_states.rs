@@ -36,9 +36,6 @@ pub struct SceneState {
     pub fixture_groups: FixtureGroupStateMap,
 }
 impl SceneState {
-    pub fn fixture_group_ids(&self) -> impl Iterator<Item = FixtureGroupId> + '_ {
-        self.fixture_groups.keys().copied()
-    }
     pub fn base_button_states(&self) -> &ButtonGroupStates {
         &self.base
     }
@@ -65,6 +62,25 @@ impl SceneState {
         fixture_group_id: Option<FixtureGroupId>,
     ) -> impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'_>)> {
         self.button_group_states(fixture_group_id).iter_info()
+    }
+    pub fn fixture_group_values(
+        &self,
+    ) -> (
+        FixtureGroupValue<'_>,
+        FxHashMap<FixtureGroupId, FixtureGroupValue<'_>>,
+    ) {
+        let base_values = self.base.fixture_group_value();
+
+        let group_values = self
+            .fixture_groups
+            .iter()
+            .map(|(id, state)| {
+                let values = state.fixture_group_value();
+                (*id, values.merge(&base_values))
+            })
+            .collect();
+
+        (base_values, group_values)
     }
     pub fn button_group_states_mut(
         &mut self,
