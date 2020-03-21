@@ -152,15 +152,39 @@ pub struct ButtonInfo<'a> {
 struct FixtureGroupValue<'a> {
     global_color: Option<Color>,
     secondary_color: Option<Color>,
+    base_position: Option<BasePosition>,
     active_dimmer_effects: FxIndexMap<&'a DimmerEffect, Rate>,
     active_color_effects: FxIndexMap<&'a ColorEffect, Rate>,
     active_pixel_effects: FxIndexMap<&'a PixelEffect, Rate>,
     active_position_effects: FxIndexMap<&'a PositionEffect, Rate>,
-    base_position: BasePosition,
 }
 impl<'a> FixtureGroupValue<'a> {
+    fn merge(mut self, other: &FixtureGroupValue<'a>) -> FixtureGroupValue<'a> {
+        if self.global_color == None {
+            self.global_color = other.global_color;
+        }
+        if self.secondary_color == None {
+            self.secondary_color = other.secondary_color;
+        }
+        if self.base_position == None {
+            self.base_position = other.base_position;
+        }
+        self.active_dimmer_effects
+            .extend(other.active_dimmer_effects.iter());
+        self.active_color_effects
+            .extend(other.active_color_effects.iter());
+        self.active_pixel_effects
+            .extend(other.active_pixel_effects.iter());
+        self.active_position_effects
+            .extend(other.active_position_effects.iter());
+
+        self
+    }
     fn global_color(&self) -> Color {
         self.global_color.unwrap_or(Color::Violet)
+    }
+    fn base_position(&self) -> BasePosition {
+        self.base_position.unwrap_or_default()
     }
 }
 impl<'a> Default for FixtureGroupValue<'a> {
@@ -172,7 +196,7 @@ impl<'a> Default for FixtureGroupValue<'a> {
             active_color_effects: FxIndexMap::default(),
             active_pixel_effects: FxIndexMap::default(),
             active_position_effects: FxIndexMap::default(),
-            base_position: BasePosition::default(),
+            base_position: None,
         }
     }
 }
@@ -445,7 +469,7 @@ impl<'a> EngineState<'a> {
             })
             .last()
     }
-    fn base_position(&self, fixture_group_id: Option<FixtureGroupId>) -> BasePosition {
+    fn base_position(&self, fixture_group_id: Option<FixtureGroupId>) -> Option<BasePosition> {
         active_effects(
             self.active_scene_state().button_states(fixture_group_id),
             |action| match action {
@@ -456,7 +480,6 @@ impl<'a> EngineState<'a> {
         .keys()
         .last()
         .map(|position| **position)
-        .unwrap_or_default()
     }
     fn active_dimmer_effects(
         &self,
@@ -520,28 +543,34 @@ impl<'a> EngineState<'a> {
             base_position: self.base_position(fixture_group_id),
         }
     }
-    fn fixture_group_values(&'a self) -> FxHashMap<FixtureGroupId, FixtureGroupValue<'a>> {
+    fn fixture_group_values(
+        &'a self,
+        base_values: &FixtureGroupValue<'a>,
+    ) -> FxHashMap<FixtureGroupId, FixtureGroupValue<'a>> {
         self.active_scene_state()
             .fixture_group_ids()
             .map(|fixture_group_id| {
                 (
                     fixture_group_id,
-                    self.fixture_group_value(Some(fixture_group_id)),
+                    self.fixture_group_value(Some(fixture_group_id))
+                        .merge(base_values),
                 )
             })
             .collect()
     }
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
         let clock_snapshot = self.clock.snapshot().with_rate(self.global_clock_rate);
-        let fixture_group_values = self.fixture_group_values();
+        let base_values = self.fixture_group_value(None);
+        let fixture_group_values = self.fixture_group_values(&base_values);
 
         let fixture_values = fixtures
             .iter()
             .map(|fixture| {
-                // TODO assuming all fixtures are in a group
-                let values = fixture_group_values
-                    .get(&fixture.group_id.unwrap())
-                    .unwrap_or_else(|| &*DEFAULT_FIXTURE_GROUP_VALUE);
+                let values = if let Some(group_id) = fixture.group_id {
+                    fixture_group_values.get(&group_id).unwrap_or(&base_values)
+                } else {
+                    &base_values
+                };
 
                 let effect_dimmer = if fixture.dimmer_effects_enabled() {
                     values
@@ -572,7 +601,10 @@ impl<'a> EngineState<'a> {
                     )
                 } else {
                     if let Some(secondary_color) = values.secondary_color {
-                        (secondary_color.to_hsl(), Some(values.global_color().to_hsl()))
+                        (
+                            secondary_color.to_hsl(),
+                            Some(values.global_color().to_hsl()),
+                        )
                     } else {
                         (values.global_color().to_hsl(), None)
                     }
@@ -631,7 +663,7 @@ impl<'a> EngineState<'a> {
                                 ))
                             })
                             .fold(
-                                values.base_position.for_fixture(&fixture, &fixtures),
+                                values.base_position().for_fixture(&fixture, &fixtures),
                                 |position1, position2| position1 + position2,
                             ),
                     )
