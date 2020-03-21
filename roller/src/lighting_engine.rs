@@ -61,6 +61,33 @@ impl SceneState {
                 button_group_states_info(*group_id, *button_type, *toggle_state, button_states)
             })
     }
+    fn pressed_buttons(
+        &self,
+        active_fixture_group_control: Option<FixtureGroupId>,
+    ) -> FxHashMap<&ButtonMapping, ButtonStateValue> {
+        self.button_states(active_fixture_group_control).fold(
+            FxHashMap::default(),
+            |mut pressed_buttons, (_, button_info)| {
+                match button_info.note_state {
+                    NoteState::On => pressed_buttons.insert(
+                        button_info.button,
+                        (button_info.triggered_at, button_info.effect_rate),
+                    ),
+                    NoteState::Off => pressed_buttons.remove(button_info.button),
+                };
+                pressed_buttons
+            },
+        )
+    }
+    fn pressed_notes(
+        &self,
+        active_fixture_group_control: Option<FixtureGroupId>,
+    ) -> FxHashSet<Note> {
+        self.pressed_buttons(active_fixture_group_control)
+            .into_iter()
+            .map(|(button, _)| button.note)
+            .collect()
+    }
 }
 
 // This is just for the case where no buttons have been activated yet
@@ -233,26 +260,11 @@ impl<'a> EngineState<'a> {
     }
     fn pressed_buttons(&self) -> FxHashMap<&ButtonMapping, ButtonStateValue> {
         self.active_scene_state()
-            .button_states(self.active_fixture_group_control)
-            .fold(
-                FxHashMap::default(),
-                |mut pressed_buttons, (_, button_info)| {
-                    match button_info.note_state {
-                        NoteState::On => pressed_buttons.insert(
-                            button_info.button,
-                            (button_info.triggered_at, button_info.effect_rate),
-                        ),
-                        NoteState::Off => pressed_buttons.remove(button_info.button),
-                    };
-                    pressed_buttons
-                },
-            )
+            .pressed_buttons(self.active_fixture_group_control)
     }
     fn pressed_notes(&self) -> FxHashSet<Note> {
-        self.pressed_buttons()
-            .into_iter()
-            .map(|(button, _)| button.note)
-            .collect()
+        self.active_scene_state()
+            .pressed_notes(self.active_fixture_group_control)
     }
     fn update_pressed_button_rates(&mut self, rate: Rate) {
         let pressed_notes = self.pressed_notes();
