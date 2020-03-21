@@ -37,11 +37,7 @@ pub struct SceneButtonStates {
 
 // This is just for the case where no buttons have been activated yet
 lazy_static::lazy_static! {
-    static ref EMPTY_BUTTON_STATES: ButtonStateMap = {
-        FxIndexMap::default()
-    };
     static ref EMPTY_BUTTON_GROUP_STATES: ButtonGroupStateMap = FxHashMap::default();
-    static ref EMPTY_FIXTURE_GROUP_STATES: FixtureGroupStateMap = FxHashMap::default();
     static ref EMPTY_SCENE_BUTTON_STATES: SceneButtonStates = SceneButtonStates::default();
     static ref DEFAULT_FIXTURE_GROUP_VALUE: FixtureGroupValue<'static> = FixtureGroupValue::default();
 }
@@ -179,16 +175,25 @@ pub struct EngineState<'a> {
     pub scene_fixture_group_button_states: FxHashMap<SceneId, SceneButtonStates>,
 }
 impl<'a> EngineState<'a> {
+    fn active_scene_button_states(&self) -> &SceneButtonStates {
+        self.scene_fixture_group_button_states
+            .get(&self.active_scene_id)
+            .unwrap_or_else(|| &*EMPTY_SCENE_BUTTON_STATES)
+    }
+    fn active_scene_fixture_group_button_states(
+        &self,
+        fixture_group_id: FixtureGroupId,
+    ) -> &ButtonGroupStateMap {
+        self.active_scene_button_states()
+            .fixture_groups
+            .get(&fixture_group_id)
+            .unwrap_or_else(|| &*EMPTY_BUTTON_GROUP_STATES)
+    }
     pub fn button_states(
         &self,
         fixture_group_id: FixtureGroupId,
     ) -> impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'_>)> {
-        self.scene_fixture_group_button_states
-            .get(&self.active_scene_id)
-            .unwrap_or_else(|| &*EMPTY_SCENE_BUTTON_STATES)
-            .fixture_groups
-            .get(&fixture_group_id)
-            .unwrap_or_else(|| &*EMPTY_BUTTON_GROUP_STATES)
+        self.active_scene_fixture_group_button_states(fixture_group_id)
             .iter()
             .flat_map(|(group_id, (button_type, toggle_state, button_states))| {
                 button_group_states_info(*group_id, *button_type, *toggle_state, button_states)
@@ -256,12 +261,7 @@ impl<'a> EngineState<'a> {
     pub fn button_group_toggle_states(
         &self,
     ) -> impl Iterator<Item = (ButtonGroupId, GroupToggleState)> + '_ {
-        self.scene_fixture_group_button_states
-            .get(&self.active_scene_id)
-            .unwrap_or_else(|| &*EMPTY_SCENE_BUTTON_STATES)
-            .fixture_groups
-            .get(&self.active_fixture_group_control)
-            .unwrap_or_else(|| &*EMPTY_BUTTON_GROUP_STATES)
+        self.active_scene_fixture_group_button_states(self.active_fixture_group_control)
             .iter()
             .map(|(group_id, (_, toggle_state, _))| (*group_id, *toggle_state))
     }
@@ -482,12 +482,7 @@ impl<'a> EngineState<'a> {
         }
     }
     fn fixture_group_values(&'a self) -> FxHashMap<FixtureGroupId, FixtureGroupValue<'a>> {
-        let fixture_group_ids = self
-            .scene_fixture_group_button_states
-            .get(&self.active_scene_id)
-            .unwrap_or_else(|| &*EMPTY_SCENE_BUTTON_STATES)
-            .fixture_groups
-            .keys();
+        let fixture_group_ids = self.active_scene_button_states().fixture_groups.keys();
 
         fixture_group_ids
             .map(|fixture_group_id| {
