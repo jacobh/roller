@@ -19,7 +19,7 @@ use crate::{
 mod button_states;
 
 pub use button_states::{
-    ButtonGroupInfo, ButtonGroupStates, ButtonInfo, ButtonStateMap, ButtonStateValue, SceneState,
+    ButtonGroupInfo, ButtonInfo, ButtonStateMap, ButtonStateValue, ButtonStates, SceneState,
     EMPTY_SCENE_STATE,
 };
 
@@ -102,17 +102,17 @@ impl<'a> EngineState<'a> {
             .get(&self.active_scene_id)
             .unwrap_or_else(|| &*EMPTY_SCENE_STATE)
     }
-    pub fn control_button_states(&self) -> &ButtonGroupStates {
+    pub fn control_button_states(&self) -> &ButtonStates {
         self.active_scene_state()
-            .button_group_states(self.active_fixture_group_control)
+            .button_states(self.active_fixture_group_control)
     }
-    pub fn control_button_states_mut(&mut self) -> &mut ButtonGroupStates {
+    pub fn control_button_states_mut(&mut self) -> &mut ButtonStates {
         let active_scene_state = self
             .scene_fixture_group_button_states
             .entry(self.active_scene_id)
             .or_default();
 
-        active_scene_state.button_group_states_mut(self.active_fixture_group_control)
+        active_scene_state.button_states_mut(self.active_fixture_group_control)
     }
     pub fn apply_event(&mut self, event: LightingEvent) {
         // dbg!(&event);

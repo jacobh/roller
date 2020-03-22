@@ -20,38 +20,32 @@ use crate::{
 
 // This is just for the case where no buttons have been activated yet
 lazy_static::lazy_static! {
-    pub static ref EMPTY_BUTTON_GROUP_STATES: ButtonGroupStates = ButtonGroupStates::default();
+    pub static ref EMPTY_BUTTON_STATES: ButtonStates = ButtonStates::default();
     pub static ref EMPTY_SCENE_STATE: SceneState = SceneState::default();
 }
 
 pub type ButtonStateMap = FxIndexMap<(ButtonMapping, NoteState), ButtonStateValue>;
 pub type ButtonStateValue = (Instant, Rate);
-pub type FixtureGroupStateMap = FxHashMap<FixtureGroupId, ButtonGroupStates>;
+pub type FixtureGroupStateMap = FxHashMap<FixtureGroupId, ButtonStates>;
 
 #[derive(Default)]
 pub struct SceneState {
     // contains base effect states, for all fixtures
-    pub base: ButtonGroupStates,
+    pub base: ButtonStates,
     // Contains states for effects enabled for specific groups. These take
     // precedence over any effects set in the `default` state
     pub fixture_groups: FixtureGroupStateMap,
 }
 impl SceneState {
-    pub fn base_button_states(&self) -> &ButtonGroupStates {
+    pub fn base_button_states(&self) -> &ButtonStates {
         &self.base
     }
-    pub fn fixture_group_button_states(
-        &self,
-        fixture_group_id: FixtureGroupId,
-    ) -> &ButtonGroupStates {
+    pub fn fixture_group_button_states(&self, fixture_group_id: FixtureGroupId) -> &ButtonStates {
         self.fixture_groups
             .get(&fixture_group_id)
-            .unwrap_or_else(|| &*EMPTY_BUTTON_GROUP_STATES)
+            .unwrap_or_else(|| &*EMPTY_BUTTON_STATES)
     }
-    pub fn button_group_states(
-        &self,
-        fixture_group_id: Option<FixtureGroupId>,
-    ) -> &ButtonGroupStates {
+    pub fn button_states(&self, fixture_group_id: Option<FixtureGroupId>) -> &ButtonStates {
         if let Some(group_id) = fixture_group_id {
             self.fixture_group_button_states(group_id)
         } else {
@@ -77,10 +71,10 @@ impl SceneState {
 
         (base_values, group_values)
     }
-    pub fn button_group_states_mut(
+    pub fn button_states_mut(
         &mut self,
         fixture_group_id: Option<FixtureGroupId>,
-    ) -> &mut ButtonGroupStates {
+    ) -> &mut ButtonStates {
         if let Some(group_id) = fixture_group_id {
             self.fixture_groups.entry(group_id).or_default()
         } else {
@@ -91,11 +85,11 @@ impl SceneState {
 
 type GroupStatesValue = (ButtonType, GroupToggleState, ButtonStateMap);
 #[derive(Default)]
-pub struct ButtonGroupStates {
+pub struct ButtonStates {
     group_states: FxHashMap<ButtonGroupId, GroupStatesValue>,
 }
-impl ButtonGroupStates {
-    fn iter(
+impl ButtonStates {
+    fn iter_groups(
         &self,
     ) -> impl Iterator<Item = (ButtonGroupId, ButtonType, GroupToggleState, &ButtonStateMap)> {
         self.group_states
@@ -106,7 +100,7 @@ impl ButtonGroupStates {
     }
     // Takes a button group and returns an iterator of `Info` summaries
     pub fn iter_info(&self) -> impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'_>)> {
-        self.iter()
+        self.iter_groups()
             .flat_map(|(group_id, button_type, toggle_state, states)| {
                 states
                     .iter()
@@ -127,10 +121,10 @@ impl ButtonGroupStates {
                     })
             })
     }
-    pub fn iter_toggle_states(
+    pub fn iter_group_toggle_states(
         &self,
     ) -> impl Iterator<Item = (ButtonGroupId, GroupToggleState)> + '_ {
-        self.iter()
+        self.iter_groups()
             .map(|(group_id, _, toggle_state, _)| (group_id, toggle_state))
     }
     fn find_active_effects<'a, T, F>(&'a self, extract_effect_fn: F) -> FxIndexMap<&'a T, Rate>
