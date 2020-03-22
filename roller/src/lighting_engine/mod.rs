@@ -102,11 +102,11 @@ impl<'a> EngineState<'a> {
             .get(&self.active_scene_id)
             .unwrap_or_else(|| &*EMPTY_SCENE_STATE)
     }
-    pub fn control_button_group_states(&self) -> &ButtonGroupStates {
+    pub fn control_button_states(&self) -> &ButtonGroupStates {
         self.active_scene_state()
             .button_group_states(self.active_fixture_group_control)
     }
-    pub fn control_button_group_states_mut(&mut self) -> &mut ButtonGroupStates {
+    pub fn control_button_states_mut(&mut self) -> &mut ButtonGroupStates {
         let active_scene_state = self
             .scene_fixture_group_button_states
             .entry(self.active_scene_id)
@@ -127,11 +127,11 @@ impl<'a> EngineState<'a> {
                 self.color_effect_intensity = intensity;
             }
             LightingEvent::UpdateClockRate(rate) => {
-                let pressed_notes = self.control_button_group_states().pressed_notes();
+                let pressed_notes = self.control_button_states().pressed_notes();
 
                 // If there are any buttons currently pressed, update the rate of those buttons, note the global rate
                 if !pressed_notes.is_empty() {
-                    self.control_button_group_states_mut()
+                    self.control_button_states_mut()
                         .update_pressed_button_rates(rate);
                 } else {
                     self.global_clock_rate = rate;
@@ -151,7 +151,7 @@ impl<'a> EngineState<'a> {
                 self.group_dimmers.insert(group_id, dimmer);
             }
             LightingEvent::UpdateButton(group, mapping, note_state, now) => {
-                self.control_button_group_states_mut()
+                self.control_button_states_mut()
                     .update_button_state(&group, mapping, note_state, now);
             }
             LightingEvent::TapTempo(now) => {
@@ -329,7 +329,7 @@ impl<'a> EngineState<'a> {
                 });
 
         let pressed_button_rate: Option<Rate> = self
-            .control_button_group_states()
+            .control_button_states()
             .pressed_buttons()
             .values()
             .map(|(_, rate)| *rate)
@@ -357,8 +357,7 @@ impl<'a> EngineState<'a> {
         .map(PadEvent::new_on)
     }
     pub fn pad_events(&self) -> impl Iterator<Item = PadEvent<'_>> {
-        self.active_scene_state()
-            .button_group_states(self.active_fixture_group_control)
+        self.control_button_states()
             .iter_info()
             .map(PadEvent::from)
             .chain(self.meta_pad_events())
