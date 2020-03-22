@@ -58,12 +58,6 @@ impl SceneState {
             self.base_button_states()
         }
     }
-    pub fn iter_button_info(
-        &self,
-        fixture_group_id: Option<FixtureGroupId>,
-    ) -> impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'_>)> {
-        self.button_group_states(fixture_group_id).iter_info()
-    }
     pub fn fixture_group_values(
         &self,
     ) -> (
@@ -111,7 +105,7 @@ impl ButtonGroupStates {
             })
     }
     // Takes a button group and returns an iterator of `Info` summaries
-    fn iter_info(&self) -> impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'_>)> {
+    pub fn iter_info(&self) -> impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'_>)> {
         self.iter()
             .flat_map(|(group_id, button_type, toggle_state, states)| {
                 states

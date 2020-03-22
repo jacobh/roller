@@ -358,7 +358,8 @@ impl<'a> EngineState<'a> {
     }
     pub fn pad_events(&self) -> impl Iterator<Item = PadEvent<'_>> {
         self.active_scene_state()
-            .iter_button_info(self.active_fixture_group_control)
+            .button_group_states(self.active_fixture_group_control)
+            .iter_info()
             .map(PadEvent::from)
             .chain(self.meta_pad_events())
     }
