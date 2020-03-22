@@ -58,7 +58,7 @@ impl SceneState {
             self.base_button_states()
         }
     }
-    pub fn iter_group_button_info(
+    pub fn iter_button_info(
         &self,
         fixture_group_id: Option<FixtureGroupId>,
     ) -> impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'_>)> {
