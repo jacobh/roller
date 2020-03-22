@@ -1,5 +1,4 @@
 use derive_more::Constructor;
-use midi::Note;
 use rustc_hash::FxHashMap;
 use std::time::Instant;
 
@@ -8,7 +7,7 @@ use crate::{
     color::Color,
     control::{
         button::{
-            ButtonGroup, ButtonGroupId, ButtonMapping, ButtonType, GroupToggleState,
+            ButtonGroup, ButtonGroupId, ButtonMapping, ButtonType,
             MetaButtonAction, PadEvent,
         },
         midi::{MidiMapping, NoteState},

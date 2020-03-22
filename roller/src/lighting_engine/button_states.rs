@@ -1,6 +1,5 @@
 use midi::Note;
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::collections::hash_map::Entry;
 use std::time::Instant;
 
 use crate::{
