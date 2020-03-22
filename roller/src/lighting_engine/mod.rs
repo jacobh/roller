@@ -126,18 +126,6 @@ impl<'a> EngineState<'a> {
         self.control_button_group_states_mut()
             .button_group_state_mut(button_group_id, button_type)
     }
-    fn toggle_button_group(&mut self, id: ButtonGroupId, button_type: ButtonType, note: Note) {
-        self.control_button_group_states_mut()
-            .entry(id)
-            .and_modify(|(_, toggle_state, _)| {
-                toggle_state.toggle_mut(note);
-            })
-            .or_insert((
-                button_type,
-                GroupToggleState::On(note),
-                FxIndexMap::default(),
-            ));
-    }
     fn update_button_state(
         &mut self,
         group: &ButtonGroup,
@@ -146,7 +134,11 @@ impl<'a> EngineState<'a> {
         now: Instant,
     ) {
         if note_state == NoteState::On {
-            self.toggle_button_group(group.id, group.button_type, button.note);
+            self.control_button_group_states_mut().toggle_button_group(
+                group.id,
+                group.button_type,
+                button.note,
+            );
         }
 
         let button_states = self.button_states_mut(group.id, group.button_type);

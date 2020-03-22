@@ -299,9 +299,6 @@ impl ButtonGroupStates {
             base_position: self.base_position(),
         }
     }
-    pub fn entry(&mut self, group_id: ButtonGroupId) -> Entry<'_, ButtonGroupId, GroupStatesValue> {
-        self.group_states.entry(group_id)
-    }
     pub fn iter_states_mut(&mut self) -> impl Iterator<Item = &mut ButtonStateMap> {
         self.group_states.values_mut().map(|(_, _, states)| states)
     }
@@ -316,6 +313,18 @@ impl ButtonGroupStates {
             .or_insert_with(|| (button_type, GroupToggleState::Off, FxIndexMap::default()));
 
         button_states
+    }
+    pub fn toggle_button_group(&mut self, id: ButtonGroupId, button_type: ButtonType, note: Note) {
+        self.group_states
+            .entry(id)
+            .and_modify(|(_, toggle_state, _)| {
+                toggle_state.toggle_mut(note);
+            })
+            .or_insert((
+                button_type,
+                GroupToggleState::On(note),
+                FxIndexMap::default(),
+            ));
     }
     pub fn update_pressed_button_rates(&mut self, rate: Rate) -> usize {
         let pressed_notes = self.pressed_notes();
