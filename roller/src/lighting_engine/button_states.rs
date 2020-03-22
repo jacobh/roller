@@ -317,6 +317,19 @@ impl ButtonGroupStates {
 
         button_states
     }
+    pub fn update_pressed_button_rates(&mut self, rate: Rate) -> usize {
+        let pressed_notes = self.pressed_notes();
+
+        for button_states in self.iter_states_mut() {
+            for ((button, _), (_, button_rate)) in button_states.iter_mut() {
+                if pressed_notes.contains(&button.note) {
+                    *button_rate = rate;
+                }
+            }
+        }
+
+        pressed_notes.len()
+    }
 }
 
 pub struct ButtonGroupInfo {

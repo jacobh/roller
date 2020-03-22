@@ -118,18 +118,6 @@ impl<'a> EngineState<'a> {
 
         active_scene_state.button_group_states_mut(self.active_fixture_group_control)
     }
-    fn update_pressed_button_rates(&mut self, rate: Rate) {
-        let pressed_notes = self.control_button_group_states().pressed_notes();
-        let button_states = self.control_button_group_states_mut().iter_states_mut();
-
-        for button_states in button_states {
-            for ((button, _), (_, button_rate)) in button_states.iter_mut() {
-                if pressed_notes.contains(&button.note) {
-                    *button_rate = rate;
-                }
-            }
-        }
-    }
     fn button_states_mut(
         &mut self,
         button_group_id: ButtonGroupId,
@@ -187,7 +175,8 @@ impl<'a> EngineState<'a> {
 
                 // If there are any buttons currently pressed, update the rate of those buttons, note the global rate
                 if !pressed_notes.is_empty() {
-                    self.update_pressed_button_rates(rate);
+                    self.control_button_group_states_mut()
+                        .update_pressed_button_rates(rate);
                 } else {
                     self.global_clock_rate = rate;
                 }
