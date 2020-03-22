@@ -6,10 +6,7 @@ use crate::{
     clock::{Clock, ClockOffsetOptionExt, Rate},
     color::Color,
     control::{
-        button::{
-            ButtonGroup, ButtonGroupId, ButtonMapping, ButtonType,
-            MetaButtonAction, PadEvent,
-        },
+        button::{ButtonGroup, ButtonMapping, MetaButtonAction, PadEvent},
         midi::{MidiMapping, NoteState},
     },
     effect::{self, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet, PositionEffect},
@@ -117,38 +114,6 @@ impl<'a> EngineState<'a> {
 
         active_scene_state.button_group_states_mut(self.active_fixture_group_control)
     }
-    fn button_states_mut(
-        &mut self,
-        button_group_id: ButtonGroupId,
-        button_type: ButtonType,
-    ) -> &mut ButtonStateMap {
-        self.control_button_group_states_mut()
-            .button_group_state_mut(button_group_id, button_type)
-    }
-    fn update_button_state(
-        &mut self,
-        group: &ButtonGroup,
-        button: ButtonMapping,
-        note_state: NoteState,
-        now: Instant,
-    ) {
-        if note_state == NoteState::On {
-            self.control_button_group_states_mut().toggle_button_group(
-                group.id,
-                group.button_type,
-                button.note,
-            );
-        }
-
-        let button_states = self.button_states_mut(group.id, group.button_type);
-        let key = (button, note_state);
-
-        let previous_state = button_states.shift_remove(&key);
-        let effect_rate = previous_state
-            .map(|(_, rate)| rate)
-            .unwrap_or_else(|| Rate::default());
-        button_states.insert(key, (now, effect_rate));
-    }
     pub fn apply_event(&mut self, event: LightingEvent) {
         // dbg!(&event);
         match event {
@@ -186,7 +151,8 @@ impl<'a> EngineState<'a> {
                 self.group_dimmers.insert(group_id, dimmer);
             }
             LightingEvent::UpdateButton(group, mapping, note_state, now) => {
-                self.update_button_state(&group, mapping, note_state, now);
+                self.control_button_group_states_mut()
+                    .update_button_state(&group, mapping, note_state, now);
             }
             LightingEvent::TapTempo(now) => {
                 self.clock.tap(now);

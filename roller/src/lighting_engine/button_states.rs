@@ -6,7 +6,9 @@ use crate::{
     clock::Rate,
     color::Color,
     control::{
-        button::{ButtonAction, ButtonGroupId, ButtonMapping, ButtonType, GroupToggleState},
+        button::{
+            ButtonAction, ButtonGroup, ButtonGroupId, ButtonMapping, ButtonType, GroupToggleState,
+        },
         midi::NoteState,
     },
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
@@ -324,6 +326,26 @@ impl ButtonGroupStates {
                 GroupToggleState::On(note),
                 FxIndexMap::default(),
             ));
+    }
+    pub fn update_button_state(
+        &mut self,
+        group: &ButtonGroup,
+        button: ButtonMapping,
+        note_state: NoteState,
+        now: Instant,
+    ) {
+        if note_state == NoteState::On {
+            self.toggle_button_group(group.id, group.button_type, button.note);
+        }
+
+        let button_states = self.button_group_state_mut(group.id, group.button_type);
+        let key = (button, note_state);
+
+        let previous_state = button_states.shift_remove(&key);
+        let effect_rate = previous_state
+            .map(|(_, rate)| rate)
+            .unwrap_or_else(|| Rate::default());
+        button_states.insert(key, (now, effect_rate));
     }
     pub fn update_pressed_button_rates(&mut self, rate: Rate) -> usize {
         let pressed_notes = self.pressed_notes();
