@@ -35,6 +35,7 @@ lazy_static::lazy_static! {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor)]
 pub struct SceneId(usize);
 
+#[derive(Default)]
 pub struct FixtureGroupValue<'a> {
     pub global_color: Option<Color>,
     pub secondary_color: Option<Color>,
@@ -71,19 +72,6 @@ impl<'a> FixtureGroupValue<'a> {
     }
     pub fn base_position(&self) -> BasePosition {
         self.base_position.unwrap_or_default()
-    }
-}
-impl<'a> Default for FixtureGroupValue<'a> {
-    fn default() -> FixtureGroupValue<'a> {
-        FixtureGroupValue {
-            global_color: None,
-            secondary_color: None,
-            active_dimmer_effects: FxIndexMap::default(),
-            active_color_effects: FxIndexMap::default(),
-            active_pixel_effects: FxIndexMap::default(),
-            active_position_effects: FxIndexMap::default(),
-            base_position: None,
-        }
     }
 }
 
