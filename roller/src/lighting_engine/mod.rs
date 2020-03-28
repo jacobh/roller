@@ -161,7 +161,8 @@ impl<'a> EngineState<'a> {
         }
     }
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
-        let clock_snapshot = self.clock.snapshot().with_rate(self.global_clock_rate);
+        let clock_snapshot = self.clock.snapshot();
+        let clock_snapshot = clock_snapshot.with_rate(self.global_clock_rate);
         let (base_values, fixture_group_values) = self.active_scene_state().fixture_group_values();
 
         let fixture_values = fixtures

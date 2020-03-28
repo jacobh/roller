@@ -1,6 +1,7 @@
 use derive_more::{From, Into};
 use ordered_float::OrderedFloat;
 use rand::{seq::SliceRandom, thread_rng};
+use std::borrow::Cow;
 use std::iter::Sum;
 use std::ops::{Add, Mul, Sub};
 use std::time::{Duration, Instant};
@@ -13,8 +14,8 @@ impl Beats {
     pub fn new(x: impl Into<OrderedFloat<f64>>) -> Beats {
         Beats(x.into())
     }
-    pub fn zero() -> Beats {
-        Beats::new(0.0)
+    pub fn is_zero(&self) -> bool {
+        self.0.into_inner() == 0.0
     }
 }
 
@@ -59,6 +60,9 @@ pub struct Rate(OrderedFloat<f64>);
 impl Rate {
     pub fn new(x: impl Into<OrderedFloat<f64>>) -> Rate {
         Rate(x.into())
+    }
+    pub fn is_one(&self) -> bool {
+        self.0.into_inner() == 1.0
     }
 }
 impl Default for Rate {
@@ -129,19 +133,27 @@ pub struct ClockSnapshot {
     bpm: f64,
 }
 impl ClockSnapshot {
-    pub fn with_rate(&self, rate: Rate) -> ClockSnapshot {
-        ClockSnapshot {
-            secs_elapsed: self.secs_elapsed * f64::from(rate),
-            bpm: self.bpm,
+    pub fn with_rate(&self, rate: Rate) -> Cow<ClockSnapshot> {
+        if rate.is_one() {
+            Cow::Borrowed(self)
+        } else {
+            Cow::Owned(ClockSnapshot {
+                secs_elapsed: self.secs_elapsed * f64::from(rate),
+                bpm: self.bpm,
+            })
         }
     }
-    pub fn shift(&self, beats: Beats) -> ClockSnapshot {
-        let secs_per_beat = 60.0 / self.bpm;
-        let secs_to_shift = secs_per_beat * f64::from(beats);
-
-        ClockSnapshot {
-            secs_elapsed: self.secs_elapsed + secs_to_shift,
-            bpm: self.bpm,
+    pub fn shift(&self, beats: Beats) -> Cow<ClockSnapshot> {
+        if beats.is_zero() {
+            Cow::Borrowed(self)
+        } else {
+            let secs_per_beat = 60.0 / self.bpm;
+            let secs_to_shift = secs_per_beat * f64::from(beats);
+    
+            Cow::Owned(ClockSnapshot {
+                secs_elapsed: self.secs_elapsed + secs_to_shift,
+                bpm: self.bpm,
+            })
         }
     }
     pub fn secs_elapsed(&self) -> f64 {
@@ -203,24 +215,24 @@ impl ClockOffset {
             }
         }
     }
-    pub fn offsetted_for_fixture(
+    pub fn offsetted_for_fixture<'a>(
         &self,
-        clock: &ClockSnapshot,
+        clock: &'a ClockSnapshot,
         fixture: &Fixture,
         fixtures: &[Fixture],
-    ) -> ClockSnapshot {
+    ) -> Cow<'a, ClockSnapshot> {
         clock.shift(self.offset_for_fixture(fixture, fixtures))
     }
 }
 
-pub fn offsetted_for_fixture(
+pub fn offsetted_for_fixture<'a>(
     clock_offset: Option<&ClockOffset>,
-    clock: &ClockSnapshot,
+    clock: &'a ClockSnapshot,
     fixture: &Fixture,
     fixtures: &[Fixture],
-) -> ClockSnapshot {
+) -> Cow<'a, ClockSnapshot> {
     match clock_offset {
         Some(clock_offset) => clock_offset.offsetted_for_fixture(clock, fixture, fixtures),
-        None => clock.clone(),
+        None => Cow::Borrowed(clock),
     }
 }
