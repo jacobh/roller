@@ -76,6 +76,7 @@ impl MidiMapping {
                         .clone()
                         .into_lighting_event(group.clone(), NoteState::Off, now)
                 }),
+            _ => None
         }
     }
     pub fn pad_mappings(&self) -> impl Iterator<Item = PadMapping<'_>> {

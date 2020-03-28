@@ -3,11 +3,16 @@ use derive_more::{From, Into};
 use ordered_float::OrderedFloat;
 use rand::{seq::SliceRandom, thread_rng};
 use std::borrow::Cow;
+use std::collections::VecDeque;
 use std::iter::Sum;
 use std::ops::{Add, Mul, Sub};
 use std::time::{Duration, Instant};
 
 use crate::fixture::Fixture;
+
+fn duration_as_secs(duration: Duration) -> f64 {
+    duration.as_micros() as f64 / 1_000_000.0
+}
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, From, Into)]
 pub struct Beats(OrderedFloat<f64>);
@@ -108,8 +113,7 @@ impl Clock {
 
             self.started_at = now;
 
-            let beat_duration_secs =
-                (time_elapsed.as_micros() as f64 / 1_000_000.0) / (self.taps.len() - 1) as f64;
+            let beat_duration_secs = duration_as_secs(time_elapsed) / (self.taps.len() - 1) as f64;
             self.bpm = 60.0 / beat_duration_secs;
         }
     }
@@ -238,6 +242,8 @@ pub fn offsetted_for_fixture<'a>(
     }
 }
 
+static PULSES_PER_QUARTER_NOTE: usize = 24;
+
 pub struct MidiClock {
     // input: midi::MidiInput,
 }
@@ -247,8 +253,25 @@ impl MidiClock {
 
         async_std::task::spawn(async move {
             let mut events = input.events();
+            let mut pulses: VecDeque<Instant> = VecDeque::new();
             while let Some(event) = events.next().await {
-                dbg!(event);
+                if event == midi::MidiEvent::TimingClock {
+                    pulses.push_back(Instant::now());
+
+                    while pulses.len() > PULSES_PER_QUARTER_NOTE {
+                        pulses.pop_front();
+                    }
+
+                    if let (Some(first_quarter_note), Some(last_quarter_note)) =
+                        (pulses.front(), pulses.back())
+                    {
+                        let duration = *last_quarter_note - *first_quarter_note;
+                        let secs_per_beat =
+                            duration_as_secs(duration) / (pulses.len() - 1) as f64 * 24.0;
+
+                        dbg!(60.0 / secs_per_beat);
+                    }
+                }
             }
         });
 

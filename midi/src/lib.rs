@@ -90,6 +90,7 @@ pub enum MidiEvent {
     NoteOn { note: Note, velocity: u8 },
     NoteOff { note: Note, velocity: u8 },
     ControlChange { control: ControlChannel, value: u8 },
+    TimingClock,
 }
 impl MidiEvent {
     pub fn from_bytes(bytes: &[u8]) -> Result<Option<MidiEvent>, MidiMessageError> {
@@ -118,6 +119,7 @@ impl MidiEvent {
                 control: ControlChannel::new(stream.read_u8()?),
                 value: stream.read_u8()?,
             })),
+            Status::TimingClock => Ok(Some(MidiEvent::TimingClock)),
             _ => Err(MidiMessageError::MalformedPacket),
         }
     }
