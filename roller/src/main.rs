@@ -26,6 +26,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     let mut fixtures = project.fixtures().await?;
 
     let midi_controller = control::midi::MidiController::new_for_device_name("APC MINI").unwrap();
+    let _midi_clock = clock::MidiClock::new("XONE:PX5");
 
     let mut state = EngineState {
         midi_mapping: &midi_controller.midi_mapping,

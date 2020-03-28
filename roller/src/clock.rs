@@ -1,3 +1,4 @@
+use async_std::prelude::*;
 use derive_more::{From, Into};
 use ordered_float::OrderedFloat;
 use rand::{seq::SliceRandom, thread_rng};
@@ -149,7 +150,7 @@ impl ClockSnapshot {
         } else {
             let secs_per_beat = 60.0 / self.bpm;
             let secs_to_shift = secs_per_beat * f64::from(beats);
-    
+
             Cow::Owned(ClockSnapshot {
                 secs_elapsed: self.secs_elapsed + secs_to_shift,
                 bpm: self.bpm,
@@ -234,5 +235,23 @@ pub fn offsetted_for_fixture<'a>(
     match clock_offset {
         Some(clock_offset) => clock_offset.offsetted_for_fixture(clock, fixture, fixtures),
         None => Cow::Borrowed(clock),
+    }
+}
+
+pub struct MidiClock {
+    // input: midi::MidiInput,
+}
+impl MidiClock {
+    pub fn new(name: &str) -> Result<MidiClock, midi::MidiIoError> {
+        let input = midi::MidiInput::new(name)?;
+
+        async_std::task::spawn(async move {
+            let mut events = input.events();
+            while let Some(event) = events.next().await {
+                dbg!(event);
+            }
+        });
+
+        Ok(MidiClock {})
     }
 }
