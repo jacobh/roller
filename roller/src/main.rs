@@ -26,11 +26,17 @@ async fn main() -> Result<(), async_std::io::Error> {
     let mut fixtures = project.fixtures().await?;
 
     let midi_controller = control::midi::MidiController::new_for_device_name("APC MINI").unwrap();
-    let _midi_clock = clock::MidiClock::new("XONE:PX5");
+    let clock: Box<dyn Clock> = {
+        if let Ok(clock) = clock::MidiClock::new("XONE:PX5") {
+            Box::new(clock)
+        } else {
+            Box::new(TapTempoClock::new(128.0))
+        }
+    };
 
     let mut state = EngineState {
         midi_mapping: &midi_controller.midi_mapping,
-        clock: TapTempoClock::new(128.0),
+        clock: clock,
         master_dimmer: 1.0,
         group_dimmers: FxHashMap::default(),
         dimmer_effect_intensity: 0.5,

@@ -86,7 +86,7 @@ pub enum LightingEvent {
 
 pub struct EngineState<'a> {
     pub midi_mapping: &'a MidiMapping,
-    pub clock: TapTempoClock,
+    pub clock: Box<dyn Clock>,
     pub master_dimmer: f64,
     pub group_dimmers: FxHashMap<FixtureGroupId, f64>,
     pub dimmer_effect_intensity: f64,
