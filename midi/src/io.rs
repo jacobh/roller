@@ -36,9 +36,8 @@ impl MidiInput {
         let midi_input_port = client
             .input_port(&format!("roller-input-{}", name), move |packet_list| {
                 for packet in packet_list.iter() {
-                    // multiple messages may appear in the same packet
-                    for message_data in packet.data().chunks_exact(3) {
-                        let midi_event = MidiEvent::from_bytes(message_data);
+                    let mut packet_data = packet.data().to_vec().into_iter();
+                    while let Some(midi_event) = MidiEvent::next_from_iter(&mut packet_data) {
                         async_std::task::block_on(input_sender.send(midi_event));
                     }
                 }

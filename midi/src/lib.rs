@@ -53,8 +53,35 @@ pub enum Status {
     ActiveSensing = 0xFE, // FD also res/unused
     SystemReset = 0xFF,
 }
+impl Status {
+    // None if SysEx
+    pub fn data_bytes(&self) -> Option<usize> {
+        match self {
+            Status::NoteOff
+            | Status::NoteOn
+            | Status::PolyphonicAftertouch
+            | Status::ControlChange
+            | Status::PitchBend
+            | Status::SongPositionPointer => Some(2),
 
-pub const STATUS_MASK: u8 = 0xF0;
+            Status::SysExStart => None,
+
+            Status::ProgramChange
+            | Status::ChannelAftertouch
+            | Status::MIDITimeCodeQtrFrame
+            | Status::SongSelect => Some(1),
+
+            Status::TuneRequest
+            | Status::SysExEnd
+            | Status::TimingClock
+            | Status::Start
+            | Status::Continue
+            | Status::Stop
+            | Status::ActiveSensing
+            | Status::SystemReset => Some(0),
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MidiEvent {
@@ -65,22 +92,32 @@ pub enum MidiEvent {
 }
 impl MidiEvent {
     pub fn from_bytes(bytes: &[u8]) -> MidiEvent {
-        let status = Status::from_u8(bytes[0] & STATUS_MASK).unwrap();
-
+        let (status_byte, data_bytes) = bytes.split_first().unwrap();
+        let status = Status::from_u8(*status_byte).unwrap();
+        MidiEvent::from_status_and_data(status, data_bytes)
+    }
+    pub fn from_status_and_data(status: Status, bytes: &[u8]) -> MidiEvent {
         match status {
             Status::NoteOn => MidiEvent::NoteOn {
-                note: Note::new(bytes[1]),
-                velocity: bytes[2],
+                note: Note::new(bytes[0]),
+                velocity: bytes[1],
             },
             Status::NoteOff => MidiEvent::NoteOff {
-                note: Note::new(bytes[1]),
-                velocity: bytes[2],
+                note: Note::new(bytes[0]),
+                velocity: bytes[1],
             },
             Status::ControlChange => MidiEvent::ControlChange {
-                control: ControlChannel::new(bytes[1]),
-                value: bytes[2],
+                control: ControlChannel::new(bytes[0]),
+                value: bytes[1],
             },
             _ => MidiEvent::Other(status),
         }
+    }
+    pub fn next_from_iter(iter: &mut impl Iterator<Item = u8>) -> Option<MidiEvent> {
+        let status = Status::from_u8(iter.next()?).unwrap();
+        // TODO SysEx messages aren't handled
+        let data_bytes: Vec<u8> = iter.take(status.data_bytes()?).collect();
+
+        Some(MidiEvent::from_status_and_data(status, &data_bytes))
     }
 }
