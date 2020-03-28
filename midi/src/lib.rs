@@ -2,6 +2,7 @@ use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 
 mod io;
+pub use io::{MidiInput, MidiIoError, MidiOutput};
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Note(u8);

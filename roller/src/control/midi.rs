@@ -1,5 +1,5 @@
 use async_std::{prelude::*, sync::Arc};
-use midi::{ControlChannel, MidiEvent, Note};
+use midi::{ControlChannel, MidiEvent, MidiInput, MidiOutput, Note};
 use rustc_hash::FxHashMap;
 use std::time::{Duration, Instant};
 
@@ -87,83 +87,33 @@ impl MidiMapping {
 }
 
 pub struct MidiController {
-    _client: coremidi::Client,
-    _source: coremidi::Source,
-    _input_port: coremidi::InputPort,
-
     pub midi_mapping: Arc<MidiMapping>,
-    input_receiver: async_std::sync::Receiver<MidiEvent>,
-    output_sender: async_std::sync::Sender<Vec<u8>>,
+    midi_input: MidiInput,
+    midi_output: MidiOutput,
 }
 impl MidiController {
     pub fn new_for_device_name(name: &str) -> Result<MidiController, ()> {
-        let midi_client = coremidi::Client::new(&format!("roller-{}", name)).unwrap();
-
-        let source = coremidi::Sources
-            .into_iter()
-            .find(|source| source.display_name() == Some(name.to_owned()))
-            .unwrap();
-
-        let (input_sender, input_receiver) = async_std::sync::channel::<MidiEvent>(1024);
-        let midi_input_port = midi_client
-            .input_port(&format!("roller-input-{}", name), move |packet_list| {
-                for packet in packet_list.iter() {
-                    // multiple messages may appear in the same packet
-                    for message_data in packet.data().chunks_exact(3) {
-                        let midi_event = MidiEvent::from_bytes(message_data);
-                        async_std::task::block_on(input_sender.send(midi_event));
-                    }
-                }
-            })
-            .unwrap();
-        midi_input_port.connect_source(&source).unwrap();
-
-        let (output_sender, mut output_receiver) = async_std::sync::channel::<Vec<u8>>(512);
-
-        let destination = coremidi::Destinations
-            .into_iter()
-            .find(|dest| dest.display_name() == Some(name.to_owned()))
-            .unwrap();
-
-        let midi_output_port = midi_client
-            .output_port(&format!("roller-input-{}", name))
-            .unwrap();
-
-        async_std::task::spawn(async move {
-            while let Some(packet) = output_receiver.next().await {
-                let packets = coremidi::PacketBuffer::new(0, &packet);
-                midi_output_port
-                    .send(&destination, &packets)
-                    .map_err(|_| "failed to send packets")
-                    .unwrap();
-                async_std::task::sleep(Duration::from_millis(1)).await;
-            }
-        });
+        let midi_input = MidiInput::new(name).map_err(|_| ())?;
+        let midi_output = MidiOutput::new(name).map_err(|_| ())?;
 
         Ok(MidiController {
-            _client: midi_client,
-            _source: source,
-            _input_port: midi_input_port,
             midi_mapping: Arc::new(default_midi_mapping()),
-            input_receiver,
-            output_sender,
+            midi_input,
+            midi_output,
         })
-    }
-    fn midi_events(&self) -> impl Stream<Item = MidiEvent> {
-        self.input_receiver.clone()
     }
     pub fn lighting_events(&self) -> impl Stream<Item = LightingEvent> {
         let mapping = self.midi_mapping.clone();
-        self.midi_events()
+
+        self.midi_input
+            .events()
             .map(move |midi_event| mapping.midi_to_lighting_event(&midi_event))
             .filter(|lighting_event| lighting_event.is_some())
             .map(|lighting_event| lighting_event.unwrap())
     }
-    async fn send_packet(&self, packet: impl Into<Vec<u8>>) {
-        self.output_sender.send(packet.into()).await
-    }
     pub async fn set_pad_color(&self, note: Note, pad_color: AkaiPadState) {
-        self.send_packet(vec![0x90, u8::from(note), pad_color.as_byte()])
+        self.midi_output
+            .send_packet(vec![0x90, u8::from(note), pad_color.as_byte()])
             .await
     }
     pub async fn set_pad_colors(&self, pad_colors: impl IntoIterator<Item = (Note, AkaiPadState)>) {
