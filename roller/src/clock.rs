@@ -278,7 +278,7 @@ impl MidiClock {
                         let duration = last_pulse - first_pulse;
                         let secs_per_beat =
                             duration_as_secs(duration) / (pulses.len() - 1) as f64 * 24.0;
-    
+
                         bpm2.store(60.0 / secs_per_beat);
 
                         pulses.clear();

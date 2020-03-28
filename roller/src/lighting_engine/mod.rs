@@ -3,7 +3,7 @@ use rustc_hash::FxHashMap;
 use std::time::Instant;
 
 use crate::{
-    clock::{offsetted_for_fixture, Clock, Rate, TapTempoClock},
+    clock::{offsetted_for_fixture, Clock, Rate},
     color::Color,
     control::{
         button::{ButtonGroup, ButtonMapping, MetaButtonAction, PadEvent},
@@ -161,8 +161,11 @@ impl<'a> EngineState<'a> {
         }
     }
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
-        let clock_snapshot = self.clock.snapshot();
-        let clock_snapshot = clock_snapshot.with_rate(self.global_clock_rate);
+        let clock_snapshot = self
+            .clock
+            .snapshot()
+            .with_rate(self.global_clock_rate)
+            .into_owned();
         let (base_values, fixture_group_values) = self.active_scene_state().fixture_group_values();
 
         let fixture_values = fixtures
