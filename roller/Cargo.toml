@@ -11,6 +11,7 @@ async-std = { version = "*", features = ["attributes", "unstable"] }
 serde = { version = "*", features = ["derive"] }
 toml = "*"
 coremidi = "*"
+crossbeam = "*"
 futures = "*"
 palette = "*"
 rustc-hash = "*"

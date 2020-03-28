@@ -1,4 +1,5 @@
-use async_std::prelude::*;
+use async_std::{prelude::*, sync::Arc};
+use crossbeam::atomic::AtomicCell;
 use derive_more::{From, Into};
 use ordered_float::OrderedFloat;
 use rand::{seq::SliceRandom, thread_rng};
@@ -245,12 +246,14 @@ pub fn offsetted_for_fixture<'a>(
 static PULSES_PER_QUARTER_NOTE: usize = 24;
 
 pub struct MidiClock {
-    // input: midi::MidiInput,
+    bpm: Arc<AtomicCell<f64>>
 }
 impl MidiClock {
     pub fn new(name: &str) -> Result<MidiClock, midi::MidiIoError> {
+        let bpm = Arc::new(AtomicCell::new(128.0));
         let input = midi::MidiInput::new(name)?;
 
+        let bpm2 = bpm.clone();
         async_std::task::spawn(async move {
             let mut events = input.events();
             let mut pulses: VecDeque<Instant> = VecDeque::new();
@@ -269,12 +272,12 @@ impl MidiClock {
                         let secs_per_beat =
                             duration_as_secs(duration) / (pulses.len() - 1) as f64 * 24.0;
 
-                        dbg!(60.0 / secs_per_beat);
+                        bpm2.store(60.0 / secs_per_beat);
                     }
                 }
             }
         });
 
-        Ok(MidiClock {})
+        Ok(MidiClock {bpm})
     }
 }
