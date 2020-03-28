@@ -58,6 +58,7 @@ pub enum Status {
 pub enum MidiMessageError {
     BadStatusByte(u8),
     UnexpectedEof,
+    MalformedPacket,
 }
 
 pub struct MidiMessageStream<'a> {
@@ -117,9 +118,7 @@ impl MidiEvent {
                 control: ControlChannel::new(stream.read_u8()?),
                 value: stream.read_u8()?,
             })),
-            _ => {
-                panic!("don't know how to parse this packet type!");
-            }
+            _ => Err(MidiMessageError::MalformedPacket),
         }
     }
 }
