@@ -97,14 +97,15 @@ impl MidiEvent {
         MidiEvent::read_next(&mut MidiMessageStream::new(bytes))
     }
 
-    pub fn read_next(stream: &mut MidiMessageStream) -> Result<Option<MidiEvent>, MidiMessageError> {
+    pub fn read_next(
+        stream: &mut MidiMessageStream,
+    ) -> Result<Option<MidiEvent>, MidiMessageError> {
         let status = match stream.try_read_u8() {
             Some(status) => status,
             None => return Ok(None),
         };
 
-        let status = Status::from_u8(status)
-            .ok_or(MidiMessageError::BadStatusByte(status))?;
+        let status = Status::from_u8(status).ok_or(MidiMessageError::BadStatusByte(status))?;
 
         match status {
             Status::NoteOn => Ok(Some(MidiEvent::NoteOn {

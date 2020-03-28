@@ -83,21 +83,44 @@ impl From<Rate> for f64 {
     }
 }
 
+pub trait Clock {
+    fn tap(&mut self, now: Instant) {}
+    fn bpm(&self) -> f64;
+    fn started_at(&self) -> Instant;
+    fn secs_elapsed(&self) -> f64 {
+        duration_as_secs(Instant::now() - self.started_at())
+    }
+    fn snapshot(&self) -> ClockSnapshot {
+        ClockSnapshot {
+            secs_elapsed: self.secs_elapsed(),
+            bpm: self.bpm(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
-pub struct Clock {
+pub struct TapTempoClock {
     started_at: Instant,
     bpm: f64,
     taps: Vec<Instant>,
 }
-impl Clock {
-    pub fn new(bpm: f64) -> Clock {
-        Clock {
+impl TapTempoClock {
+    pub fn new(bpm: f64) -> TapTempoClock {
+        TapTempoClock {
             bpm,
             started_at: Instant::now(),
             taps: Vec::new(),
         }
     }
-    pub fn tap(&mut self, now: Instant) {
+}
+impl Clock for TapTempoClock {
+    fn started_at(&self) -> Instant {
+        self.started_at
+    }
+    fn bpm(&self) -> f64 {
+        self.bpm
+    }
+    fn tap(&mut self, now: Instant) {
         // If last tap was more than 1 second ago, clear the taps
         if let Some(last_tap) = self.taps.last() {
             if (now - *last_tap) > Duration::from_secs(1) {
@@ -116,19 +139,6 @@ impl Clock {
 
             let beat_duration_secs = duration_as_secs(time_elapsed) / (self.taps.len() - 1) as f64;
             self.bpm = 60.0 / beat_duration_secs;
-        }
-    }
-    pub fn bpm(&self) -> f64 {
-        self.bpm
-    }
-    fn secs_elapsed(&self) -> f64 {
-        let elapsed_duration = Instant::now() - self.started_at;
-        elapsed_duration.as_micros() as f64 / 1_000_000.0
-    }
-    pub fn snapshot(&self) -> ClockSnapshot {
-        ClockSnapshot {
-            secs_elapsed: self.secs_elapsed(),
-            bpm: self.bpm,
         }
     }
 }
@@ -246,7 +256,8 @@ pub fn offsetted_for_fixture<'a>(
 static PULSES_PER_QUARTER_NOTE: usize = 24;
 
 pub struct MidiClock {
-    bpm: Arc<AtomicCell<f64>>
+    started_at: Instant,
+    bpm: Arc<AtomicCell<f64>>,
 }
 impl MidiClock {
     pub fn new(name: &str) -> Result<MidiClock, midi::MidiIoError> {
@@ -278,6 +289,20 @@ impl MidiClock {
             }
         });
 
-        Ok(MidiClock {bpm})
+        Ok(MidiClock {
+            started_at: Instant::now(),
+            bpm,
+        })
+    }
+}
+impl Clock for MidiClock {
+    fn tap(&mut self, now: Instant) {
+        self.started_at = now;
+    }
+    fn bpm(&self) -> f64 {
+        self.bpm.load()
+    }
+    fn started_at(&self) -> Instant {
+        self.started_at
     }
 }

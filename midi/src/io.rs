@@ -46,9 +46,7 @@ impl MidiInput {
                             Ok(None) => {
                                 break;
                             }
-                            Err(e) => {
-                                eprintln!("error reading midi event: {:?}", e)
-                            }
+                            Err(e) => eprintln!("error reading midi event: {:?}", e),
                         }
                     }
                 }

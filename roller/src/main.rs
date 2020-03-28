@@ -13,7 +13,7 @@ mod position;
 mod project;
 mod utils;
 
-use crate::clock::{Clock, Rate};
+use crate::clock::{Clock, Rate, TapTempoClock};
 use crate::control::button::pad_states;
 use crate::lighting_engine::{EngineState, LightingEvent, SceneId};
 
@@ -30,7 +30,7 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     let mut state = EngineState {
         midi_mapping: &midi_controller.midi_mapping,
-        clock: Clock::new(128.0),
+        clock: TapTempoClock::new(128.0),
         master_dimmer: 1.0,
         group_dimmers: FxHashMap::default(),
         dimmer_effect_intensity: 0.5,

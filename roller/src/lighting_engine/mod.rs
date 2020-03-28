@@ -3,7 +3,7 @@ use rustc_hash::FxHashMap;
 use std::time::Instant;
 
 use crate::{
-    clock::{offsetted_for_fixture, Clock, Rate},
+    clock::{offsetted_for_fixture, Clock, Rate, TapTempoClock},
     color::Color,
     control::{
         button::{ButtonGroup, ButtonMapping, MetaButtonAction, PadEvent},
@@ -86,7 +86,7 @@ pub enum LightingEvent {
 
 pub struct EngineState<'a> {
     pub midi_mapping: &'a MidiMapping,
-    pub clock: Clock,
+    pub clock: TapTempoClock,
     pub master_dimmer: f64,
     pub group_dimmers: FxHashMap<FixtureGroupId, f64>,
     pub dimmer_effect_intensity: f64,
