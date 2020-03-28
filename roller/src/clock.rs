@@ -4,7 +4,6 @@ use derive_more::{From, Into};
 use ordered_float::OrderedFloat;
 use rand::{seq::SliceRandom, thread_rng};
 use std::borrow::Cow;
-use std::collections::VecDeque;
 use std::iter::Sum;
 use std::ops::{Add, Mul, Sub};
 use std::time::{Duration, Instant};
@@ -267,23 +266,22 @@ impl MidiClock {
         let bpm2 = bpm.clone();
         async_std::task::spawn(async move {
             let mut events = input.events();
-            let mut pulses: VecDeque<Instant> = VecDeque::new();
+            let mut pulses: Vec<Instant> = Vec::with_capacity(PULSES_PER_QUARTER_NOTE);
             while let Some(event) = events.next().await {
                 if event == midi::MidiEvent::TimingClock {
-                    pulses.push_back(Instant::now());
+                    pulses.push(Instant::now());
 
-                    while pulses.len() > PULSES_PER_QUARTER_NOTE {
-                        pulses.pop_front();
-                    }
+                    if pulses.len() == PULSES_PER_QUARTER_NOTE {
+                        let first_pulse = pulses[0];
+                        let last_pulse = pulses[PULSES_PER_QUARTER_NOTE - 1];
 
-                    if let (Some(first_quarter_note), Some(last_quarter_note)) =
-                        (pulses.front(), pulses.back())
-                    {
-                        let duration = *last_quarter_note - *first_quarter_note;
+                        let duration = last_pulse - first_pulse;
                         let secs_per_beat =
                             duration_as_secs(duration) / (pulses.len() - 1) as f64 * 24.0;
-
+    
                         bpm2.store(60.0 / secs_per_beat);
+
+                        pulses.clear();
                     }
                 }
             }
