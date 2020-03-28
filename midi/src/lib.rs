@@ -1,6 +1,8 @@
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 
+mod io;
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Note(u8);
 impl Note {
