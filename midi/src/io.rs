@@ -2,7 +2,7 @@ use async_std::prelude::*;
 use std::time::Duration;
 use thiserror::Error;
 
-use crate::MidiEvent;
+use crate::{MidiEvent, MidiMessageStream};
 
 #[derive(Debug, Error)]
 pub enum MidiIoError {
@@ -36,9 +36,20 @@ impl MidiInput {
         let midi_input_port = client
             .input_port(&format!("roller-input-{}", name), move |packet_list| {
                 for packet in packet_list.iter() {
-                    let mut packet_data = packet.data().to_vec().into_iter();
-                    while let Some(midi_event) = MidiEvent::next_from_iter(&mut packet_data) {
-                        async_std::task::block_on(input_sender.send(midi_event));
+                    let mut stream = MidiMessageStream::new(packet.data());
+
+                    loop {
+                        match MidiEvent::read_next(&mut stream) {
+                            Ok(Some(midi_event)) => {
+                                async_std::task::block_on(input_sender.send(midi_event));
+                            }
+                            Ok(None) => {
+                                break;
+                            }
+                            Err(e) => {
+                                eprintln!("error reading midi event: {:?}", e)
+                            }
+                        }
                     }
                 }
             })

@@ -53,33 +53,34 @@ pub enum Status {
     ActiveSensing = 0xFE, // FD also res/unused
     SystemReset = 0xFF,
 }
-impl Status {
-    // None if SysEx
-    pub fn data_bytes(&self) -> Option<usize> {
-        match self {
-            Status::NoteOff
-            | Status::NoteOn
-            | Status::PolyphonicAftertouch
-            | Status::ControlChange
-            | Status::PitchBend
-            | Status::SongPositionPointer => Some(2),
 
-            Status::SysExStart => None,
+#[derive(Debug)]
+pub enum MidiMessageError {
+    BadStatusByte(u8),
+    UnexpectedEof,
+}
 
-            Status::ProgramChange
-            | Status::ChannelAftertouch
-            | Status::MIDITimeCodeQtrFrame
-            | Status::SongSelect => Some(1),
+pub struct MidiMessageStream<'a> {
+    data: &'a [u8],
+}
 
-            Status::TuneRequest
-            | Status::SysExEnd
-            | Status::TimingClock
-            | Status::Start
-            | Status::Continue
-            | Status::Stop
-            | Status::ActiveSensing
-            | Status::SystemReset => Some(0),
+impl<'a> MidiMessageStream<'a> {
+    pub fn new(data: &'a [u8]) -> Self {
+        MidiMessageStream { data }
+    }
+
+    pub fn try_read_u8(&mut self) -> Option<u8> {
+        if self.data.is_empty() {
+            None
+        } else {
+            let byte = self.data[0];
+            self.data = &self.data[1..];
+            Some(byte)
         }
+    }
+
+    pub fn read_u8(&mut self) -> Result<u8, MidiMessageError> {
+        self.try_read_u8().ok_or(MidiMessageError::UnexpectedEof)
     }
 }
 
@@ -88,36 +89,37 @@ pub enum MidiEvent {
     NoteOn { note: Note, velocity: u8 },
     NoteOff { note: Note, velocity: u8 },
     ControlChange { control: ControlChannel, value: u8 },
-    Other(Status),
 }
 impl MidiEvent {
-    pub fn from_bytes(bytes: &[u8]) -> MidiEvent {
-        let (status_byte, data_bytes) = bytes.split_first().unwrap();
-        let status = Status::from_u8(*status_byte).unwrap();
-        MidiEvent::from_status_and_data(status, data_bytes)
+    pub fn from_bytes(bytes: &[u8]) -> Result<Option<MidiEvent>, MidiMessageError> {
+        MidiEvent::read_next(&mut MidiMessageStream::new(bytes))
     }
-    pub fn from_status_and_data(status: Status, bytes: &[u8]) -> MidiEvent {
-        match status {
-            Status::NoteOn => MidiEvent::NoteOn {
-                note: Note::new(bytes[0]),
-                velocity: bytes[1],
-            },
-            Status::NoteOff => MidiEvent::NoteOff {
-                note: Note::new(bytes[0]),
-                velocity: bytes[1],
-            },
-            Status::ControlChange => MidiEvent::ControlChange {
-                control: ControlChannel::new(bytes[0]),
-                value: bytes[1],
-            },
-            _ => MidiEvent::Other(status),
-        }
-    }
-    pub fn next_from_iter(iter: &mut impl Iterator<Item = u8>) -> Option<MidiEvent> {
-        let status = Status::from_u8(iter.next()?).unwrap();
-        // TODO SysEx messages aren't handled
-        let data_bytes: Vec<u8> = iter.take(status.data_bytes()?).collect();
 
-        Some(MidiEvent::from_status_and_data(status, &data_bytes))
+    pub fn read_next(stream: &mut MidiMessageStream) -> Result<Option<MidiEvent>, MidiMessageError> {
+        let status = match stream.try_read_u8() {
+            Some(status) => status,
+            None => return Ok(None),
+        };
+
+        let status = Status::from_u8(status)
+            .ok_or(MidiMessageError::BadStatusByte(status))?;
+
+        match status {
+            Status::NoteOn => Ok(Some(MidiEvent::NoteOn {
+                note: Note::new(stream.read_u8()?),
+                velocity: stream.read_u8()?,
+            })),
+            Status::NoteOff => Ok(Some(MidiEvent::NoteOff {
+                note: Note::new(stream.read_u8()?),
+                velocity: stream.read_u8()?,
+            })),
+            Status::ControlChange => Ok(Some(MidiEvent::ControlChange {
+                control: ControlChannel::new(stream.read_u8()?),
+                value: stream.read_u8()?,
+            })),
+            _ => {
+                panic!("don't know how to parse this packet type!");
+            }
+        }
     }
 }
