@@ -3,7 +3,7 @@ use rustc_hash::FxHashMap;
 use std::time::Instant;
 
 use crate::{
-    clock::{Clock, ClockOffsetOptionExt, Rate},
+    clock::{offsetted_for_fixture, Clock, Rate},
     color::Color,
     control::{
         button::{ButtonGroup, ButtonMapping, MetaButtonAction, PadEvent},
@@ -180,7 +180,8 @@ impl<'a> EngineState<'a> {
                         .fold(1.0, |dimmer, (effect, rate)| {
                             dimmer
                                 * effect::compress(
-                                    effect.dimmer(&effect.clock_offset.offsetted_for_fixture(
+                                    effect.dimmer(&offsetted_for_fixture(
+                                        effect.clock_offset.as_ref(),
                                         &clock_snapshot.with_rate(*rate),
                                         &fixture,
                                         &fixtures,
@@ -220,7 +221,8 @@ impl<'a> EngineState<'a> {
                                 effect.color(
                                     color,
                                     secondary_color,
-                                    &effect.clock_offset.offsetted_for_fixture(
+                                    &offsetted_for_fixture(
+                                        effect.clock_offset.as_ref(),
                                         &clock_snapshot.with_rate(*rate),
                                         &fixture,
                                         &fixtures,
@@ -241,7 +243,8 @@ impl<'a> EngineState<'a> {
                         .iter()
                         .nth(0)
                         .map(|(effect, rate)| {
-                            effect.pixel_range_set(&effect.clock_offset.offsetted_for_fixture(
+                            effect.pixel_range_set(&offsetted_for_fixture(
+                                effect.clock_offset.as_ref(),
                                 &clock_snapshot.with_rate(*rate),
                                 &fixture,
                                 &fixtures,
@@ -257,7 +260,8 @@ impl<'a> EngineState<'a> {
                             .active_position_effects
                             .iter()
                             .map(|(effect, rate)| {
-                                effect.position(&effect.clock_offset.offsetted_for_fixture(
+                                effect.position(&offsetted_for_fixture(
+                                    effect.clock_offset.as_ref(),
                                     &clock_snapshot.with_rate(*rate),
                                     &fixture,
                                     &fixtures,

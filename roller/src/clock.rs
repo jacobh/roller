@@ -213,27 +213,14 @@ impl ClockOffset {
     }
 }
 
-/// Convenience trait so that `offsetted_for_fixture` works on Option<ClockOffset>'s as well as
-/// on clock offsets themselves
-pub trait ClockOffsetOptionExt {
-    fn offsetted_for_fixture(
-        &self,
-        clock: &ClockSnapshot,
-        fixture: &Fixture,
-        fixtures: &[Fixture],
-    ) -> ClockSnapshot;
-}
-
-impl ClockOffsetOptionExt for Option<ClockOffset> {
-    fn offsetted_for_fixture(
-        &self,
-        clock: &ClockSnapshot,
-        fixture: &Fixture,
-        fixtures: &[Fixture],
-    ) -> ClockSnapshot {
-        match self {
-            Some(clock_offset) => clock_offset.offsetted_for_fixture(clock, fixture, fixtures),
-            None => clock.clone(),
-        }
+pub fn offsetted_for_fixture(
+    clock_offset: Option<&ClockOffset>,
+    clock: &ClockSnapshot,
+    fixture: &Fixture,
+    fixtures: &[Fixture],
+) -> ClockSnapshot {
+    match clock_offset {
+        Some(clock_offset) => clock_offset.offsetted_for_fixture(clock, fixture, fixtures),
+        None => clock.clone(),
     }
 }
