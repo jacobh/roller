@@ -142,7 +142,7 @@ impl Clock {
                 let snapshot = self.snapshot();
                 let eight_beats_secs = snapshot.secs_per_meter(Beats::new(8.0));
 
-                if snapshot.secs_elapsed() - eight_beats_secs >= 0.0 {
+                if snapshot.secs_elapsed() - (eight_beats_secs * 2.0) >= 0.0 {
                     self.started_at += Duration::from_secs_f64(eight_beats_secs);
                 }
 
