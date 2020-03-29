@@ -15,7 +15,7 @@ mod utils;
 
 use crate::clock::{Clock, Rate};
 use crate::control::button::pad_states;
-use crate::lighting_engine::{EngineState, ControlEvent, SceneId};
+use crate::lighting_engine::{ControlEvent, EngineState, SceneId};
 
 #[global_allocator]
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
@@ -77,12 +77,7 @@ async fn main() -> Result<(), async_std::io::Error> {
             .map(|()| Event::Tick)
             .boxed(),
     );
-    let control_events = Some(
-        midi_controller
-            .control_events()
-            .map(Event::Control)
-            .boxed(),
-    );
+    let control_events = Some(midi_controller.control_events().map(Event::Control).boxed());
     let clock_events = midi_clock_events.map(|events| events.map(Event::Clock).boxed());
 
     let events = stream::select_all(

@@ -28,8 +28,7 @@ pub struct MidiFaderMapping {
 }
 impl MidiFaderMapping {
     pub fn control_event(&self, value: f64) -> ControlEvent {
-        self.fader_type
-            .control_event(self.fader_curve.apply(value))
+        self.fader_type.control_event(self.fader_curve.apply(value))
     }
 }
 
