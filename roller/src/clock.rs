@@ -88,44 +88,65 @@ impl From<Rate> for f64 {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+enum ClockState {
+    Manual { taps: Vec<Instant> },
+    Automatic,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Clock {
     started_at: Instant,
     bpm: f64,
-    taps: Vec<Instant>,
+    state: ClockState,
 }
 impl Clock {
     pub fn new(bpm: f64) -> Clock {
         Clock {
             bpm,
             started_at: Instant::now(),
-            taps: Vec::new(),
+            state: ClockState::Manual { taps: Vec::new() },
         }
     }
     pub fn apply_event(&mut self, event: ClockEvent) {
         match event {
             ClockEvent::Tap(now) => {
-                // If last tap was more than 1 second ago, clear the taps
-                if let Some(last_tap) = self.taps.last() {
-                    if (now - *last_tap) > Duration::from_secs(1) {
-                        dbg!(&self.taps);
-                        self.taps.clear();
-                        dbg!(&self.taps);
+                match self.state {
+                    ClockState::Manual { ref mut taps } => {
+                        // If last tap was more than 1 second ago, clear the taps
+                        if let Some(last_tap) = taps.last() {
+                            if (now - *last_tap) > Duration::from_secs(1) {
+                                dbg!(&taps);
+                                taps.clear();
+                                dbg!(&taps);
+                            }
+                        }
+
+                        taps.push(now);
+
+                        if taps.len() >= 4 {
+                            let time_elapsed = now - *taps.first().unwrap();
+                            let beat_duration_secs =
+                                duration_as_secs(time_elapsed) / (taps.len() - 1) as f64;
+
+                            self.started_at = now;
+                            self.bpm = 60.0 / beat_duration_secs;
+                        }
                     }
-                }
-
-                self.taps.push(now);
-
-                if self.taps.len() >= 4 {
-                    let time_elapsed = now - *self.taps.first().unwrap();
-
-                    self.started_at = now;
-
-                    let beat_duration_secs =
-                        duration_as_secs(time_elapsed) / (self.taps.len() - 1) as f64;
-                    self.bpm = 60.0 / beat_duration_secs;
+                    ClockState::Automatic => {
+                        self.started_at = now;
+                    }
                 }
             }
             ClockEvent::BpmChanged(bpm) => {
+                // Periodically reset the start time to avoid glitchiness when tempo slightly drifts
+                let snapshot = self.snapshot();
+                let eight_beats_secs = snapshot.secs_per_meter(Beats::new(8.0));
+
+                if snapshot.secs_elapsed() - eight_beats_secs >= 0.0 {
+                    self.started_at += Duration::from_secs_f64(eight_beats_secs);
+                }
+
+                self.state = ClockState::Automatic;
                 self.bpm = bpm;
             }
         }
