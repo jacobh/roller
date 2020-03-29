@@ -267,31 +267,38 @@ pub fn offsetted_for_fixture<'a>(
 
 static PULSES_PER_QUARTER_NOTE: usize = 24;
 
-pub fn midi_clock_events(name: &str) -> Result<impl Stream<Item = ClockEvent>, midi::MidiIoError> {
-    let input = midi::MidiInput::new(name)?;
-    let mut pulses: Vec<Instant> = Vec::with_capacity(PULSES_PER_QUARTER_NOTE);
+pub struct MidiClockSource {
+    input: midi::MidiInput,
+}
+impl MidiClockSource {
+    pub fn new(name: &str) -> Result<MidiClockSource, midi::MidiIoError> {
+        let input = midi::MidiInput::new(name)?;
 
-    dbg!("init clock events");
+        Ok(MidiClockSource { input })
+    }
+    pub fn events(&self) -> impl Stream<Item = ClockEvent> {
+        let mut pulses: Vec<Instant> = Vec::with_capacity(PULSES_PER_QUARTER_NOTE);
 
-    Ok(input
-        .events()
-        // .filter(|midi_event| midi_event == &midi::MidiEvent::TimingClock)
-        .filter_map(move |evt| {
-            dbg!(evt);
-            pulses.push(Instant::now());
+        self.input
+            .events()
+            .filter(|midi_event| midi_event == &midi::MidiEvent::TimingClock)
+            .filter_map(move |_| {
+                pulses.push(Instant::now());
 
-            if pulses.len() == PULSES_PER_QUARTER_NOTE {
-                let first_pulse = pulses[0];
-                let last_pulse = pulses[PULSES_PER_QUARTER_NOTE - 1];
+                if pulses.len() == PULSES_PER_QUARTER_NOTE {
+                    let first_pulse = pulses[0];
+                    let last_pulse = pulses[PULSES_PER_QUARTER_NOTE - 1];
 
-                let duration = last_pulse - first_pulse;
-                let secs_per_beat = duration_as_secs(duration) / (pulses.len() - 1) as f64 * 24.0;
-                let bpm = 60.0 / secs_per_beat;
+                    let duration = last_pulse - first_pulse;
+                    let secs_per_beat =
+                        duration_as_secs(duration) / (pulses.len() - 1) as f64 * 24.0;
+                    let bpm = 60.0 / secs_per_beat;
 
-                pulses.clear();
-                dbg!(Some(ClockEvent::BpmChanged(bpm)))
-            } else {
-                None
-            }
-        }))
+                    pulses.clear();
+                    dbg!(Some(ClockEvent::BpmChanged(bpm)))
+                } else {
+                    None
+                }
+            })
+    }
 }
