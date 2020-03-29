@@ -1,5 +1,6 @@
-use async_std::prelude::*;
+use async_std::{prelude::*, stream::Stream, sync::Arc};
 use std::time::Duration;
+use std::pin::Pin;
 use thiserror::Error;
 
 use crate::{MidiEvent, MidiMessageStream};
@@ -15,10 +16,19 @@ pub enum MidiIoError {
 }
 
 #[derive(Debug)]
-pub struct MidiInput {
+struct MidiInputState {
     _client: coremidi::Client,
     _input_port: coremidi::InputPort,
     _source: coremidi::Source,
+}
+
+// TODO unclear if this is legitimate
+unsafe impl Send for MidiInputState {}
+unsafe impl Sync for MidiInputState {}
+
+#[derive(Debug, Clone)]
+pub struct MidiInput {
+    state: Arc<MidiInputState>,
     input_receiver: async_std::sync::Receiver<MidiEvent>,
 }
 impl MidiInput {
@@ -58,14 +68,22 @@ impl MidiInput {
             .map_err(|_| MidiIoError::InitFailed)?;
 
         Ok(MidiInput {
-            _client: client,
-            _input_port: midi_input_port,
-            _source: source,
+            state: Arc::new(MidiInputState {
+                _client: client,
+                _input_port: midi_input_port,
+                _source: source,
+            }),
             input_receiver,
         })
     }
-    pub fn events(&self) -> impl Stream<Item = MidiEvent> {
-        self.input_receiver.clone()
+}
+impl Stream for MidiInput {
+    type Item = MidiEvent;
+    fn poll_next(
+        mut self: Pin<&mut Self>, 
+        cx: &mut std::task::Context
+    ) -> std::task::Poll<Option<Self::Item>> {
+        Pin::new(&mut self.input_receiver).poll_next(cx)
     }
 }
 

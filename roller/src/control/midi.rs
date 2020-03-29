@@ -106,7 +106,7 @@ impl MidiController {
         let mapping = self.midi_mapping.clone();
 
         self.midi_input
-            .events()
+            .clone()
             .map(move |midi_event| mapping.midi_to_lighting_event(&midi_event))
             .filter(|lighting_event| lighting_event.is_some())
             .map(|lighting_event| lighting_event.unwrap())

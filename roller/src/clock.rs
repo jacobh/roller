@@ -280,7 +280,7 @@ impl MidiClockSource {
         let mut pulses: Vec<Instant> = Vec::with_capacity(PULSES_PER_QUARTER_NOTE);
 
         self.input
-            .events()
+            .clone()
             .filter(|midi_event| midi_event == &midi::MidiEvent::TimingClock)
             .filter_map(move |_| {
                 pulses.push(Instant::now());
