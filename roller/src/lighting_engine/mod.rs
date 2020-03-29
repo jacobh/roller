@@ -72,7 +72,7 @@ impl<'a> FixtureGroupValue<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum LightingEvent {
+pub enum ControlEvent {
     UpdateMasterDimmer(f64),
     UpdateGroupDimmer(FixtureGroupId, f64),
     UpdateDimmerEffectIntensity(f64),
@@ -114,19 +114,19 @@ impl<'a> EngineState<'a> {
 
         active_scene_state.button_states_mut(self.active_fixture_group_control)
     }
-    pub fn apply_event(&mut self, event: LightingEvent) {
+    pub fn apply_event(&mut self, event: ControlEvent) {
         // dbg!(&event);
         match event {
-            LightingEvent::UpdateMasterDimmer(dimmer) => {
+            ControlEvent::UpdateMasterDimmer(dimmer) => {
                 self.master_dimmer = dimmer;
             }
-            LightingEvent::UpdateDimmerEffectIntensity(intensity) => {
+            ControlEvent::UpdateDimmerEffectIntensity(intensity) => {
                 self.dimmer_effect_intensity = intensity;
             }
-            LightingEvent::UpdateColorEffectIntensity(intensity) => {
+            ControlEvent::UpdateColorEffectIntensity(intensity) => {
                 self.color_effect_intensity = intensity;
             }
-            LightingEvent::UpdateClockRate(rate) => {
+            ControlEvent::UpdateClockRate(rate) => {
                 let pressed_notes = self.control_button_states().pressed_notes();
 
                 // If there are any buttons currently pressed, update the rate of those buttons, note the global rate
@@ -137,24 +137,24 @@ impl<'a> EngineState<'a> {
                     self.global_clock_rate = rate;
                 }
             }
-            LightingEvent::ActivateScene(scene_id) => {
+            ControlEvent::ActivateScene(scene_id) => {
                 self.active_scene_id = scene_id;
             }
-            LightingEvent::ToggleFixtureGroupControl(group_id) => {
+            ControlEvent::ToggleFixtureGroupControl(group_id) => {
                 if Some(group_id) == self.active_fixture_group_control {
                     self.active_fixture_group_control = None;
                 } else {
                     self.active_fixture_group_control = Some(group_id);
                 }
             }
-            LightingEvent::UpdateGroupDimmer(group_id, dimmer) => {
+            ControlEvent::UpdateGroupDimmer(group_id, dimmer) => {
                 self.group_dimmers.insert(group_id, dimmer);
             }
-            LightingEvent::UpdateButton(group, mapping, note_state, now) => {
+            ControlEvent::UpdateButton(group, mapping, note_state, now) => {
                 self.control_button_states_mut()
                     .update_button_state(&group, mapping, note_state, now);
             }
-            LightingEvent::TapTempo(now) => {
+            ControlEvent::TapTempo(now) => {
                 self.clock.apply_event(ClockEvent::Tap(now));
                 dbg!(self.clock.bpm());
             }

@@ -1,4 +1,4 @@
-use crate::{effect::sigmoid, lighting_engine::LightingEvent, project::FixtureGroupId};
+use crate::{effect::sigmoid, lighting_engine::ControlEvent, project::FixtureGroupId};
 use midi::ControlChannel;
 use ordered_float::OrderedFloat;
 
@@ -10,12 +10,12 @@ pub enum FaderType {
     ColorEffectIntensity,
 }
 impl FaderType {
-    fn lighting_event(&self, value: f64) -> LightingEvent {
+    fn control_event(&self, value: f64) -> ControlEvent {
         match *self {
-            FaderType::MasterDimmer => LightingEvent::UpdateMasterDimmer(value),
-            FaderType::GroupDimmer(group_id) => LightingEvent::UpdateGroupDimmer(group_id, value),
-            FaderType::DimmerEffectIntensity => LightingEvent::UpdateDimmerEffectIntensity(value),
-            FaderType::ColorEffectIntensity => LightingEvent::UpdateColorEffectIntensity(value),
+            FaderType::MasterDimmer => ControlEvent::UpdateMasterDimmer(value),
+            FaderType::GroupDimmer(group_id) => ControlEvent::UpdateGroupDimmer(group_id, value),
+            FaderType::DimmerEffectIntensity => ControlEvent::UpdateDimmerEffectIntensity(value),
+            FaderType::ColorEffectIntensity => ControlEvent::UpdateColorEffectIntensity(value),
         }
     }
 }
@@ -27,9 +27,9 @@ pub struct MidiFaderMapping {
     pub fader_curve: FaderCurve,
 }
 impl MidiFaderMapping {
-    pub fn lighting_event(&self, value: f64) -> LightingEvent {
+    pub fn control_event(&self, value: f64) -> ControlEvent {
         self.fader_type
-            .lighting_event(self.fader_curve.apply(value))
+            .control_event(self.fader_curve.apply(value))
     }
 }
 

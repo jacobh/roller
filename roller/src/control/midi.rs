@@ -9,7 +9,7 @@ use crate::{
         default_midi_mapping,
         fader::MidiFaderMapping,
     },
-    lighting_engine::LightingEvent,
+    lighting_engine::ControlEvent,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -47,26 +47,26 @@ impl MidiMapping {
             .iter()
             .flat_map(|group| group.buttons().map(move |button| (group, button)))
     }
-    fn midi_to_lighting_event(&self, midi_event: &MidiEvent) -> Option<LightingEvent> {
+    fn midi_to_control_event(&self, midi_event: &MidiEvent) -> Option<ControlEvent> {
         let now = Instant::now();
 
         match dbg!(midi_event) {
             MidiEvent::ControlChange { control, value } => self
                 .faders
                 .get(control)
-                .map(|fader| fader.lighting_event(1.0 / 127.0 * (*value as f64))),
+                .map(|fader| fader.control_event(1.0 / 127.0 * (*value as f64))),
             MidiEvent::NoteOn { note, .. } => self
                 .group_buttons()
                 .find(|(_, button)| button.note == *note)
                 .map(|(group, button)| {
                     button
                         .clone()
-                        .into_lighting_event(group.clone(), NoteState::On, now)
+                        .into_control_event(group.clone(), NoteState::On, now)
                 })
                 .or_else(|| {
                     self.meta_buttons
                         .get(note)
-                        .map(|meta_button| meta_button.lighting_event(now))
+                        .map(|meta_button| meta_button.control_event(now))
                 }),
             MidiEvent::NoteOff { note, .. } => self
                 .group_buttons()
@@ -74,7 +74,7 @@ impl MidiMapping {
                 .map(|(group, button)| {
                     button
                         .clone()
-                        .into_lighting_event(group.clone(), NoteState::Off, now)
+                        .into_control_event(group.clone(), NoteState::Off, now)
                 }),
             _ => None,
         }
@@ -102,14 +102,14 @@ impl MidiController {
             midi_output,
         })
     }
-    pub fn lighting_events(&self) -> impl Stream<Item = LightingEvent> {
+    pub fn control_events(&self) -> impl Stream<Item = ControlEvent> {
         let mapping = self.midi_mapping.clone();
 
         self.midi_input
             .clone()
-            .map(move |midi_event| mapping.midi_to_lighting_event(&midi_event))
-            .filter(|lighting_event| lighting_event.is_some())
-            .map(|lighting_event| lighting_event.unwrap())
+            .map(move |midi_event| mapping.midi_to_control_event(&midi_event))
+            .filter(|control_event| control_event.is_some())
+            .map(|control_event| control_event.unwrap())
     }
     pub async fn set_pad_color(&self, note: Note, pad_color: AkaiPadState) {
         self.midi_output

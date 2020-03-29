@@ -9,7 +9,7 @@ use crate::{
     color::Color,
     control::midi::NoteState,
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
-    lighting_engine::{ButtonGroupInfo, ButtonInfo, LightingEvent, SceneId},
+    lighting_engine::{ButtonGroupInfo, ButtonInfo, ControlEvent, SceneId},
     position::BasePosition,
     project::FixtureGroupId,
     utils::shift_remove_vec,
@@ -84,13 +84,13 @@ impl ButtonMapping {
     pub fn into_group(self, button_type: ButtonType) -> ButtonGroup {
         ButtonGroup::new(button_type, vec![self])
     }
-    pub fn into_lighting_event(
+    pub fn into_control_event(
         self,
         group: ButtonGroup,
         note_state: NoteState,
         now: Instant,
-    ) -> LightingEvent {
-        LightingEvent::UpdateButton(group, self, note_state, now)
+    ) -> ControlEvent {
+        ControlEvent::UpdateButton(group, self, note_state, now)
     }
 }
 
@@ -109,13 +109,13 @@ pub struct MetaButtonMapping {
     pub on_action: MetaButtonAction,
 }
 impl MetaButtonMapping {
-    pub fn lighting_event(&self, now: Instant) -> LightingEvent {
+    pub fn control_event(&self, now: Instant) -> ControlEvent {
         match self.on_action {
-            MetaButtonAction::TapTempo => LightingEvent::TapTempo(now),
-            MetaButtonAction::UpdateClockRate(rate) => LightingEvent::UpdateClockRate(rate),
-            MetaButtonAction::ActivateScene(scene_id) => LightingEvent::ActivateScene(scene_id),
+            MetaButtonAction::TapTempo => ControlEvent::TapTempo(now),
+            MetaButtonAction::UpdateClockRate(rate) => ControlEvent::UpdateClockRate(rate),
+            MetaButtonAction::ActivateScene(scene_id) => ControlEvent::ActivateScene(scene_id),
             MetaButtonAction::ToggleFixtureGroupControl(group_id) => {
-                LightingEvent::ToggleFixtureGroupControl(group_id)
+                ControlEvent::ToggleFixtureGroupControl(group_id)
             }
         }
     }

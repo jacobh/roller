@@ -15,7 +15,7 @@ mod utils;
 
 use crate::clock::{Clock, Rate};
 use crate::control::button::pad_states;
-use crate::lighting_engine::{EngineState, LightingEvent, SceneId};
+use crate::lighting_engine::{EngineState, ControlEvent, SceneId};
 
 #[global_allocator]
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
@@ -55,7 +55,7 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     enum Event {
         Tick,
-        Lighting(LightingEvent),
+        Control(ControlEvent),
         Clock(clock::ClockEvent),
     }
 
@@ -77,16 +77,16 @@ async fn main() -> Result<(), async_std::io::Error> {
             .map(|()| Event::Tick)
             .boxed(),
     );
-    let lighting_events = Some(
+    let control_events = Some(
         midi_controller
-            .lighting_events()
-            .map(Event::Lighting)
+            .control_events()
+            .map(Event::Control)
             .boxed(),
     );
     let clock_events = midi_clock_events.map(|events| events.map(Event::Clock).boxed());
 
     let events = stream::select_all(
-        vec![ticks, lighting_events, clock_events]
+        vec![ticks, control_events, clock_events]
             .into_iter()
             .flatten(),
     );
@@ -127,7 +127,7 @@ async fn main() -> Result<(), async_std::io::Error> {
 
                 current_pad_states = new_pad_states;
             }
-            Event::Lighting(event) => {
+            Event::Control(event) => {
                 state.apply_event(event);
             }
             Event::Clock(event) => state.clock.apply_event(event),
