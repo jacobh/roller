@@ -87,44 +87,21 @@ impl From<Rate> for f64 {
     }
 }
 
-pub trait Clock {
-    fn apply_event(&mut self, event: ClockEvent) {}
-    fn bpm(&self) -> f64;
-    fn started_at(&self) -> Instant;
-    fn secs_elapsed(&self) -> f64 {
-        duration_as_secs(Instant::now() - self.started_at())
-    }
-    fn snapshot(&self) -> ClockSnapshot {
-        ClockSnapshot {
-            secs_elapsed: self.secs_elapsed(),
-            bpm: self.bpm(),
-        }
-    }
-}
-
 #[derive(Debug, Clone, PartialEq)]
-pub struct TapTempoClock {
+pub struct Clock {
     started_at: Instant,
     bpm: f64,
     taps: Vec<Instant>,
 }
-impl TapTempoClock {
-    pub fn new(bpm: f64) -> TapTempoClock {
-        TapTempoClock {
+impl Clock {
+    pub fn new(bpm: f64) -> Clock {
+        Clock {
             bpm,
             started_at: Instant::now(),
             taps: Vec::new(),
         }
     }
-}
-impl Clock for TapTempoClock {
-    fn started_at(&self) -> Instant {
-        self.started_at
-    }
-    fn bpm(&self) -> f64 {
-        self.bpm
-    }
-    fn apply_event(&mut self, event: ClockEvent) {
+    pub fn apply_event(&mut self, event: ClockEvent) {
         match event {
             ClockEvent::Tap(now) => {
                 // If last tap was more than 1 second ago, clear the taps
@@ -151,6 +128,21 @@ impl Clock for TapTempoClock {
             ClockEvent::BpmChanged(bpm) => {
                 self.bpm = bpm;
             }
+        }
+    }
+    pub fn started_at(&self) -> Instant {
+        self.started_at
+    }
+    pub fn bpm(&self) -> f64 {
+        self.bpm
+    }
+    pub fn secs_elapsed(&self) -> f64 {
+        duration_as_secs(Instant::now() - self.started_at())
+    }
+    pub fn snapshot(&self) -> ClockSnapshot {
+        ClockSnapshot {
+            secs_elapsed: self.secs_elapsed(),
+            bpm: self.bpm(),
         }
     }
 }
