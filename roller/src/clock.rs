@@ -1,5 +1,4 @@
-use async_std::{prelude::*, sync::Arc};
-use crossbeam::atomic::AtomicCell;
+use async_std::prelude::*;
 use derive_more::{From, Into};
 use ordered_float::OrderedFloat;
 use rand::{seq::SliceRandom, thread_rng};
@@ -12,6 +11,12 @@ use crate::fixture::Fixture;
 
 fn duration_as_secs(duration: Duration) -> f64 {
     duration.as_micros() as f64 / 1_000_000.0
+}
+
+#[derive(Debug)]
+pub enum ClockEvent {
+    BpmChanged(f64),
+    Tap(Instant),
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, From, Into)]
@@ -83,7 +88,7 @@ impl From<Rate> for f64 {
 }
 
 pub trait Clock {
-    fn tap(&mut self, now: Instant) {}
+    fn apply_event(&mut self, event: ClockEvent) {}
     fn bpm(&self) -> f64;
     fn started_at(&self) -> Instant;
     fn secs_elapsed(&self) -> f64 {
@@ -119,25 +124,33 @@ impl Clock for TapTempoClock {
     fn bpm(&self) -> f64 {
         self.bpm
     }
-    fn tap(&mut self, now: Instant) {
-        // If last tap was more than 1 second ago, clear the taps
-        if let Some(last_tap) = self.taps.last() {
-            if (now - *last_tap) > Duration::from_secs(1) {
-                dbg!(&self.taps);
-                self.taps.clear();
-                dbg!(&self.taps);
+    fn apply_event(&mut self, event: ClockEvent) {
+        match event {
+            ClockEvent::Tap(now) => {
+                // If last tap was more than 1 second ago, clear the taps
+                if let Some(last_tap) = self.taps.last() {
+                    if (now - *last_tap) > Duration::from_secs(1) {
+                        dbg!(&self.taps);
+                        self.taps.clear();
+                        dbg!(&self.taps);
+                    }
+                }
+
+                self.taps.push(now);
+
+                if self.taps.len() >= 4 {
+                    let time_elapsed = now - *self.taps.first().unwrap();
+
+                    self.started_at = now;
+
+                    let beat_duration_secs =
+                        duration_as_secs(time_elapsed) / (self.taps.len() - 1) as f64;
+                    self.bpm = 60.0 / beat_duration_secs;
+                }
             }
-        }
-
-        self.taps.push(now);
-
-        if self.taps.len() >= 4 {
-            let time_elapsed = now - *self.taps.first().unwrap();
-
-            self.started_at = now;
-
-            let beat_duration_secs = duration_as_secs(time_elapsed) / (self.taps.len() - 1) as f64;
-            self.bpm = 60.0 / beat_duration_secs;
+            ClockEvent::BpmChanged(bpm) => {
+                self.bpm = bpm;
+            }
         }
     }
 }
@@ -254,16 +267,14 @@ pub fn offsetted_for_fixture<'a>(
 
 static PULSES_PER_QUARTER_NOTE: usize = 24;
 
-pub struct MidiClock {
-    started_at: Instant,
-    bpm: Arc<AtomicCell<f64>>,
+pub struct MidiClockSource {
+    recv: async_std::sync::Receiver<ClockEvent>,
 }
-impl MidiClock {
-    pub fn new(name: &str) -> Result<MidiClock, midi::MidiIoError> {
-        let bpm = Arc::new(AtomicCell::new(128.0));
+impl MidiClockSource {
+    pub fn new(name: &str) -> Result<MidiClockSource, midi::MidiIoError> {
+        let (sender, recv) = async_std::sync::channel(10);
         let input = midi::MidiInput::new(name)?;
 
-        let bpm2 = bpm.clone();
         async_std::task::spawn(async move {
             let mut events = input.events();
             let mut pulses: Vec<Instant> = Vec::with_capacity(PULSES_PER_QUARTER_NOTE);
@@ -278,8 +289,9 @@ impl MidiClock {
                         let duration = last_pulse - first_pulse;
                         let secs_per_beat =
                             duration_as_secs(duration) / (pulses.len() - 1) as f64 * 24.0;
+                        let bpm = 60.0 / secs_per_beat;
 
-                        bpm2.store(60.0 / secs_per_beat);
+                        sender.send(ClockEvent::BpmChanged(bpm)).await;
 
                         pulses.clear();
                     }
@@ -287,20 +299,12 @@ impl MidiClock {
             }
         });
 
-        Ok(MidiClock {
-            started_at: Instant::now(),
-            bpm,
+        Ok(MidiClockSource { recv })
+    }
+    pub fn events(&self) -> impl Stream<Item = ClockEvent> {
+        self.recv.clone().map(|event| {
+            dbg!(&event);
+            event
         })
-    }
-}
-impl Clock for MidiClock {
-    fn tap(&mut self, now: Instant) {
-        self.started_at = now;
-    }
-    fn bpm(&self) -> f64 {
-        self.bpm.load()
-    }
-    fn started_at(&self) -> Instant {
-        self.started_at
     }
 }

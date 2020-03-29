@@ -3,7 +3,7 @@ use rustc_hash::FxHashMap;
 use std::time::Instant;
 
 use crate::{
-    clock::{offsetted_for_fixture, Clock, Rate},
+    clock::{offsetted_for_fixture, Clock, ClockEvent, Rate},
     color::Color,
     control::{
         button::{ButtonGroup, ButtonMapping, MetaButtonAction, PadEvent},
@@ -155,7 +155,7 @@ impl<'a> EngineState<'a> {
                     .update_button_state(&group, mapping, note_state, now);
             }
             LightingEvent::TapTempo(now) => {
-                self.clock.tap(now);
+                self.clock.apply_event(ClockEvent::Tap(now));
                 dbg!(self.clock.bpm());
             }
         }

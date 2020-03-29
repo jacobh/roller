@@ -26,17 +26,11 @@ async fn main() -> Result<(), async_std::io::Error> {
     let mut fixtures = project.fixtures().await?;
 
     let midi_controller = control::midi::MidiController::new_for_device_name("APC MINI").unwrap();
-    let clock: Box<dyn Clock> = {
-        if let Ok(clock) = clock::MidiClock::new("XONE:PX5") {
-            Box::new(clock)
-        } else {
-            Box::new(TapTempoClock::new(128.0))
-        }
-    };
+    let midi_clock_source = clock::MidiClockSource::new("XONE:PX5").ok();
 
     let mut state = EngineState {
         midi_mapping: &midi_controller.midi_mapping,
-        clock: clock,
+        clock: Box::new(TapTempoClock::new(128.0)),
         master_dimmer: 1.0,
         group_dimmers: FxHashMap::default(),
         dimmer_effect_intensity: 0.5,
@@ -62,6 +56,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     enum Event {
         Tick,
         Lighting(LightingEvent),
+        Clock(clock::ClockEvent),
     }
 
     midi_controller.run_pad_startup().await;
@@ -77,9 +72,21 @@ async fn main() -> Result<(), async_std::io::Error> {
         .set_pad_colors(current_pad_states.clone())
         .await;
 
-    let ticks = utils::tick_stream(Duration::from_millis(1000 / 40)).map(|()| Event::Tick);
-    let lighting_events = midi_controller.lighting_events().map(Event::Lighting);
-    let events = stream::select(ticks, lighting_events);
+    let ticks = utils::tick_stream(Duration::from_millis(1000 / 40))
+        .map(|()| Event::Tick)
+        .boxed();
+    let lighting_events = midi_controller
+        .lighting_events()
+        .map(Event::Lighting)
+        .boxed();
+    let clock_events = midi_clock_source.map(|source| source.events().map(Event::Clock).boxed());
+
+    let events = stream::select_all(
+        vec![Some(ticks), Some(lighting_events), clock_events]
+            .into_iter()
+            .flatten(),
+    );
+
     pin_mut!(events);
 
     while let Some(event) = events.next().await {
@@ -119,6 +126,7 @@ async fn main() -> Result<(), async_std::io::Error> {
             Event::Lighting(event) => {
                 state.apply_event(event);
             }
+            Event::Clock(event) => state.clock.apply_event(event),
         }
     }
 
