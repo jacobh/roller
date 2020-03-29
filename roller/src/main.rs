@@ -26,7 +26,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     let mut fixtures = project.fixtures().await?;
 
     let midi_controller = control::midi::MidiController::new_for_device_name("APC MINI").unwrap();
-    let midi_clock_events = clock::midi_clock_events("XONE:PX5").unwrap();
+    let midi_clock_events = clock::midi_clock_events("XONE:PX5").ok();
 
     let mut state = EngineState {
         midi_mapping: &midi_controller.midi_mapping,
@@ -72,16 +72,24 @@ async fn main() -> Result<(), async_std::io::Error> {
         .set_pad_colors(current_pad_states.clone())
         .await;
 
-    let ticks = utils::tick_stream(Duration::from_millis(1000 / 40))
-        .map(|()| Event::Tick)
-        .boxed();
-    let lighting_events = midi_controller
-        .lighting_events()
-        .map(Event::Lighting)
-        .boxed();
-    let clock_events = midi_clock_events.map(Event::Clock).boxed();
+    let ticks = Some(
+        utils::tick_stream(Duration::from_millis(1000 / 40))
+            .map(|()| Event::Tick)
+            .boxed(),
+    );
+    let lighting_events = Some(
+        midi_controller
+            .lighting_events()
+            .map(Event::Lighting)
+            .boxed(),
+    );
+    let clock_events = midi_clock_events.map(|events| events.map(Event::Clock).boxed());
 
-    let events = stream::select_all(vec![ticks, lighting_events, clock_events]);
+    let events = stream::select_all(
+        vec![ticks, lighting_events, clock_events]
+            .into_iter()
+            .flatten(),
+    );
 
     pin_mut!(events);
 
