@@ -1,6 +1,6 @@
 use async_std::{prelude::*, stream::Stream, sync::Arc};
-use std::time::Duration;
 use std::pin::Pin;
+use std::time::Duration;
 use thiserror::Error;
 
 use crate::{MidiEvent, MidiMessageStream};
@@ -80,8 +80,8 @@ impl MidiInput {
 impl Stream for MidiInput {
     type Item = MidiEvent;
     fn poll_next(
-        mut self: Pin<&mut Self>, 
-        cx: &mut std::task::Context
+        mut self: Pin<&mut Self>,
+        cx: &mut std::task::Context,
     ) -> std::task::Poll<Option<Self::Item>> {
         Pin::new(&mut self.input_receiver).poll_next(cx)
     }
