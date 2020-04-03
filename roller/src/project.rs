@@ -28,8 +28,8 @@ struct ProjectUniverse {
 #[derive(Debug, Clone, Deserialize)]
 pub struct Project {
     label: String,
-    midi_controller: Option<String>,
-    midi_clock: Option<String>,
+    pub midi_controller: Option<String>,
+    pub midi_clock: Option<String>,
     universes: Vec<ProjectUniverse>,
 }
 impl Project {

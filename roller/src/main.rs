@@ -26,12 +26,12 @@ async fn main() -> Result<(), async_std::io::Error> {
     let mut fixtures = project.fixtures().await?;
 
     let midi_controller =
-        control::midi::MidiController::new_for_device_name(project.midi_controller.unwrap())
+        control::midi::MidiController::new_for_device_name(&project.midi_controller.unwrap())
             .unwrap();
 
     let midi_clock_events = project
         .midi_clock
-        .and_then(|clock_name| clock::midi_clock_events(clock_name).ok());
+        .and_then(|clock_name| clock::midi_clock_events(&clock_name).ok());
 
     let mut state = EngineState {
         midi_mapping: &midi_controller.midi_mapping,
