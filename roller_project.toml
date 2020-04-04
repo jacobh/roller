@@ -9,6 +9,7 @@ universe_id = 10
     start_channel = 1
     fixture_profile = "ave_quad_pro_flat_4ch"
     group_id = 1
+    location = { x = 10, y = 30 }
 
     [[universes.fixtures]]
     start_channel = 5
@@ -19,6 +20,7 @@ universe_id = 10
     start_channel = 9
     fixture_profile = "ebay_par_can"
     group_id = 1
+    location = { x = 40, y = 20}
 
     [[universes.fixtures]]
     start_channel = 17
@@ -29,6 +31,7 @@ universe_id = 10
     start_channel = 25
     fixture_profile = "ebay_par_can"
     group_id = 1
+    location = { x = 40, y = 30 }
 
     [[universes.fixtures]]
     start_channel = 33
@@ -44,8 +47,10 @@ universe_id = 10
     start_channel = 61
     fixture_profile = "ave_ledbar_24_29ch"
     group_id = 3
+    location = { x = 30, y = 10 }
 
     [[universes.fixtures]]
     start_channel = 90
     fixture_profile = "ave_ledbar_24_29ch"
     group_id = 3
+    location = { x = 20, y = 10 }
