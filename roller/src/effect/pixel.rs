@@ -132,6 +132,7 @@ impl PixelModulator {
 
                 PixelRangeSet::new(&[(low, high), (1.0 - low, 1.0 - high)])
             }
+            EffectDirection::LeftToRight => PixelRangeSet::new(&[(0.0, 1.0)]),
         }
     }
 }

@@ -20,6 +20,7 @@ pub enum EffectDirection {
     BottomToTop,
     ToCenter,
     FromCenter,
+    LeftToRight,
 }
 
 // Utilities

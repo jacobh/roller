@@ -1,5 +1,6 @@
 use async_std::prelude::*;
 use derive_more::{From, Into};
+use itertools::Itertools;
 use ordered_float::OrderedFloat;
 use rand::{seq::SliceRandom, thread_rng};
 use std::borrow::Cow;
@@ -7,7 +8,7 @@ use std::iter::Sum;
 use std::ops::{Add, Mul, Sub};
 use std::time::{Duration, Instant};
 
-use crate::fixture::Fixture;
+use crate::{effect::EffectDirection, fixture::Fixture};
 
 fn duration_as_secs(duration: Duration) -> f64 {
     duration.as_micros() as f64 / 1_000_000.0
@@ -217,6 +218,7 @@ pub enum ClockOffsetMode {
     GroupId,
     FixtureIndex,
     Random,
+    Location(EffectDirection),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -253,6 +255,39 @@ impl ClockOffset {
             ClockOffsetMode::Random => {
                 let fixture_idx = fixtures.iter().position(|x| x == fixture).unwrap();
                 self.offset * self.seed[fixture_idx % 32] as f64
+            }
+            ClockOffsetMode::Location(direction) => {
+                let fixture_locations = fixtures
+                    .iter()
+                    .flat_map(|fixture| fixture.location.as_ref());
+
+                match (fixture.location.as_ref(), direction) {
+                    (Some(location), EffectDirection::LeftToRight) => {
+                        let location_idx = fixture_locations
+                            .map(|location| location.x)
+                            .unique()
+                            .sorted()
+                            .rev()
+                            .position(|x| x == location.x)
+                            .unwrap();
+
+                        self.offset * location_idx as f64
+                    }
+                    (Some(location), EffectDirection::BottomToTop) => {
+                        let location_idx = fixture_locations
+                            .map(|location| location.y)
+                            .unique()
+                            .sorted()
+                            .rev()
+                            .position(|y| y == location.y)
+                            .unwrap();
+
+                        self.offset * location_idx as f64
+                    }
+                    (Some(_location), EffectDirection::FromCenter)
+                    | (Some(_location), EffectDirection::ToCenter) => unimplemented!(),
+                    _ => Beats::new(0.0),
+                }
             }
         }
     }
