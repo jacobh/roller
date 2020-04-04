@@ -2,7 +2,7 @@ use midi::Note;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use crate::{
     clock::Rate,
@@ -170,10 +170,30 @@ impl AkaiPadState {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+pub enum PadIllumination {
+    Solid(AkaiPadState),
+    Blink(AkaiPadState),
+}
+impl PadIllumination {
+    pub fn state(self, elapsed: Duration) -> AkaiPadState {
+        match self {
+            PadIllumination::Solid(state) => state,
+            PadIllumination::Blink(state) => {
+                if elapsed.as_millis() % 250 < 100 {
+                    state
+                } else {
+                    AkaiPadState::Off
+                }
+            }
+        }
+    }
+}
+
 pub struct Pad<'a> {
     mapping: PadMapping<'a>,
     group_toggle_state: GroupToggleState,
-    state: AkaiPadState,
+    state: PadIllumination,
     active_group_notes: Vec<Note>,
 }
 impl<'a> Pad<'a> {
@@ -182,7 +202,7 @@ impl<'a> Pad<'a> {
             mapping,
             group_toggle_state,
             active_group_notes: Vec::with_capacity(8),
-            state: AkaiPadState::Yellow,
+            state: PadIllumination::Solid(AkaiPadState::Yellow),
         }
     }
     fn apply_event(&mut self, event: &PadEvent<'a>) {
@@ -304,23 +324,17 @@ impl<'a> PadMapping<'a> {
             PadMapping::Meta(_) => ButtonType::Switch,
         }
     }
-    fn active_color(&self) -> AkaiPadState {
+    fn active_color(&self) -> PadIllumination {
         match self {
-            PadMapping::Standard(..) => AkaiPadState::Green,
-            PadMapping::Meta(_) => AkaiPadState::GreenBlink,
+            PadMapping::Standard(..) => PadIllumination::Solid(AkaiPadState::Green),
+            PadMapping::Meta(_) => PadIllumination::Blink(AkaiPadState::Green),
         }
     }
-    fn inactive_color(&self) -> AkaiPadState {
-        match self {
-            PadMapping::Standard(..) => AkaiPadState::Yellow,
-            PadMapping::Meta(_) => AkaiPadState::Yellow,
-        }
+    fn inactive_color(&self) -> PadIllumination {
+        PadIllumination::Solid(AkaiPadState::Yellow)
     }
-    fn deactivated_color(&self) -> AkaiPadState {
-        match self {
-            PadMapping::Standard(..) => AkaiPadState::Red,
-            PadMapping::Meta(_) => AkaiPadState::Red,
-        }
+    fn deactivated_color(&self) -> PadIllumination {
+        PadIllumination::Solid(AkaiPadState::Red)
     }
 }
 
@@ -375,7 +389,7 @@ pub fn pad_states<'a>(
     all_pads: Vec<PadMapping<'a>>,
     group_toggle_states: &FxHashMap<ButtonGroupId, GroupToggleState>,
     pad_events: impl IntoIterator<Item = PadEvent<'a>>,
-) -> FxHashMap<Note, AkaiPadState> {
+) -> FxHashMap<Note, PadIllumination> {
     let mut state: Vec<_> = all_pads
         .into_iter()
         .map(|mapping| {

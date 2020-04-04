@@ -1,7 +1,7 @@
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
 use rustc_hash::FxHashMap;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 mod clock;
 mod color;
@@ -33,6 +33,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         .midi_clock
         .and_then(|clock_name| clock::midi_clock_events(&clock_name).ok());
 
+    let started_at = Instant::now();
     let mut state = EngineState {
         midi_mapping: &midi_controller.midi_mapping,
         clock: Clock::new(128.0),
@@ -65,6 +66,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     }
 
     midi_controller.run_pad_startup().await;
+    let elapsed = started_at.elapsed();
     let mut current_pad_states = pad_states(
         midi_controller.midi_mapping.pad_mappings().collect(),
         &state
@@ -72,7 +74,10 @@ async fn main() -> Result<(), async_std::io::Error> {
             .iter_group_toggle_states()
             .collect(),
         state.pad_events(),
-    );
+    )
+    .into_iter()
+    .map(|(note, pad)| (note, pad.state(elapsed)))
+    .collect::<FxHashMap<_, _>>();
     midi_controller
         .set_pad_colors(current_pad_states.clone())
         .await;
@@ -101,6 +106,7 @@ async fn main() -> Result<(), async_std::io::Error> {
                     dmx_sender.send((universe as i32, dmx_data)).await;
                 }
 
+                let elapsed = started_at.elapsed();
                 let new_pad_states = pad_states(
                     midi_controller.midi_mapping.pad_mappings().collect(),
                     &state
@@ -108,7 +114,10 @@ async fn main() -> Result<(), async_std::io::Error> {
                         .iter_group_toggle_states()
                         .collect(),
                     state.pad_events(),
-                );
+                )
+                .into_iter()
+                .map(|(note, pad)| (note, pad.state(elapsed)))
+                .collect::<FxHashMap<_, _>>();
 
                 midi_controller
                     .set_pad_colors(
