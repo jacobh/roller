@@ -5,7 +5,7 @@ use serde::Deserialize;
 
 use crate::{
     position::{degrees_to_percent, Position},
-    project::FixtureGroupId,
+    project::{FixtureGroupId, FixtureLocation},
     utils::FxIndexMap,
 };
 
@@ -265,6 +265,7 @@ pub struct Fixture {
     universe: usize,
     start_channel: usize,
     pub group_id: Option<FixtureGroupId>,
+    pub location: Option<FixtureLocation>,
     enabled_effects: FxHashSet<FixtureEffectType>,
 
     beams: FxIndexMap<BeamId, FixtureBeam>,
@@ -277,6 +278,7 @@ impl Fixture {
         universe: usize,
         start_channel: usize,
         group_id: Option<FixtureGroupId>,
+        location: Option<FixtureLocation>,
         enabled_effects: FxHashSet<FixtureEffectType>,
     ) -> Fixture {
         let beams = profile
@@ -291,6 +293,7 @@ impl Fixture {
             universe,
             start_channel,
             group_id,
+            location,
             enabled_effects,
             beams,
             dimmer: 1.0,

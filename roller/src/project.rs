@@ -13,10 +13,17 @@ pub struct FixtureGroupId(usize);
 struct ProjectFixture {
     start_channel: usize,
     group_id: Option<FixtureGroupId>,
+    location: Option<FixtureLocation>,
     #[serde(rename = "fixture_profile")]
     fixture_profile_slug: String,
     #[serde(default = "FixtureEffectType::all")]
     enabled_effects: FxHashSet<FixtureEffectType>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize)]
+pub struct FixtureLocation {
+    pub x: isize,
+    pub y: isize,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -65,6 +72,7 @@ impl Project {
                             universe_id,
                             project_fixture.start_channel,
                             project_fixture.group_id,
+                            project_fixture.location,
                             project_fixture.enabled_effects,
                         )
                     })
