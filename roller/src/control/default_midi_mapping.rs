@@ -192,7 +192,10 @@ pub fn default_midi_mapping() -> MidiMapping {
                         DimmerModulator::new(Waveform::Off, Beats::new(0.5), 1.0),
                         DimmerModulator::new(Waveform::SawUp, Beats::new(0.5), (0.0, 0.2)),
                     ],
-                    Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(2.0))),
+                    Some(ClockOffset::new(
+                        ClockOffsetMode::Location(EffectDirection::BottomToTop),
+                        Beats::new(1.0),
+                    )),
                 )),
             }
             .into_group(ButtonType::Toggle),
@@ -203,7 +206,10 @@ pub fn default_midi_mapping() -> MidiMapping {
                         DimmerModulator::new(Waveform::ShortSquarePulse, Beats::new(1.0), 1.0),
                         DimmerModulator::new(Waveform::SineUp, Beats::new(1.0), (0.0, 0.7)),
                     ],
-                    Some(ClockOffset::new(ClockOffsetMode::GroupId, Beats::new(1.0))),
+                    Some(ClockOffset::new(
+                        ClockOffsetMode::Location(EffectDirection::BottomToTop),
+                        Beats::new(1.0),
+                    )),
                 )),
             }
             .into_group(ButtonType::Toggle),
@@ -230,6 +236,17 @@ pub fn default_midi_mapping() -> MidiMapping {
                     )],
                     Some(ClockOffset::new(
                         ClockOffsetMode::Location(EffectDirection::LeftToRight),
+                        Beats::new(1.0),
+                    )),
+                )),
+            }
+            .into_group(ButtonType::Toggle),
+            ButtonMapping {
+                note: Note::new(30),
+                on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
+                    vec![DimmerModulator::new(Waveform::SineUp, Beats::new(4.0), 1.0)],
+                    Some(ClockOffset::new(
+                        ClockOffsetMode::Location(EffectDirection::BottomToTop),
                         Beats::new(1.0),
                     )),
                 )),
