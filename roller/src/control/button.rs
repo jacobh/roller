@@ -301,12 +301,7 @@ impl<'a> PadMapping<'a> {
     fn button_type(&self) -> ButtonType {
         match self {
             PadMapping::Standard(_, _, button_type) => *button_type,
-            PadMapping::Meta(mapping) => match mapping.on_action {
-                MetaButtonAction::TapTempo => ButtonType::Flash,
-                MetaButtonAction::UpdateClockRate(_) => ButtonType::Switch,
-                MetaButtonAction::ActivateScene(_) => ButtonType::Switch,
-                MetaButtonAction::ToggleFixtureGroupControl(_) => ButtonType::Toggle,
-            },
+            PadMapping::Meta(_) => ButtonType::Switch,
         }
     }
     fn active_color(&self) -> AkaiPadState {
