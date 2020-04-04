@@ -284,9 +284,41 @@ impl ClockOffset {
 
                         self.offset * location_idx as f64
                     }
-                    (Some(_location), EffectDirection::FromCenter)
-                    | (Some(_location), EffectDirection::ToCenter) => unimplemented!(),
-                    _ => Beats::new(0.0),
+                    (Some(location), EffectDirection::ToCenter)
+                    | (Some(location), EffectDirection::FromCenter) => {
+                        let xs = fixture_locations
+                            .map(|location| location.x)
+                            .unique()
+                            .sorted()
+                            .collect_vec();
+                        let len = xs.len();
+
+                        let range = if len > 1 {
+                            if len % 2 == 0 {
+                                0..(len / 2)
+                            } else {
+                                0..((len + 1) / 2)
+                            }
+                        } else {
+                            0..0
+                        };
+
+                        let mut pairs = range.map(|i| (xs[i], xs[len - 1 - i]));
+
+                        let location_idx = match direction {
+                            EffectDirection::ToCenter => pairs
+                                .rev()
+                                .position(|(x1, x2)| x1 == location.x || x2 == location.x)
+                                .unwrap(),
+                            EffectDirection::FromCenter => pairs
+                                .position(|(x1, x2)| x1 == location.x || x2 == location.x)
+                                .unwrap(),
+                            _ => unreachable!(),
+                        };
+
+                        self.offset * location_idx as f64
+                    }
+                    (None, _) => Beats::new(0.0),
                 }
             }
         }

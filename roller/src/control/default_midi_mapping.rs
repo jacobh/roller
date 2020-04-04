@@ -246,7 +246,7 @@ pub fn default_midi_mapping() -> MidiMapping {
                 on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                     vec![DimmerModulator::new(Waveform::SineUp, Beats::new(4.0), 1.0)],
                     Some(ClockOffset::new(
-                        ClockOffsetMode::Location(EffectDirection::BottomToTop),
+                        ClockOffsetMode::Location(EffectDirection::FromCenter),
                         Beats::new(1.0),
                     )),
                 )),
