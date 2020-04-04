@@ -483,6 +483,57 @@ pub fn default_midi_mapping() -> MidiMapping {
                             )),
                         )),
                     },
+                    ButtonMapping {
+                        note: Note::new(4),
+                        on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
+                            vec![
+                                PixelModulator::new(
+                                    Waveform::OnePointFiveRootUp,
+                                    Beats::new(0.5),
+                                    EffectDirection::BottomToTop,
+                                ),
+                                PixelModulator::new(
+                                    Waveform::OnePointFiveRootUp,
+                                    Beats::new(0.5),
+                                    EffectDirection::BottomToTop,
+                                ),
+                                PixelModulator::new(
+                                    Waveform::OnePointFiveRootUp,
+                                    Beats::new(0.5),
+                                    EffectDirection::BottomToTop,
+                                ),
+                                PixelModulator::new(
+                                    Waveform::OnePointFiveRootUp,
+                                    Beats::new(0.5),
+                                    EffectDirection::BottomToTop,
+                                ),
+                                PixelModulator::new(
+                                    Waveform::OnePointFiveRootDown,
+                                    Beats::new(0.5),
+                                    EffectDirection::BottomToTop,
+                                ),
+                                PixelModulator::new(
+                                    Waveform::OnePointFiveRootDown,
+                                    Beats::new(0.5),
+                                    EffectDirection::BottomToTop,
+                                ),
+                                PixelModulator::new(
+                                    Waveform::OnePointFiveRootDown,
+                                    Beats::new(0.5),
+                                    EffectDirection::BottomToTop,
+                                ),
+                                PixelModulator::new(
+                                    Waveform::OnePointFiveRootDown,
+                                    Beats::new(0.5),
+                                    EffectDirection::BottomToTop,
+                                ),
+                            ],
+                            Some(ClockOffset::new(
+                                ClockOffsetMode::FixtureIndex,
+                                Beats::new(0.25),
+                            )),
+                        )),
+                    },
                 ],
             ),
             // Positions
