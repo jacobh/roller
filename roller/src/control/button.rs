@@ -389,7 +389,8 @@ pub fn pad_states<'a>(
     all_pads: Vec<PadMapping<'a>>,
     group_toggle_states: &FxHashMap<ButtonGroupId, GroupToggleState>,
     pad_events: impl IntoIterator<Item = PadEvent<'a>>,
-) -> FxHashMap<Note, PadIllumination> {
+    elapsed: Duration,
+) -> FxHashMap<Note, AkaiPadState> {
     let mut state: Vec<_> = all_pads
         .into_iter()
         .map(|mapping| {
@@ -410,6 +411,6 @@ pub fn pad_states<'a>(
 
     state
         .into_iter()
-        .map(|pad| (pad.mapping.note(), pad.state))
+        .map(|pad| (pad.mapping.note(), pad.state.state(elapsed)))
         .collect()
 }
