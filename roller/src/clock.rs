@@ -293,17 +293,11 @@ impl ClockOffset {
                             .collect_vec();
                         let len = xs.len();
 
-                        let range = if len > 1 {
-                            if len % 2 == 0 {
-                                0..(len / 2)
-                            } else {
-                                0..((len + 1) / 2)
-                            }
-                        } else {
-                            0..0
-                        };
-
-                        let mut pairs = range.map(|i| (xs[i], xs[len - 1 - i]));
+                        let mut pairs = xs
+                            .clone()
+                            .into_iter()
+                            .zip(xs.into_iter().rev())
+                            .take((len + 1) / 2);
 
                         let location_idx = match direction {
                             EffectDirection::ToCenter => pairs
