@@ -50,23 +50,23 @@ pub fn sigmoid(x: f64, tilt: f64) -> f64 {
     1.0 - (1.0 / (1.0 + f64::powf(1.0 / x - 1.0, -tilt)))
 }
 
-pub trait Modulator {
+pub trait Step {
     fn meter_length(&self) -> Beats;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ModulatorSteps<T>
+pub struct Steps<T>
 where
-    T: Modulator,
+    T: Step,
 {
     steps: Vec<T>,
 }
-impl<T> ModulatorSteps<T>
+impl<T> Steps<T>
 where
-    T: Modulator,
+    T: Step,
 {
-    fn new(steps: Vec<T>) -> ModulatorSteps<T> {
-        ModulatorSteps { steps }
+    fn new(steps: Vec<T>) -> Steps<T> {
+        Steps { steps }
     }
 
     fn total_length(&self) -> Beats {

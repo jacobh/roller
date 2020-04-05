@@ -2,18 +2,18 @@ use ordered_float::OrderedFloat;
 
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
-    effect::{Modulator, ModulatorSteps, Waveform},
+    effect::{Step, Steps, Waveform},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DimmerEffect {
-    steps: ModulatorSteps<DimmerModulator>,
+    steps: Steps<DimmerModulator>,
     pub clock_offset: Option<ClockOffset>,
 }
 impl DimmerEffect {
     pub fn new(steps: Vec<DimmerModulator>, clock_offset: Option<ClockOffset>) -> DimmerEffect {
         DimmerEffect {
-            steps: ModulatorSteps::new(steps),
+            steps: Steps::new(steps),
             clock_offset,
         }
     }
@@ -81,7 +81,7 @@ impl DimmerModulator {
         self.scale.scale(self.waveform.apply(elapsed_percent))
     }
 }
-impl Modulator for DimmerModulator {
+impl Step for DimmerModulator {
     fn meter_length(&self) -> Beats {
         self.meter_length
     }
