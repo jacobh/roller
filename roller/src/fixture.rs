@@ -341,6 +341,25 @@ impl Fixture {
     ) -> Result<(), &'static str> {
         let color = color.into();
 
+        // Apply a subtle perceptual brightness scale to colors.
+        // Luma values have been eyeballed and might differ on a per-fixture basis in reality
+        const R_LUMA: f64 = 1.2;
+        const G_LUMA: f64 = 1.5;
+        const B_LUMA: f64 = 1.0;
+        let (r, g, b) = color.into_components();
+        let is_white = r == 1.0 && g == 1.0 && b == 1.0;
+
+        // Special casing white here for it to remain full brightness
+        // TODO some sort of enum like `BrightnessMode {Full, Perceuptual}`
+        let scale = if !is_white {
+            let luminance = r * R_LUMA + g * G_LUMA + b * B_LUMA;
+            1.0 / luminance * B_LUMA
+        } else {
+            1.0
+        };
+
+        let color = palette::LinSrgb::<f64>::new(r * scale, g * scale, b * scale);
+
         if self.profile.is_colorable() {
             for beam in self.beams.values_mut() {
                 if beam.profile.is_colorable() {
