@@ -197,24 +197,8 @@ impl<'a> EngineState<'a> {
                     1.0
                 };
 
-                let (base_color, secondary_color) = if fixture.group_id
-                    == Some(FixtureGroupId::new(1))
-                    || fixture.group_id == Some(FixtureGroupId::new(2))
-                {
-                    (
-                        values.global_color().to_hsl(),
-                        values.secondary_color.map(Color::to_hsl),
-                    )
-                } else {
-                    if let Some(secondary_color) = values.secondary_color {
-                        (
-                            secondary_color.to_hsl(),
-                            Some(values.global_color().to_hsl()),
-                        )
-                    } else {
-                        (values.global_color().to_hsl(), None)
-                    }
-                };
+                let base_color = values.global_color().to_hsl();
+                let secondary_color = values.secondary_color.map(Color::to_hsl);
 
                 let color = if fixture.color_effects_enabled() {
                     effect::color_intensity(
