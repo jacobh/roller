@@ -26,24 +26,24 @@ lazy_static::lazy_static! {
 
 pub type ButtonStateMap = FxIndexMap<(ButtonMapping, NoteState), ButtonStateValue>;
 pub type ButtonStateValue = (Instant, Rate);
-pub type FixtureGroupStateMap = FxHashMap<FixtureGroupId, ButtonStates>;
 
 #[derive(Default)]
 pub struct SceneState {
     // contains base effect states, for all fixtures
-    pub base: ButtonStates,
+    pub base: FixtureGroupState,
     // Contains states for effects enabled for specific groups. These take
     // precedence over any effects set in the `default` state
-    pub fixture_groups: FixtureGroupStateMap,
+    pub fixture_groups: FxHashMap<FixtureGroupId, FixtureGroupState>,
     pub clock_rate: Rate,
 }
 impl SceneState {
     pub fn base_button_states(&self) -> &ButtonStates {
-        &self.base
+        &self.base.button_states
     }
     pub fn fixture_group_button_states(&self, fixture_group_id: FixtureGroupId) -> &ButtonStates {
         self.fixture_groups
             .get(&fixture_group_id)
+            .map(|state| &state.button_states)
             .unwrap_or_else(|| &*EMPTY_BUTTON_STATES)
     }
     pub fn button_states(&self, fixture_group_id: Option<FixtureGroupId>) -> &ButtonStates {
@@ -59,13 +59,13 @@ impl SceneState {
         FixtureGroupValue<'_>,
         FxHashMap<FixtureGroupId, FixtureGroupValue<'_>>,
     ) {
-        let base_values = self.base.fixture_group_value();
+        let base_values = self.base.button_states.fixture_group_value();
 
         let group_values = self
             .fixture_groups
             .iter()
             .map(|(id, state)| {
-                let values = state.fixture_group_value();
+                let values = state.button_states.fixture_group_value();
                 (*id, values.merge(&base_values))
             })
             .collect();
@@ -77,15 +77,24 @@ impl SceneState {
         fixture_group_id: Option<FixtureGroupId>,
     ) -> &mut ButtonStates {
         if let Some(group_id) = fixture_group_id {
-            self.fixture_groups.entry(group_id).or_default()
+            &mut self
+                .fixture_groups
+                .entry(group_id)
+                .or_default()
+                .button_states
         } else {
-            &mut self.base
+            &mut self.base.button_states
         }
     }
 }
 
+#[derive(Debug, Default)]
+pub struct FixtureGroupState {
+    button_states: ButtonStates,
+}
+
 type GroupStatesValue = (ButtonType, GroupToggleState, ButtonStateMap);
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct ButtonStates {
     group_states: FxHashMap<ButtonGroupId, GroupStatesValue>,
 }
