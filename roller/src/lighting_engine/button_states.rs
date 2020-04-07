@@ -20,7 +20,7 @@ use crate::{
 
 // This is just for the case where no buttons have been activated yet
 lazy_static::lazy_static! {
-    pub static ref EMPTY_BUTTON_STATES: ButtonStates = ButtonStates::default();
+    pub static ref EMPTY_FIXTURE_GROUP_STATE: FixtureGroupState = FixtureGroupState::default();
     pub static ref EMPTY_SCENE_STATE: SceneState = SceneState::default();
 }
 
@@ -37,20 +37,26 @@ pub struct SceneState {
     pub clock_rate: Rate,
 }
 impl SceneState {
-    pub fn base_button_states(&self) -> &ButtonStates {
-        &self.base.button_states
-    }
-    pub fn fixture_group_button_states(&self, fixture_group_id: FixtureGroupId) -> &ButtonStates {
-        self.fixture_groups
-            .get(&fixture_group_id)
-            .map(|state| &state.button_states)
-            .unwrap_or_else(|| &*EMPTY_BUTTON_STATES)
-    }
-    pub fn button_states(&self, fixture_group_id: Option<FixtureGroupId>) -> &ButtonStates {
+    pub fn fixture_group_state(
+        &self,
+        fixture_group_id: Option<FixtureGroupId>,
+    ) -> &FixtureGroupState {
         if let Some(group_id) = fixture_group_id {
-            self.fixture_group_button_states(group_id)
+            self.fixture_groups
+                .get(&group_id)
+                .unwrap_or_else(|| &*EMPTY_FIXTURE_GROUP_STATE)
         } else {
-            self.base_button_states()
+            &self.base
+        }
+    }
+    pub fn fixture_group_state_mut(
+        &mut self,
+        fixture_group_id: Option<FixtureGroupId>,
+    ) -> &mut FixtureGroupState {
+        if let Some(group_id) = fixture_group_id {
+            self.fixture_groups.entry(group_id).or_default()
+        } else {
+            &mut self.base
         }
     }
     pub fn fixture_group_values(
@@ -72,25 +78,11 @@ impl SceneState {
 
         (base_values, group_values)
     }
-    pub fn button_states_mut(
-        &mut self,
-        fixture_group_id: Option<FixtureGroupId>,
-    ) -> &mut ButtonStates {
-        if let Some(group_id) = fixture_group_id {
-            &mut self
-                .fixture_groups
-                .entry(group_id)
-                .or_default()
-                .button_states
-        } else {
-            &mut self.base.button_states
-        }
-    }
 }
 
 #[derive(Debug, Default)]
 pub struct FixtureGroupState {
-    button_states: ButtonStates,
+    pub button_states: ButtonStates,
 }
 
 type GroupStatesValue = (ButtonType, GroupToggleState, ButtonStateMap);

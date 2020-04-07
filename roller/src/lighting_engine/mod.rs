@@ -107,14 +107,18 @@ impl<'a> EngineState<'a> {
             .or_default()
     }
     pub fn control_button_states(&self) -> &ButtonStates {
-        self.active_scene_state()
-            .button_states(self.active_fixture_group_control)
+        &self
+            .active_scene_state()
+            .fixture_group_state(self.active_fixture_group_control)
+            .button_states
     }
     pub fn control_button_states_mut(&mut self) -> &mut ButtonStates {
         let active_fixture_group_control = self.active_fixture_group_control;
 
-        self.active_scene_state_mut()
-            .button_states_mut(active_fixture_group_control)
+        &mut self
+            .active_scene_state_mut()
+            .fixture_group_state_mut(active_fixture_group_control)
+            .button_states
     }
     pub fn apply_event(&mut self, event: ControlEvent) {
         // dbg!(&event);
