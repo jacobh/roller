@@ -35,6 +35,7 @@ pub struct SceneState {
     // Contains states for effects enabled for specific groups. These take
     // precedence over any effects set in the `default` state
     pub fixture_groups: FixtureGroupStateMap,
+    pub clock_rate: Rate,
 }
 impl SceneState {
     pub fn base_button_states(&self) -> &ButtonStates {
