@@ -87,6 +87,12 @@ impl From<Rate> for f64 {
         rate.0.into_inner()
     }
 }
+impl Mul for Rate {
+    type Output = Rate;
+    fn mul(self, other: Rate) -> Rate {
+        Rate::new(self.0.into_inner() * other.0.into_inner())
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 enum ClockState {

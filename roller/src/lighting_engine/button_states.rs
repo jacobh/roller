@@ -34,7 +34,6 @@ pub struct SceneState {
     // Contains states for effects enabled for specific groups. These take
     // precedence over any effects set in the `default` state
     pub fixture_groups: FxHashMap<FixtureGroupId, FixtureGroupState>,
-    pub clock_rate: Rate,
 }
 impl SceneState {
     pub fn fixture_group_state(
@@ -65,13 +64,13 @@ impl SceneState {
         FixtureGroupValue<'_>,
         FxHashMap<FixtureGroupId, FixtureGroupValue<'_>>,
     ) {
-        let base_values = self.base.button_states.fixture_group_value();
+        let base_values = self.base.fixture_group_value();
 
         let group_values = self
             .fixture_groups
             .iter()
             .map(|(id, state)| {
-                let values = state.button_states.fixture_group_value();
+                let values = state.fixture_group_value();
                 (*id, values.merge(&base_values))
             })
             .collect();
@@ -82,7 +81,24 @@ impl SceneState {
 
 #[derive(Debug, Default)]
 pub struct FixtureGroupState {
+    pub clock_rate: Rate,
     pub button_states: ButtonStates,
+}
+impl FixtureGroupState {
+    pub fn fixture_group_value(&self) -> FixtureGroupValue<'_> {
+        let buttons = &self.button_states;
+
+        FixtureGroupValue {
+            clock_rate: self.clock_rate,
+            global_color: buttons.global_color(),
+            secondary_color: buttons.secondary_color(),
+            active_dimmer_effects: buttons.active_dimmer_effects(),
+            active_color_effects: buttons.active_color_effects(),
+            active_pixel_effects: buttons.active_pixel_effects(),
+            active_position_effects: buttons.active_position_effects(),
+            base_position: buttons.base_position(),
+        }
+    }
 }
 
 type GroupStatesValue = (ButtonType, GroupToggleState, ButtonStateMap);
@@ -278,17 +294,6 @@ impl ButtonStates {
             ButtonAction::ActivatePositionEffect(effect) => Some(effect),
             _ => None,
         })
-    }
-    pub fn fixture_group_value(&self) -> FixtureGroupValue<'_> {
-        FixtureGroupValue {
-            global_color: self.global_color(),
-            secondary_color: self.secondary_color(),
-            active_dimmer_effects: self.active_dimmer_effects(),
-            active_color_effects: self.active_color_effects(),
-            active_pixel_effects: self.active_pixel_effects(),
-            active_position_effects: self.active_position_effects(),
-            base_position: self.base_position(),
-        }
     }
     pub fn iter_states_mut(&mut self) -> impl Iterator<Item = &mut ButtonStateMap> {
         self.group_states.values_mut().map(|(_, _, states)| states)

@@ -19,8 +19,8 @@ use crate::{
 mod button_states;
 
 pub use button_states::{
-    ButtonGroupInfo, ButtonInfo, ButtonStateMap, ButtonStateValue, ButtonStates, SceneState,
-    EMPTY_SCENE_STATE,
+    ButtonGroupInfo, ButtonInfo, ButtonStateMap, ButtonStateValue, ButtonStates, FixtureGroupState,
+    SceneState, EMPTY_SCENE_STATE,
 };
 
 // This is just for the case where no buttons have been activated yet
@@ -33,6 +33,7 @@ pub struct SceneId(usize);
 
 #[derive(Default)]
 pub struct FixtureGroupValue<'a> {
+    pub clock_rate: Rate,
     pub global_color: Option<Color>,
     pub secondary_color: Option<Color>,
     pub base_position: Option<BasePosition>,
@@ -43,6 +44,7 @@ pub struct FixtureGroupValue<'a> {
 }
 impl<'a> FixtureGroupValue<'a> {
     pub fn merge(mut self, other: &FixtureGroupValue<'a>) -> FixtureGroupValue<'a> {
+        self.clock_rate = self.clock_rate * other.clock_rate;
         if self.global_color == None {
             self.global_color = other.global_color;
         }
@@ -106,19 +108,16 @@ impl<'a> EngineState<'a> {
             .entry(self.active_scene_id)
             .or_default()
     }
-    pub fn control_button_states(&self) -> &ButtonStates {
+    pub fn control_fixture_group_state(&self) -> &FixtureGroupState {
         &self
             .active_scene_state()
             .fixture_group_state(self.active_fixture_group_control)
-            .button_states
     }
-    pub fn control_button_states_mut(&mut self) -> &mut ButtonStates {
+    fn control_fixture_group_state_mut(&mut self) -> &mut FixtureGroupState {
         let active_fixture_group_control = self.active_fixture_group_control;
 
-        &mut self
-            .active_scene_state_mut()
+        self.active_scene_state_mut()
             .fixture_group_state_mut(active_fixture_group_control)
-            .button_states
     }
     pub fn apply_event(&mut self, event: ControlEvent) {
         // dbg!(&event);
@@ -133,14 +132,18 @@ impl<'a> EngineState<'a> {
                 self.color_effect_intensity = intensity;
             }
             ControlEvent::UpdateClockRate(rate) => {
-                let pressed_notes = self.control_button_states().pressed_notes();
+                let pressed_notes = self
+                    .control_fixture_group_state()
+                    .button_states
+                    .pressed_notes();
 
                 // If there are any buttons currently pressed, update the rate of those buttons, note the global rate
                 if !pressed_notes.is_empty() {
-                    self.control_button_states_mut()
+                    self.control_fixture_group_state_mut()
+                        .button_states
                         .update_pressed_button_rates(rate);
                 } else {
-                    self.active_scene_state_mut().clock_rate = rate;
+                    self.control_fixture_group_state_mut().clock_rate = rate;
                 }
             }
             ControlEvent::ActivateScene(scene_id) => {
@@ -157,7 +160,8 @@ impl<'a> EngineState<'a> {
                 self.group_dimmers.insert(group_id, dimmer);
             }
             ControlEvent::UpdateButton(group, mapping, note_state, now) => {
-                self.control_button_states_mut()
+                self.control_fixture_group_state_mut()
+                    .button_states
                     .update_button_state(&group, mapping, note_state, now);
             }
             ControlEvent::TapTempo(now) => {
@@ -169,11 +173,7 @@ impl<'a> EngineState<'a> {
     pub fn update_fixtures(&self, fixtures: &mut Vec<Fixture>) {
         let scene = self.active_scene_state();
 
-        let clock_snapshot = self
-            .clock
-            .snapshot()
-            .with_rate(scene.clock_rate)
-            .into_owned();
+        let clock_snapshot = self.clock.snapshot();
         let (base_values, fixture_group_values) = scene.fixture_group_values();
 
         let fixture_values = fixtures
@@ -184,6 +184,8 @@ impl<'a> EngineState<'a> {
                 } else {
                     &base_values
                 };
+
+                let clock_snapshot = clock_snapshot.with_rate(values.clock_rate);
 
                 let effect_dimmer = if fixture.dimmer_effects_enabled() {
                     values
@@ -329,13 +331,14 @@ impl<'a> EngineState<'a> {
                 });
 
         let pressed_button_rate: Option<Rate> = self
-            .control_button_states()
+            .control_fixture_group_state()
+            .button_states
             .pressed_buttons()
             .values()
             .map(|(_, rate)| *rate)
             .max();
 
-        let scene_clock_rate = self.active_scene_state().clock_rate;
+        let clock_rate = self.control_fixture_group_state().clock_rate;
         let active_clock_rate_button = self
             .midi_mapping
             .meta_buttons
@@ -343,7 +346,7 @@ impl<'a> EngineState<'a> {
             .find(|button| {
                 button.on_action
                     == MetaButtonAction::UpdateClockRate(
-                        pressed_button_rate.unwrap_or(scene_clock_rate),
+                        pressed_button_rate.unwrap_or(clock_rate),
                     )
             })
             .unwrap();
@@ -358,7 +361,8 @@ impl<'a> EngineState<'a> {
         .map(PadEvent::new_on)
     }
     pub fn pad_events(&self) -> impl Iterator<Item = PadEvent<'_>> {
-        self.control_button_states()
+        self.control_fixture_group_state()
+            .button_states
             .iter_info()
             .map(PadEvent::from)
             .chain(self.meta_pad_events())
