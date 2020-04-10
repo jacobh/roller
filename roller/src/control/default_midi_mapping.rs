@@ -252,6 +252,25 @@ pub fn default_midi_mapping() -> MidiMapping {
                 )),
             }
             .into_group(ButtonType::Toggle),
+            ButtonMapping {
+                note: Note::new(22),
+                on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
+                    vec![
+                        DimmerModulator::new(Waveform::SawDown, Beats::new(2.0), 1.0),
+                        DimmerModulator::new(Waveform::Off, Beats::new(1.0), 1.0),
+                        DimmerModulator::new(Waveform::Off, Beats::new(1.0), 1.0),
+                        DimmerModulator::new(Waveform::Off, Beats::new(1.0), 1.0),
+                        DimmerModulator::new(Waveform::SawDown, Beats::new(2.0), 1.0),
+                        DimmerModulator::new(Waveform::Off, Beats::new(1.0), 1.0),
+                        DimmerModulator::new(Waveform::Off, Beats::new(1.0), 1.0),
+                    ],
+                    Some(ClockOffset::new(
+                        ClockOffsetMode::FixtureIndex,
+                        Beats::new(2.0),
+                    )),
+                )),
+            }
+            .into_group(ButtonType::Toggle),
             // Color effects
             ButtonMapping {
                 note: Note::new(58),
