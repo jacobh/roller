@@ -15,6 +15,7 @@ universe_id = 10
     start_channel = 5
     fixture_profile = "ave_quad_pro_flat_4ch"
     group_id = 1
+    location = { x = 40, y = 30 }
 
     [[universes.fixtures]]
     start_channel = 9
@@ -37,11 +38,13 @@ universe_id = 10
     start_channel = 33
     fixture_profile = "mini_led_moving_head"
     group_id = 2
+    location = { x = 30, y = 10 }
 
     [[universes.fixtures]]
     start_channel = 47
     fixture_profile = "mini_led_moving_head"
     group_id = 2
+    location = { x = 20, y = 10 }
 
     [[universes.fixtures]]
     start_channel = 61
