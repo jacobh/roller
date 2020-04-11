@@ -148,6 +148,7 @@ impl<'a> EngineState<'a> {
             }
             ControlEvent::ActivateScene(scene_id) => {
                 self.active_scene_id = scene_id;
+                self.active_fixture_group_control = None;
             }
             ControlEvent::ToggleFixtureGroupControl(group_id) => {
                 if Some(group_id) == self.active_fixture_group_control {
