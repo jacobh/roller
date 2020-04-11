@@ -344,7 +344,7 @@ impl Fixture {
         // Apply a subtle perceptual brightness scale to colors.
         // Luma values have been eyeballed and might differ on a per-fixture basis in reality
         const R_LUMA: f64 = 1.2;
-        const G_LUMA: f64 = 1.5;
+        const G_LUMA: f64 = 1.7;
         const B_LUMA: f64 = 1.0;
         let (r, g, b) = color.into_components();
         let is_white = r == 1.0 && g == 1.0 && b == 1.0;
