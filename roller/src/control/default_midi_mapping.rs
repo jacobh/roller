@@ -681,34 +681,22 @@ pub fn default_midi_mapping() -> MidiMapping {
             },
             MetaButtonMapping {
                 note: Note::new(82),
-                on_action: MetaButtonAction::UpdateClockRate(Rate::new(0.333_333)),
+                on_action: MetaButtonAction::UpdateClockRate(Rate::new(1.0 / 3.0)),
             },
             MetaButtonMapping {
                 note: Note::new(83),
-                on_action: MetaButtonAction::UpdateClockRate(Rate::new(0.5)),
+                on_action: MetaButtonAction::UpdateClockRate(Rate::new(1.0 / 2.0)),
             },
             MetaButtonMapping {
                 note: Note::new(84),
-                on_action: MetaButtonAction::UpdateClockRate(Rate::new(0.666_667)),
-            },
-            MetaButtonMapping {
-                note: Note::new(85),
-                on_action: MetaButtonAction::UpdateClockRate(Rate::new(0.75)),
-            },
-            MetaButtonMapping {
-                note: Note::new(86),
                 on_action: MetaButtonAction::UpdateClockRate(Rate::new(1.0)),
             },
             MetaButtonMapping {
-                note: Note::new(87),
-                on_action: MetaButtonAction::UpdateClockRate(Rate::new(1.5)),
-            },
-            MetaButtonMapping {
-                note: Note::new(88),
+                note: Note::new(85),
                 on_action: MetaButtonAction::UpdateClockRate(Rate::new(2.0)),
             },
             MetaButtonMapping {
-                note: Note::new(89),
+                note: Note::new(86),
                 on_action: MetaButtonAction::UpdateClockRate(Rate::new(3.0)),
             },
         ],
