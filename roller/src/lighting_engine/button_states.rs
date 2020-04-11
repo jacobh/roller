@@ -79,8 +79,9 @@ impl SceneState {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct FixtureGroupState {
+    pub dimmer: f64,
     pub clock_rate: Rate,
     pub button_states: ButtonStates,
 }
@@ -89,6 +90,7 @@ impl FixtureGroupState {
         let buttons = &self.button_states;
 
         FixtureGroupValue {
+            dimmer: self.dimmer,
             clock_rate: self.clock_rate,
             global_color: buttons.global_color(),
             secondary_color: buttons.secondary_color(),
@@ -97,6 +99,15 @@ impl FixtureGroupState {
             active_pixel_effects: buttons.active_pixel_effects(),
             active_position_effects: buttons.active_position_effects(),
             base_position: buttons.base_position(),
+        }
+    }
+}
+impl Default for FixtureGroupState {
+    fn default() -> FixtureGroupState {
+        FixtureGroupState {
+            dimmer: 1.0,
+            clock_rate: Rate::default(),
+            button_states: ButtonStates::default(),
         }
     }
 }

@@ -33,6 +33,7 @@ pub struct SceneId(usize);
 
 #[derive(Default)]
 pub struct FixtureGroupValue<'a> {
+    pub dimmer: f64,
     pub clock_rate: Rate,
     pub global_color: Option<Color>,
     pub secondary_color: Option<Color>,
@@ -90,7 +91,6 @@ pub struct EngineState<'a> {
     pub midi_mapping: &'a MidiMapping,
     pub clock: Clock,
     pub master_dimmer: f64,
-    pub group_dimmers: FxHashMap<FixtureGroupId, f64>,
     pub dimmer_effect_intensity: f64,
     pub color_effect_intensity: f64,
     pub active_scene_id: SceneId,
@@ -158,7 +158,9 @@ impl<'a> EngineState<'a> {
                 }
             }
             ControlEvent::UpdateGroupDimmer(group_id, dimmer) => {
-                self.group_dimmers.insert(group_id, dimmer);
+                self.active_scene_state_mut()
+                    .fixture_group_state_mut(Some(group_id))
+                    .dimmer = dimmer;
             }
             ControlEvent::UpdateButton(group, mapping, note_state, now) => {
                 self.control_fixture_group_state_mut()
@@ -275,10 +277,7 @@ impl<'a> EngineState<'a> {
                     None
                 };
 
-                let group_dimmer = fixture
-                    .group_id
-                    .and_then(|group_id| self.group_dimmers.get(&group_id).copied())
-                    .unwrap_or(1.0);
+                let group_dimmer = values.dimmer;
 
                 let dimmer = self.master_dimmer * group_dimmer * effect_dimmer;
                 (dimmer, color, pixel_range_set, position)
@@ -346,9 +345,7 @@ impl<'a> EngineState<'a> {
             .values()
             .find(|button| {
                 button.on_action
-                    == MetaButtonAction::UpdateClockRate(
-                        pressed_button_rate.unwrap_or(clock_rate),
-                    )
+                    == MetaButtonAction::UpdateClockRate(pressed_button_rate.unwrap_or(clock_rate))
             })
             .unwrap();
 

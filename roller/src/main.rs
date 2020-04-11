@@ -38,7 +38,6 @@ async fn main() -> Result<(), async_std::io::Error> {
         midi_mapping: &midi_controller.midi_mapping,
         clock: Clock::new(128.0),
         master_dimmer: 1.0,
-        group_dimmers: FxHashMap::default(),
         dimmer_effect_intensity: 0.5,
         color_effect_intensity: 1.0,
         active_scene_id: SceneId::new(1),
