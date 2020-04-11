@@ -66,7 +66,7 @@ impl MidiMapping {
                 .or_else(|| {
                     self.meta_buttons
                         .get(note)
-                        .map(|meta_button| meta_button.control_event(now))
+                        .map(|meta_button| meta_button.on_action.control_event(now))
                 }),
             MidiEvent::NoteOff { note, .. } => self
                 .group_buttons()
@@ -75,6 +75,12 @@ impl MidiMapping {
                     button
                         .clone()
                         .into_control_event(group.clone(), NoteState::Off, now)
+                })
+                .or_else(|| {
+                    self.meta_buttons
+                        .get(note)
+                        .and_then(|meta_button| meta_button.off_action.as_ref())
+                        .map(|off_action| off_action.control_event(now))
                 }),
             _ => None,
         }

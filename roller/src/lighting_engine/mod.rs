@@ -75,6 +75,12 @@ impl<'a> FixtureGroupValue<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub enum ControlMode {
+    Shift,
+    Normal,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum ControlEvent {
     UpdateMasterDimmer(f64),
     UpdateGroupDimmer(FixtureGroupId, f64),
@@ -85,6 +91,7 @@ pub enum ControlEvent {
     ToggleFixtureGroupControl(FixtureGroupId),
     UpdateButton(ButtonGroup, ButtonMapping, NoteState, Instant),
     TapTempo(Instant),
+    UpdateControlMode(ControlMode),
 }
 
 pub struct EngineState<'a> {
@@ -93,11 +100,25 @@ pub struct EngineState<'a> {
     pub master_dimmer: f64,
     pub dimmer_effect_intensity: f64,
     pub color_effect_intensity: f64,
+    pub control_mode: ControlMode,
     pub active_scene_id: SceneId,
     pub active_fixture_group_control: Option<FixtureGroupId>,
     pub scene_fixture_group_button_states: FxHashMap<SceneId, SceneState>,
 }
 impl<'a> EngineState<'a> {
+    pub fn new(midi_mapping: &'a MidiMapping) -> EngineState<'a> {
+        EngineState {
+            midi_mapping,
+            clock: Clock::new(128.0),
+            master_dimmer: 1.0,
+            dimmer_effect_intensity: 0.5,
+            color_effect_intensity: 1.0,
+            control_mode: ControlMode::Normal,
+            active_scene_id: SceneId::new(1),
+            active_fixture_group_control: None,
+            scene_fixture_group_button_states: FxHashMap::default(),
+        }
+    }
     fn active_scene_state(&self) -> &SceneState {
         self.scene_fixture_group_button_states
             .get(&self.active_scene_id)
@@ -122,6 +143,9 @@ impl<'a> EngineState<'a> {
     pub fn apply_event(&mut self, event: ControlEvent) {
         // dbg!(&event);
         match event {
+            ControlEvent::UpdateControlMode(mode) => {
+                self.control_mode = mode;
+            }
             ControlEvent::UpdateMasterDimmer(dimmer) => {
                 self.master_dimmer = dimmer;
             }

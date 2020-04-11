@@ -34,16 +34,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         .and_then(|clock_name| clock::midi_clock_events(&clock_name).ok());
 
     let started_at = Instant::now();
-    let mut state = EngineState {
-        midi_mapping: &midi_controller.midi_mapping,
-        clock: Clock::new(128.0),
-        master_dimmer: 1.0,
-        dimmer_effect_intensity: 0.5,
-        color_effect_intensity: 1.0,
-        active_scene_id: SceneId::new(1),
-        active_fixture_group_control: None,
-        scene_fixture_group_button_states: FxHashMap::default(),
-    };
+    let mut state = EngineState::new(&midi_controller.midi_mapping);
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
 

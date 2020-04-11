@@ -648,56 +648,74 @@ pub fn default_midi_mapping() -> MidiMapping {
         ],
         vec![
             MetaButtonMapping {
+                note: Note::new(98),
+                on_action: MetaButtonAction::EnableShiftMode,
+                off_action: Some(MetaButtonAction::DisableShiftMode),
+            },
+            MetaButtonMapping {
                 note: Note::new(89),
                 on_action: MetaButtonAction::TapTempo,
+                off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(64),
                 on_action: MetaButtonAction::ToggleFixtureGroupControl(FixtureGroupId::new(1)),
+                off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(65),
                 on_action: MetaButtonAction::ToggleFixtureGroupControl(FixtureGroupId::new(2)),
+                off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(66),
                 on_action: MetaButtonAction::ToggleFixtureGroupControl(FixtureGroupId::new(3)),
+                off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(68),
                 on_action: MetaButtonAction::ActivateScene(SceneId::new(1)),
+                off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(69),
                 on_action: MetaButtonAction::ActivateScene(SceneId::new(2)),
+                off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(70),
                 on_action: MetaButtonAction::ActivateScene(SceneId::new(3)),
+                off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(71),
                 on_action: MetaButtonAction::ActivateScene(SceneId::new(4)),
+                off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(82),
                 on_action: MetaButtonAction::UpdateClockRate(Rate::new(1.0 / 3.0)),
+                off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(83),
                 on_action: MetaButtonAction::UpdateClockRate(Rate::new(1.0 / 2.0)),
+                off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(84),
                 on_action: MetaButtonAction::UpdateClockRate(Rate::new(1.0)),
+                off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(85),
                 on_action: MetaButtonAction::UpdateClockRate(Rate::new(2.0)),
+                off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(86),
                 on_action: MetaButtonAction::UpdateClockRate(Rate::new(3.0)),
+                off_action: None,
             },
         ],
     )

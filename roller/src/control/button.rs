@@ -9,7 +9,7 @@ use crate::{
     color::Color,
     control::midi::NoteState,
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
-    lighting_engine::{ButtonGroupInfo, ButtonInfo, ControlEvent, SceneId},
+    lighting_engine::{ButtonGroupInfo, ButtonInfo, ControlEvent, ControlMode, SceneId},
     position::BasePosition,
     project::FixtureGroupId,
     utils::shift_remove_vec,
@@ -97,28 +97,37 @@ impl ButtonMapping {
 // Meta buttons are global controls for things like tap tempo, changing page, activating a bank
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum MetaButtonAction {
+    EnableShiftMode,
+    DisableShiftMode,
     TapTempo,
     UpdateClockRate(Rate),
     ActivateScene(SceneId),
     ToggleFixtureGroupControl(FixtureGroupId),
+}
+impl MetaButtonAction {
+    pub fn control_event(&self, now: Instant) -> ControlEvent {
+        match self {
+            MetaButtonAction::EnableShiftMode => {
+                ControlEvent::UpdateControlMode(ControlMode::Shift)
+            }
+            MetaButtonAction::DisableShiftMode => {
+                ControlEvent::UpdateControlMode(ControlMode::Normal)
+            }
+            MetaButtonAction::TapTempo => ControlEvent::TapTempo(now),
+            MetaButtonAction::UpdateClockRate(rate) => ControlEvent::UpdateClockRate(*rate),
+            MetaButtonAction::ActivateScene(scene_id) => ControlEvent::ActivateScene(*scene_id),
+            MetaButtonAction::ToggleFixtureGroupControl(group_id) => {
+                ControlEvent::ToggleFixtureGroupControl(*group_id)
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MetaButtonMapping {
     pub note: Note,
     pub on_action: MetaButtonAction,
-}
-impl MetaButtonMapping {
-    pub fn control_event(&self, now: Instant) -> ControlEvent {
-        match self.on_action {
-            MetaButtonAction::TapTempo => ControlEvent::TapTempo(now),
-            MetaButtonAction::UpdateClockRate(rate) => ControlEvent::UpdateClockRate(rate),
-            MetaButtonAction::ActivateScene(scene_id) => ControlEvent::ActivateScene(scene_id),
-            MetaButtonAction::ToggleFixtureGroupControl(group_id) => {
-                ControlEvent::ToggleFixtureGroupControl(group_id)
-            }
-        }
-    }
+    pub off_action: Option<MetaButtonAction>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -311,10 +320,12 @@ impl<'a> PadMapping<'a> {
         match self {
             PadMapping::Standard(_, group_id, _) => Some(*group_id),
             PadMapping::Meta(mapping) => match mapping.on_action {
-                MetaButtonAction::TapTempo => None,
                 MetaButtonAction::UpdateClockRate(_) => Some(*CLOCK_RATE_GROUP_ID),
                 MetaButtonAction::ActivateScene(_) => Some(*SCENE_GROUP_ID),
                 MetaButtonAction::ToggleFixtureGroupControl(_) => Some(*TOGGLE_FIXTURE_GROUP_ID),
+                MetaButtonAction::TapTempo
+                | MetaButtonAction::EnableShiftMode
+                | MetaButtonAction::DisableShiftMode => None,
             },
         }
     }
