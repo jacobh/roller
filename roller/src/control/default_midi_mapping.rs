@@ -648,7 +648,7 @@ pub fn default_midi_mapping() -> MidiMapping {
         ],
         vec![
             MetaButtonMapping {
-                note: Note::new(98),
+                note: Note::new(89),
                 on_action: MetaButtonAction::TapTempo,
             },
             MetaButtonMapping {
