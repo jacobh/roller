@@ -1,5 +1,6 @@
 use crate::color::Hsl64;
 use palette::Mix;
+use serde::{Deserialize, Serialize};
 
 mod color;
 mod dimmer;
@@ -15,7 +16,7 @@ pub use waveform::Waveform;
 
 use crate::clock::{Beats, ClockSnapshot};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum EffectDirection {
     BottomToTop,
     ToCenter,
@@ -54,11 +55,8 @@ pub trait Step {
     fn meter_length(&self) -> Beats;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Steps<T>
-where
-    T: Step,
-{
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct Steps<T> {
     steps: Vec<T>,
 }
 impl<T> Steps<T>

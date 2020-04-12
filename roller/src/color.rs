@@ -1,8 +1,9 @@
 use palette::Hsl;
+use serde::{Deserialize, Serialize};
 
 pub type Hsl64 = Hsl<palette::encoding::srgb::Srgb, f64>;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Color {
     White,
     Yellow,
