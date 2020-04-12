@@ -1,10 +1,11 @@
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
+use serde::{Deserialize, Serialize};
 
 mod io;
 pub use io::{MidiInput, MidiIoError, MidiOutput};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Note(u8);
 impl Note {
     pub fn new(note: u8) -> Note {
@@ -17,7 +18,7 @@ impl From<Note> for u8 {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct ControlChannel(u8);
 impl ControlChannel {
     pub fn new(control_channel: u8) -> ControlChannel {

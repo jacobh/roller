@@ -17,7 +17,7 @@ palette = "*"
 rustc-hash = "*"
 derive_more = "*"
 indexmap = "*"
-ordered-float = "*"
+ordered-float = { version = "*", features = ["serde"] }
 rand = "*"
 lazy_static = "*"
 jemallocator = "*"

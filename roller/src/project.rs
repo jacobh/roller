@@ -1,11 +1,22 @@
 use derive_more::{Constructor, From, Into};
 use rustc_hash::FxHashSet;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::fixture::{Fixture, FixtureEffectType};
 
 #[derive(
-    Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize, From, Into,
+    Debug,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Constructor,
+    From,
+    Into,
+    Serialize,
+    Deserialize,
 )]
 pub struct FixtureGroupId(usize);
 

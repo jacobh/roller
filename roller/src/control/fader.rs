@@ -1,8 +1,10 @@
-use crate::{effect::sigmoid, lighting_engine::ControlEvent, project::FixtureGroupId};
 use midi::ControlChannel;
 use ordered_float::OrderedFloat;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+use crate::{effect::sigmoid, lighting_engine::ControlEvent, project::FixtureGroupId};
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum FaderType {
     MasterDimmer,
     GroupDimmer(FixtureGroupId),
@@ -20,7 +22,7 @@ impl FaderType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct MidiFaderMapping {
     pub control_channel: ControlChannel,
     pub fader_type: FaderType,
@@ -32,7 +34,7 @@ impl MidiFaderMapping {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum FaderCurve {
     Linear,
     Sigmoid(OrderedFloat<f64>),
