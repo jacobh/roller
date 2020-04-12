@@ -101,8 +101,8 @@ pub enum MetaButtonAction {
     DisableShiftMode,
     TapTempo,
     UpdateClockRate(Rate),
-    ActivateScene(SceneId),
-    ToggleFixtureGroupControl(FixtureGroupId),
+    SelectScene(SceneId),
+    SelectFixtureGroupControl(FixtureGroupId),
 }
 impl MetaButtonAction {
     pub fn control_event(&self, now: Instant) -> ControlEvent {
@@ -115,9 +115,9 @@ impl MetaButtonAction {
             }
             MetaButtonAction::TapTempo => ControlEvent::TapTempo(now),
             MetaButtonAction::UpdateClockRate(rate) => ControlEvent::UpdateClockRate(*rate),
-            MetaButtonAction::ActivateScene(scene_id) => ControlEvent::ActivateScene(*scene_id),
-            MetaButtonAction::ToggleFixtureGroupControl(group_id) => {
-                ControlEvent::ToggleFixtureGroupControl(*group_id)
+            MetaButtonAction::SelectScene(scene_id) => ControlEvent::SelectScene(*scene_id),
+            MetaButtonAction::SelectFixtureGroupControl(group_id) => {
+                ControlEvent::SelectFixtureGroupControl(*group_id)
             }
         }
     }
@@ -321,8 +321,8 @@ impl<'a> PadMapping<'a> {
             PadMapping::Standard(_, group_id, _) => Some(*group_id),
             PadMapping::Meta(mapping) => match mapping.on_action {
                 MetaButtonAction::UpdateClockRate(_) => Some(*CLOCK_RATE_GROUP_ID),
-                MetaButtonAction::ActivateScene(_) => Some(*SCENE_GROUP_ID),
-                MetaButtonAction::ToggleFixtureGroupControl(_) => Some(*TOGGLE_FIXTURE_GROUP_ID),
+                MetaButtonAction::SelectScene(_) => Some(*SCENE_GROUP_ID),
+                MetaButtonAction::SelectFixtureGroupControl(_) => Some(*TOGGLE_FIXTURE_GROUP_ID),
                 MetaButtonAction::TapTempo
                 | MetaButtonAction::EnableShiftMode
                 | MetaButtonAction::DisableShiftMode => None,

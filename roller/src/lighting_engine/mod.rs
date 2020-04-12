@@ -87,8 +87,8 @@ pub enum ControlEvent {
     UpdateDimmerEffectIntensity(f64),
     UpdateColorEffectIntensity(f64),
     UpdateClockRate(Rate),
-    ActivateScene(SceneId),
-    ToggleFixtureGroupControl(FixtureGroupId),
+    SelectScene(SceneId),
+    SelectFixtureGroupControl(FixtureGroupId),
     UpdateButton(ButtonGroup, ButtonMapping, NoteState, Instant),
     TapTempo(Instant),
     UpdateControlMode(ControlMode),
@@ -170,11 +170,11 @@ impl<'a> EngineState<'a> {
                     self.control_fixture_group_state_mut().clock_rate = rate;
                 }
             }
-            ControlEvent::ActivateScene(scene_id) => {
+            ControlEvent::SelectScene(scene_id) => {
                 self.active_scene_id = scene_id;
                 self.active_fixture_group_control = None;
             }
-            ControlEvent::ToggleFixtureGroupControl(group_id) => {
+            ControlEvent::SelectFixtureGroupControl(group_id) => {
                 if Some(group_id) == self.active_fixture_group_control {
                     self.active_fixture_group_control = None;
                 } else {
@@ -335,7 +335,7 @@ impl<'a> EngineState<'a> {
             .meta_buttons
             .values()
             .find(|button| {
-                button.on_action == MetaButtonAction::ActivateScene(self.active_scene_id)
+                button.on_action == MetaButtonAction::SelectScene(self.active_scene_id)
             })
             .unwrap();
 
@@ -347,7 +347,7 @@ impl<'a> EngineState<'a> {
                         .values()
                         .find(|button| {
                             button.on_action
-                                == MetaButtonAction::ToggleFixtureGroupControl(
+                                == MetaButtonAction::SelectFixtureGroupControl(
                                     control_fixture_group_id,
                                 )
                         })

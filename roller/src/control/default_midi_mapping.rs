@@ -659,37 +659,37 @@ pub fn default_midi_mapping() -> MidiMapping {
             },
             MetaButtonMapping {
                 note: Note::new(64),
-                on_action: MetaButtonAction::ToggleFixtureGroupControl(FixtureGroupId::new(1)),
+                on_action: MetaButtonAction::SelectFixtureGroupControl(FixtureGroupId::new(1)),
                 off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(65),
-                on_action: MetaButtonAction::ToggleFixtureGroupControl(FixtureGroupId::new(2)),
+                on_action: MetaButtonAction::SelectFixtureGroupControl(FixtureGroupId::new(2)),
                 off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(66),
-                on_action: MetaButtonAction::ToggleFixtureGroupControl(FixtureGroupId::new(3)),
+                on_action: MetaButtonAction::SelectFixtureGroupControl(FixtureGroupId::new(3)),
                 off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(68),
-                on_action: MetaButtonAction::ActivateScene(SceneId::new(1)),
+                on_action: MetaButtonAction::SelectScene(SceneId::new(1)),
                 off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(69),
-                on_action: MetaButtonAction::ActivateScene(SceneId::new(2)),
+                on_action: MetaButtonAction::SelectScene(SceneId::new(2)),
                 off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(70),
-                on_action: MetaButtonAction::ActivateScene(SceneId::new(3)),
+                on_action: MetaButtonAction::SelectScene(SceneId::new(3)),
                 off_action: None,
             },
             MetaButtonMapping {
                 note: Note::new(71),
-                on_action: MetaButtonAction::ActivateScene(SceneId::new(4)),
+                on_action: MetaButtonAction::SelectScene(SceneId::new(4)),
                 off_action: None,
             },
             MetaButtonMapping {
