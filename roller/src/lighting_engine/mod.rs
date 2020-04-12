@@ -142,20 +142,20 @@ impl<'a> EngineState<'a> {
     }
     pub fn apply_event(&mut self, event: ControlEvent) {
         // dbg!(&event);
-        match event {
-            ControlEvent::UpdateControlMode(mode) => {
+        match (&self.control_mode, event) {
+            (_, ControlEvent::UpdateControlMode(mode)) => {
                 self.control_mode = mode;
             }
-            ControlEvent::UpdateMasterDimmer(dimmer) => {
+            (_, ControlEvent::UpdateMasterDimmer(dimmer)) => {
                 self.master_dimmer = dimmer;
             }
-            ControlEvent::UpdateDimmerEffectIntensity(intensity) => {
+            (_, ControlEvent::UpdateDimmerEffectIntensity(intensity)) => {
                 self.dimmer_effect_intensity = intensity;
             }
-            ControlEvent::UpdateColorEffectIntensity(intensity) => {
+            (_, ControlEvent::UpdateColorEffectIntensity(intensity)) => {
                 self.color_effect_intensity = intensity;
             }
-            ControlEvent::UpdateClockRate(rate) => {
+            (_, ControlEvent::UpdateClockRate(rate)) => {
                 let pressed_notes = self
                     .control_fixture_group_state()
                     .button_states
@@ -170,28 +170,37 @@ impl<'a> EngineState<'a> {
                     self.control_fixture_group_state_mut().clock_rate = rate;
                 }
             }
-            ControlEvent::SelectScene(scene_id) => {
+            (ControlMode::Normal, ControlEvent::SelectScene(scene_id)) => {
                 self.active_scene_id = scene_id;
                 self.active_fixture_group_control = None;
             }
-            ControlEvent::SelectFixtureGroupControl(group_id) => {
+            (ControlMode::Shift, ControlEvent::SelectScene(scene_id)) => {
+                self.scene_fixture_group_button_states
+                    .insert(scene_id, SceneState::default());
+            }
+            (ControlMode::Normal, ControlEvent::SelectFixtureGroupControl(group_id)) => {
                 if Some(group_id) == self.active_fixture_group_control {
                     self.active_fixture_group_control = None;
                 } else {
                     self.active_fixture_group_control = Some(group_id);
                 }
             }
-            ControlEvent::UpdateGroupDimmer(group_id, dimmer) => {
+            (ControlMode::Shift, ControlEvent::SelectFixtureGroupControl(group_id)) => {
+                self.active_scene_state_mut()
+                    .fixture_groups
+                    .insert(group_id, FixtureGroupState::default());
+            }
+            (_, ControlEvent::UpdateGroupDimmer(group_id, dimmer)) => {
                 self.active_scene_state_mut()
                     .fixture_group_state_mut(Some(group_id))
                     .dimmer = dimmer;
             }
-            ControlEvent::UpdateButton(group, mapping, note_state, now) => {
+            (_, ControlEvent::UpdateButton(group, mapping, note_state, now)) => {
                 self.control_fixture_group_state_mut()
                     .button_states
                     .update_button_state(&group, mapping, note_state, now);
             }
-            ControlEvent::TapTempo(now) => {
+            (_, ControlEvent::TapTempo(now)) => {
                 self.clock.apply_event(ClockEvent::Tap(now));
                 dbg!(self.clock.bpm());
             }
@@ -334,9 +343,7 @@ impl<'a> EngineState<'a> {
             .midi_mapping
             .meta_buttons
             .values()
-            .find(|button| {
-                button.on_action == MetaButtonAction::SelectScene(self.active_scene_id)
-            })
+            .find(|button| button.on_action == MetaButtonAction::SelectScene(self.active_scene_id))
             .unwrap();
 
         let active_fixture_group_toggle_button =
