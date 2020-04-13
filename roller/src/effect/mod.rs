@@ -10,11 +10,11 @@ mod waveform;
 
 pub use color::{ColorEffect, ColorModulation, ColorModulator};
 pub use dimmer::{DimmerEffect, DimmerModulator};
-pub use pixel::{PixelEffect, PixelModulator, PixelRangeSet};
+pub use pixel::{PixelEffect, PixelEffectOverride, PixelModulator, PixelRangeSet};
 pub use position::{PositionEffect, PositionModulator};
 pub use waveform::Waveform;
 
-use crate::clock::{Beats, ClockSnapshot};
+use crate::clock::{Beats, ClockOffset, ClockSnapshot};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum EffectDirection {
@@ -92,4 +92,9 @@ where
 
         unreachable!()
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum EffectOverride {
+    Pixel(pixel::PixelEffectOverride),
 }

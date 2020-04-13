@@ -13,7 +13,8 @@ use crate::{
     },
     effect::{
         ColorEffect, ColorModulation, ColorModulator, DimmerEffect, DimmerModulator,
-        EffectDirection, PixelEffect, PixelModulator, PositionEffect, PositionModulator, Waveform,
+        EffectDirection, EffectOverride, PixelEffect, PixelEffectOverride, PixelModulator,
+        PositionEffect, PositionModulator, Waveform,
     },
     lighting_engine::SceneId,
     position::BasePositionMode,
@@ -509,6 +510,13 @@ pub fn default_midi_mapping() -> MidiMapping {
                     },
                 ],
             ),
+            ButtonMapping {
+                note: Note::new(4),
+                on_action: ButtonAction::ActivateEffectOverride(EffectOverride::Pixel(
+                    PixelEffectOverride::Direction(EffectDirection::BottomToTop),
+                )),
+            }
+            .into_group(ButtonType::Toggle),
             // Positions
             ButtonGroup::new(
                 ButtonType::Switch,

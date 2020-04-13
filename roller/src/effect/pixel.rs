@@ -141,3 +141,9 @@ impl Step for PixelModulator {
         self.meter_length
     }
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum PixelEffectOverride {
+    Direction(EffectDirection),
+    ClockOffset(ClockOffset),
+}
