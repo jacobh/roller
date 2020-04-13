@@ -11,7 +11,9 @@ use crate::{
         },
         midi::NoteState,
     },
-    effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
+    effect::{
+        ColorEffect, DimmerEffect, EffectOverride, PixelEffect, PixelEffectOverride, PositionEffect,
+    },
     lighting_engine::FixtureGroupValue,
     position::BasePosition,
     project::FixtureGroupId,
@@ -97,6 +99,7 @@ impl FixtureGroupState {
             active_dimmer_effects: buttons.active_dimmer_effects(),
             active_color_effects: buttons.active_color_effects(),
             active_pixel_effects: buttons.active_pixel_effects(),
+            active_pixel_effect_overrides: buttons.active_pixel_effect_overrides(),
             active_position_effects: buttons.active_position_effects(),
             base_position: buttons.base_position(),
         }
@@ -299,6 +302,17 @@ impl ButtonStates {
             ButtonAction::ActivatePixelEffect(effect) => Some(effect),
             _ => None,
         })
+    }
+    pub fn active_pixel_effect_overrides(&self) -> FxHashSet<&PixelEffectOverride> {
+        self.find_active_effects(|action| match action {
+            ButtonAction::ActivateEffectOverride(EffectOverride::Pixel(effect_override)) => {
+                Some(effect_override)
+            }
+            _ => None,
+        })
+        .into_iter()
+        .map(|(effect_override, _)| effect_override)
+        .collect()
     }
     pub fn active_position_effects(&self) -> FxIndexMap<&PositionEffect, Rate> {
         self.find_active_effects(|action| match action {

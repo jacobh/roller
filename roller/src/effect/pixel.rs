@@ -147,3 +147,17 @@ pub enum PixelEffectOverride {
     Direction(EffectDirection),
     ClockOffset(ClockOffset),
 }
+impl PixelEffectOverride {
+    pub fn apply(&self, effect: &mut PixelEffect) {
+        match self {
+            Self::Direction(direction) => {
+                for step in effect.steps.iter_mut() {
+                    step.direction = *direction;
+                }
+            }
+            Self::ClockOffset(clock_offset) => {
+                effect.clock_offset = Some(clock_offset.clone());
+            }
+        }
+    }
+}

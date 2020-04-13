@@ -1,5 +1,6 @@
 use derive_more::Constructor;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
+use std::borrow::Cow;
 use std::time::Instant;
 
 use crate::{
@@ -9,7 +10,10 @@ use crate::{
         button::{ButtonGroup, ButtonMapping, MetaButtonAction, PadEvent},
         midi::{MidiMapping, NoteState},
     },
-    effect::{self, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet, PositionEffect},
+    effect::{
+        self, ColorEffect, DimmerEffect, PixelEffect, PixelEffectOverride, PixelRangeSet,
+        PositionEffect,
+    },
     fixture::Fixture,
     position::BasePosition,
     project::FixtureGroupId,
@@ -42,6 +46,7 @@ pub struct FixtureGroupValue<'a> {
     pub active_color_effects: FxIndexMap<&'a ColorEffect, Rate>,
     pub active_pixel_effects: FxIndexMap<&'a PixelEffect, Rate>,
     pub active_position_effects: FxIndexMap<&'a PositionEffect, Rate>,
+    pub active_pixel_effect_overrides: FxHashSet<&'a PixelEffectOverride>,
 }
 impl<'a> FixtureGroupValue<'a> {
     pub fn merge(mut self, other: &FixtureGroupValue<'a>) -> FixtureGroupValue<'a> {
@@ -61,6 +66,8 @@ impl<'a> FixtureGroupValue<'a> {
             .extend(other.active_color_effects.iter());
         self.active_pixel_effects
             .extend(other.active_pixel_effects.iter());
+        self.active_pixel_effect_overrides
+            .extend(other.active_pixel_effect_overrides.iter());
         self.active_position_effects
             .extend(other.active_position_effects.iter());
 
@@ -276,6 +283,21 @@ impl<'a> EngineState<'a> {
                         .active_pixel_effects
                         .iter()
                         .nth(0)
+                        .map(|(effect, rate)| {
+                            // reduce &&T to &T
+                            let effect = *effect;
+                            // Apply any active overrides
+                            let overrides = &values.active_pixel_effect_overrides;
+                            if !overrides.is_empty() {
+                                let mut effect = effect.clone();
+                                for effect_override in overrides.iter() {
+                                    effect_override.apply(&mut effect);
+                                }
+                                (Cow::Owned(effect), rate)
+                            } else {
+                                (Cow::Borrowed(effect), rate)
+                            }
+                        })
                         .map(|(effect, rate)| {
                             effect.pixel_range_set(&offsetted_for_fixture(
                                 effect.clock_offset.as_ref(),

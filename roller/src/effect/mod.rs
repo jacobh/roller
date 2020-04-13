@@ -67,6 +67,10 @@ where
         Steps { steps }
     }
 
+    fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.steps.iter_mut()
+    }
+
     fn total_length(&self) -> Beats {
         self.steps
             .iter()
