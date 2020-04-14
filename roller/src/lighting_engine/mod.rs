@@ -284,19 +284,15 @@ impl<'a> EngineState<'a> {
                         .iter()
                         .nth(0)
                         .map(|(effect, rate)| {
-                            // reduce &&T to &T
-                            let effect = *effect;
-                            // Apply any active overrides
-                            let overrides = &values.active_pixel_effect_overrides;
-                            if !overrides.is_empty() {
-                                let mut effect = effect.clone();
-                                for effect_override in overrides.iter() {
-                                    effect_override.apply(&mut effect);
-                                }
-                                (Cow::Owned(effect), rate)
-                            } else {
-                                (Cow::Borrowed(effect), rate)
-                            }
+                            let effect = values.active_pixel_effect_overrides.iter().fold(
+                                Cow::Borrowed(*effect),
+                                |mut effect, effect_override| {
+                                    effect_override.apply(effect.to_mut());
+                                    effect
+                                },
+                            );
+
+                            (effect, rate)
                         })
                         .map(|(effect, rate)| {
                             effect.pixel_range_set(&offsetted_for_fixture(
