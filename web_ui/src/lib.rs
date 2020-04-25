@@ -1,7 +1,8 @@
-#![recursion_limit="256"]
+#![recursion_limit = "256"]
 
 mod app;
 mod button;
+mod button_grid;
 
 use wasm_bindgen::prelude::*;
 

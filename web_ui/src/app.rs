@@ -1,6 +1,6 @@
 use yew::prelude::*;
 
-use crate::button::Button;
+use crate::button_grid::ButtonGrid;
 
 pub struct App {}
 
@@ -21,11 +21,9 @@ impl Component for App {
     fn view(&self) -> Html {
         html! {
             <div>
-                {(0..8).map(|row_idx| html! {
-                    <div>
-                    {(0..8).map(|col_idx| html! { <Button row_idx={row_idx} column_idx={col_idx}/> }).collect::<Html>()}
-                    </div>
-                }).collect::<Html>()}
+                <ButtonGrid rows={8} columns={8}/>
+                <ButtonGrid rows={8} columns={1}/>
+                <ButtonGrid rows={1} columns={8}/>
             </div>
         }
     }
