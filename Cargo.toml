@@ -6,6 +6,8 @@ members = [
     "ola_client"
 ]
 
+exclude = ["web_ui"]
+
 [profile.release]
 lto = "fat"
 codegen-units = 1
