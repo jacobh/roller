@@ -1,8 +1,12 @@
+use async_std::prelude::*;
 use derive_more::{Constructor, From, Into};
 use rustc_hash::FxHashSet;
 use serde::{Deserialize, Serialize};
 
-use crate::fixture::{Fixture, FixtureEffectType};
+use crate::{
+    clock::{self, ClockEvent},
+    fixture::{Fixture, FixtureEffectType},
+};
 
 #[derive(
     Debug,
@@ -47,7 +51,7 @@ struct ProjectUniverse {
 pub struct Project {
     label: String,
     pub midi_controller: Option<String>,
-    pub midi_clock: Option<String>,
+    pub midi_clocks: Vec<String>,
     universes: Vec<ProjectUniverse>,
 }
 impl Project {
@@ -94,5 +98,12 @@ impl Project {
         // TODO validate fixture addresses don't overlap
 
         Ok(fixtures)
+    }
+    /// Uses first active MIDI clock
+    pub fn midi_clock_events(&self) -> Option<impl Stream<Item = ClockEvent>> {
+        self.midi_clocks
+            .iter()
+            .flat_map(|clock_name| clock::midi_clock_events(&clock_name).ok())
+            .nth(0)
     }
 }

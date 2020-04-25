@@ -1,6 +1,9 @@
 label = "Matter Light Show - Roller Project"
 midi_controller = "APC MINI"
-midi_clock = "XONE:PX5"
+midi_clocks = [
+    "Traktor Virtual Output",
+    "XONE:PX5"
+]
 
 [[universes]]
 universe_id = 10

@@ -1,6 +1,5 @@
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
-use rustc_hash::FxHashMap;
 use std::time::{Duration, Instant};
 
 mod clock;
@@ -13,9 +12,8 @@ mod position;
 mod project;
 mod utils;
 
-use crate::clock::Clock;
 use crate::control::button::pad_states;
-use crate::lighting_engine::{ControlEvent, EngineState, SceneId};
+use crate::lighting_engine::{ControlEvent, EngineState};
 
 #[global_allocator]
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
@@ -25,13 +23,9 @@ async fn main() -> Result<(), async_std::io::Error> {
     let project = project::Project::load("./roller_project.toml").await?;
     let mut fixtures = project.fixtures().await?;
 
+    let midi_controller_name = project.midi_controller.as_ref().unwrap();
     let midi_controller =
-        control::midi::MidiController::new_for_device_name(&project.midi_controller.unwrap())
-            .unwrap();
-
-    let midi_clock_events = project
-        .midi_clock
-        .and_then(|clock_name| clock::midi_clock_events(&clock_name).ok());
+        control::midi::MidiController::new_for_device_name(midi_controller_name).unwrap();
 
     let started_at = Instant::now();
     let mut state = EngineState::new(&midi_controller.midi_mapping);
@@ -75,7 +69,9 @@ async fn main() -> Result<(), async_std::io::Error> {
             .boxed(),
     );
     let control_events = Some(midi_controller.control_events().map(Event::Control).boxed());
-    let clock_events = midi_clock_events.map(|events| events.map(Event::Clock).boxed());
+    let clock_events = project
+        .midi_clock_events()
+        .map(|events| events.map(Event::Clock).boxed());
 
     let events = stream::select_all(
         vec![ticks, control_events, clock_events]
