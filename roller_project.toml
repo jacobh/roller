@@ -1,6 +1,6 @@
 label = "Matter Light Show - Roller Project"
 midi_controller = "APC MINI"
-midi_clock = "Traktor Virtual Output"
+midi_clock = "XONE:PX5"
 
 [[universes]]
 universe_id = 10
@@ -27,6 +27,7 @@ universe_id = 10
     start_channel = 17
     fixture_profile = "ebay_par_can"
     group_id = 1
+    location = { x = 10, y = 10 }
 
     [[universes.fixtures]]
     start_channel = 25
