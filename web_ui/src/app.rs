@@ -1,5 +1,7 @@
 use yew::prelude::*;
 
+use crate::button::Button;
+
 pub struct App {}
 
 pub enum Msg {}
@@ -18,7 +20,13 @@ impl Component for App {
 
     fn view(&self) -> Html {
         html! {
-            <p>{ "Hello world!" }</p>
+            <div>
+                {(0..8).map(|row_idx| html! {
+                    <div>
+                    {(0..8).map(|col_idx| html! { <Button row_idx={row_idx} column_idx={col_idx}/> }).collect::<Html>()}
+                    </div>
+                }).collect::<Html>()}
+            </div>
         }
     }
 }
