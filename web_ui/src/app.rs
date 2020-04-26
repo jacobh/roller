@@ -1,10 +1,12 @@
 use yew::prelude::*;
 
-use crate::{button_grid::ButtonGrid, ButtonGridLocation};
+use crate::{button_grid::ButtonGrid, ButtonGridLocation, ButtonCoordinate};
 
 pub struct App {}
 
-pub enum Msg {}
+pub enum Msg {
+    ButtonPressed(ButtonGridLocation, ButtonCoordinate),
+}
 
 impl Component for App {
     type Message = Msg;

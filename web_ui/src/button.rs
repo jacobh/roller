@@ -3,6 +3,7 @@ use yew::prelude::*;
 use crate::{ButtonCoordinate, ButtonState};
 
 pub struct Button {
+    link: ComponentLink<Self>,
     props: ButtonProps,
 }
 
@@ -11,15 +12,15 @@ pub enum Msg {}
 #[derive(Properties, Clone)]
 pub struct ButtonProps {
     pub state: ButtonState,
-    pub coordinate: Option<ButtonCoordinate>,
+    pub coordinate: ButtonCoordinate,
 }
 
 impl Component for Button {
     type Message = Msg;
     type Properties = ButtonProps;
 
-    fn create(props: Self::Properties, _: ComponentLink<Self>) -> Self {
-        Button { props }
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        Button { link, props }
     }
 
     fn update(&mut self, _msg: Self::Message) -> ShouldRender {
@@ -27,15 +28,10 @@ impl Component for Button {
     }
 
     fn view(&self) -> Html {
-        let label = self
-            .props
-            .coordinate
-            .as_ref()
-            .map(|coords| coords.to_string())
-            .unwrap_or("".to_string());
+        let label = self.props.coordinate.to_string();
 
         html! {
-            <div class=format!("button {}", self.props.state.css_class())>
+            <div class=format!("button {}", self.props.state.css_class()) >
                 <span>{label}</span>
             </div>
         }
