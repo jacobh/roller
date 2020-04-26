@@ -1,8 +1,7 @@
 use yew::prelude::*;
 
 use crate::{
-    button::Button, console_log, utils::callback_fn, ButtonCoordinate, ButtonGridLocation,
-    ButtonState,
+    button::Button, utils::callback_fn, ButtonCoordinate, ButtonGridLocation, ButtonState,
 };
 
 pub struct ButtonGrid {
@@ -13,9 +12,10 @@ pub enum Msg {}
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct ButtonGridProps {
-    pub location: Option<ButtonGridLocation>,
+    pub location: ButtonGridLocation,
     pub rows: usize,
     pub columns: usize,
+    pub on_button_press: Callback<(ButtonGridLocation, ButtonCoordinate)>,
 }
 
 impl Component for ButtonGrid {
@@ -40,14 +40,15 @@ impl Component for ButtonGrid {
     }
 
     fn view(&self) -> Html {
-        let container_class = if let Some(location) = &self.props.location {
-            format!("button-grid button-grid--{}", location.css_name())
-        } else {
-            "button-grid".to_owned()
-        };
+        let ButtonGridProps {
+            location,
+            on_button_press,
+            ..
+        } = self.props.clone();
+        let container_class = format!("button-grid button-grid--{}", location.css_name());
 
-        let callback = callback_fn(|coord: ButtonCoordinate| {
-            console_log!("{}", coord);
+        let callback = callback_fn(move |coord: ButtonCoordinate| {
+            on_button_press.emit((location.clone(), coord));
         });
 
         html! {
