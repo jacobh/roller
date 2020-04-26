@@ -1,5 +1,7 @@
 use yew::prelude::*;
 
+use crate::{ButtonCoordinate, ButtonState};
+
 pub struct Button {
     props: ButtonProps,
 }
@@ -8,8 +10,8 @@ pub enum Msg {}
 
 #[derive(Properties, Clone)]
 pub struct ButtonProps {
-    pub column_idx: usize,
-    pub row_idx: usize,
+    pub state: ButtonState,
+    pub coordinate: Option<ButtonCoordinate>,
 }
 
 impl Component for Button {
@@ -25,9 +27,16 @@ impl Component for Button {
     }
 
     fn view(&self) -> Html {
+        let label = self
+            .props
+            .coordinate
+            .as_ref()
+            .map(|coords| coords.to_string())
+            .unwrap_or("".to_string());
+
         html! {
-            <div class="button">
-                <span>{"("}{self.props.column_idx}{", "}{self.props.row_idx}{")"}</span>
+            <div class=format!("button {}", self.props.state.css_class())>
+                <span>{label}</span>
             </div>
         }
     }

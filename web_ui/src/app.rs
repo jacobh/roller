@@ -1,6 +1,6 @@
 use yew::prelude::*;
 
-use crate::{ButtonGridLocation, button_grid::ButtonGrid};
+use crate::{button_grid::ButtonGrid, ButtonGridLocation};
 
 pub struct App {}
 

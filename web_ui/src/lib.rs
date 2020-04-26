@@ -1,16 +1,28 @@
 #![recursion_limit = "256"]
 
+use std::fmt;
+use wasm_bindgen::prelude::*;
+
 mod app;
 mod button;
 mod button_grid;
 
-use wasm_bindgen::prelude::*;
+#[derive(Debug, Clone)]
+pub struct ButtonCoordinate {
+    pub row_idx: usize,
+    pub column_idx: usize,
+}
+impl fmt::Display for ButtonCoordinate {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {})", self.column_idx, self.row_idx)
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum ButtonGridLocation {
     Main,
     MetaRight,
-    MetaBottom
+    MetaBottom,
 }
 impl ButtonGridLocation {
     fn css_name(&self) -> &'static str {
@@ -27,7 +39,7 @@ pub enum ButtonState {
     Active,
     Inactive,
     Deactivated,
-    Unused
+    Unused,
 }
 impl ButtonState {
     fn css_class(&self) -> &'static str {

@@ -1,6 +1,6 @@
 use yew::prelude::*;
 
-use crate::{ButtonGridLocation, button::Button};
+use crate::{button::Button, ButtonCoordinate, ButtonGridLocation};
 
 pub struct ButtonGrid {
     props: ButtonGridProps,
@@ -38,8 +38,8 @@ impl Component for ButtonGrid {
             <div class={container_class}>
                 {(0..self.props.rows).map(|row_idx| html! {
                     <div class="button-grid__row">
-                    {(0..self.props.columns).map(|col_idx| html! {
-                        <Button row_idx={row_idx} column_idx={col_idx}/>
+                    {(0..self.props.columns).map(|column_idx| html! {
+                        <Button coordinate={ButtonCoordinate{ row_idx, column_idx }} />
                     }).collect::<Html>()}
                     </div>
                 }).collect::<Html>()}
