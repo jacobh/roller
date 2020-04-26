@@ -1,6 +1,6 @@
 use yew::prelude::*;
 
-use crate::button_grid::ButtonGrid;
+use crate::{ButtonGridLocation, button_grid::ButtonGrid};
 
 pub struct App {}
 
@@ -20,10 +20,14 @@ impl Component for App {
 
     fn view(&self) -> Html {
         html! {
-            <div>
-                <ButtonGrid rows={8} columns={8}/>
-                <ButtonGrid rows={8} columns={1}/>
-                <ButtonGrid rows={1} columns={8}/>
+            <div id="app">
+                <div class="row row--top">
+                    <ButtonGrid location={ButtonGridLocation::Main} rows={8} columns={8}/>
+                    <ButtonGrid location={ButtonGridLocation::MetaRight} rows={8} columns={1}/>
+                </div>
+                <div class="row row--bottom">
+                    <ButtonGrid location={ButtonGridLocation::MetaBottom} rows={1} columns={8}/>
+                </div>
             </div>
         }
     }

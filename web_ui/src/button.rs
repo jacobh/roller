@@ -26,7 +26,9 @@ impl Component for Button {
 
     fn view(&self) -> Html {
         html! {
-            <span>{"("}{self.props.column_idx}{", "}{self.props.row_idx}{")"}</span>
+            <div class="button">
+                <span>{"("}{self.props.column_idx}{", "}{self.props.row_idx}{")"}</span>
+            </div>
         }
     }
 }
