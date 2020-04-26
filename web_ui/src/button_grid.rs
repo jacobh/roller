@@ -1,7 +1,9 @@
-use std::rc::Rc;
 use yew::prelude::*;
 
-use crate::{button::Button, console_log, ButtonCoordinate, ButtonGridLocation, ButtonState};
+use crate::{
+    button::Button, console_log, utils::callback_fn, ButtonCoordinate, ButtonGridLocation,
+    ButtonState,
+};
 
 pub struct ButtonGrid {
     props: ButtonGridProps,
@@ -44,9 +46,9 @@ impl Component for ButtonGrid {
             "button-grid".to_owned()
         };
 
-        let callback = Callback::Callback(Rc::new(|coord: ButtonCoordinate| {
+        let callback = callback_fn(|coord: ButtonCoordinate| {
             console_log!("{}", coord);
-        }));
+        });
 
         html! {
             <div class={container_class}>

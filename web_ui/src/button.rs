@@ -1,7 +1,6 @@
-use std::rc::Rc;
 use yew::prelude::*;
 
-use crate::{ButtonCoordinate, ButtonState};
+use crate::{utils::callback_fn, ButtonCoordinate, ButtonState};
 
 pub struct Button {
     props: ButtonProps,
@@ -43,8 +42,7 @@ impl Component for Button {
             on_press,
             ..
         } = self.props.clone();
-        let click_callback =
-            Callback::Callback(Rc::new(move |_evt| on_press.emit(coordinate.clone())));
+        let click_callback = callback_fn(move |_evt| on_press.emit(coordinate.clone()));
 
         html! {
             <div class=format!("button {}", self.props.state.css_class()) onclick={click_callback}>
