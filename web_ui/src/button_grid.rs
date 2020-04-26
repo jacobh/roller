@@ -8,7 +8,7 @@ pub struct ButtonGrid {
 
 pub enum Msg {}
 
-#[derive(Properties, Clone)]
+#[derive(Properties, Clone, PartialEq)]
 pub struct ButtonGridProps {
     pub location: Option<ButtonGridLocation>,
     pub rows: usize,
@@ -25,6 +25,15 @@ impl Component for ButtonGrid {
 
     fn update(&mut self, _msg: Self::Message) -> ShouldRender {
         true
+    }
+
+    fn change(&mut self, props: Self::Properties) -> ShouldRender {
+        if self.props != props {
+            self.props = props;
+            true
+        } else {
+            false
+        }
     }
 
     fn view(&self) -> Html {

@@ -7,7 +7,7 @@ mod app;
 mod button;
 mod button_grid;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ButtonCoordinate {
     pub row_idx: usize,
     pub column_idx: usize,
@@ -18,7 +18,7 @@ impl fmt::Display for ButtonCoordinate {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ButtonGridLocation {
     Main,
     MetaRight,
@@ -34,7 +34,7 @@ impl ButtonGridLocation {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ButtonState {
     Active,
     Inactive,

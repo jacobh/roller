@@ -1,6 +1,6 @@
 use yew::prelude::*;
 
-use crate::{button_grid::ButtonGrid, ButtonGridLocation, ButtonCoordinate};
+use crate::{button_grid::ButtonGrid, ButtonCoordinate, ButtonGridLocation};
 
 pub struct App {}
 
@@ -18,6 +18,10 @@ impl Component for App {
 
     fn update(&mut self, _msg: Self::Message) -> ShouldRender {
         true
+    }
+
+    fn change(&mut self, _props: Self::Properties) -> ShouldRender {
+        false
     }
 
     fn view(&self) -> Html {
