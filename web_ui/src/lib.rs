@@ -6,6 +6,7 @@ use wasm_bindgen::prelude::*;
 mod app;
 mod button;
 mod button_grid;
+mod utils;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ButtonCoordinate {

@@ -1,9 +1,9 @@
+use std::rc::Rc;
 use yew::prelude::*;
 
 use crate::{ButtonCoordinate, ButtonState};
 
 pub struct Button {
-    link: ComponentLink<Self>,
     props: ButtonProps,
 }
 
@@ -13,14 +13,15 @@ pub enum Msg {}
 pub struct ButtonProps {
     pub state: ButtonState,
     pub coordinate: ButtonCoordinate,
+    pub on_press: Callback<ButtonCoordinate>,
 }
 
 impl Component for Button {
     type Message = Msg;
     type Properties = ButtonProps;
 
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
-        Button { link, props }
+    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+        Button { props }
     }
 
     fn update(&mut self, _msg: Self::Message) -> ShouldRender {
@@ -37,11 +38,17 @@ impl Component for Button {
     }
 
     fn view(&self) -> Html {
-        let label = self.props.coordinate.to_string();
+        let ButtonProps {
+            coordinate,
+            on_press,
+            ..
+        } = self.props.clone();
+        let click_callback =
+            Callback::Callback(Rc::new(move |_evt| on_press.emit(coordinate.clone())));
 
         html! {
-            <div class=format!("button {}", self.props.state.css_class()) >
-                <span>{label}</span>
+            <div class=format!("button {}", self.props.state.css_class()) onclick={click_callback}>
+                <span>{self.props.coordinate.to_string()}</span>
             </div>
         }
     }

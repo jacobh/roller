@@ -1,6 +1,7 @@
+use std::rc::Rc;
 use yew::prelude::*;
 
-use crate::{button::Button, ButtonCoordinate, ButtonGridLocation, ButtonState};
+use crate::{button::Button, console_log, ButtonCoordinate, ButtonGridLocation, ButtonState};
 
 pub struct ButtonGrid {
     props: ButtonGridProps,
@@ -43,6 +44,10 @@ impl Component for ButtonGrid {
             "button-grid".to_owned()
         };
 
+        let callback = Callback::Callback(Rc::new(|coord: ButtonCoordinate| {
+            console_log!("{}", coord);
+        }));
+
         html! {
             <div class={container_class}>
                 {(0..self.props.rows).map(|row_idx| html! {
@@ -51,6 +56,7 @@ impl Component for ButtonGrid {
                         <Button
                             coordinate={ButtonCoordinate{ row_idx, column_idx }}
                             state={ButtonState::Unused}
+                            on_press={callback.clone()}
                         />
                     }).collect::<Html>()}
                     </div>
