@@ -13,8 +13,7 @@ pub enum Msg {}
 #[derive(Properties, Clone, PartialEq)]
 pub struct ButtonGridProps {
     pub location: ButtonGridLocation,
-    pub rows: usize,
-    pub columns: usize,
+    pub button_states: Vec<Vec<ButtonState>>,
     pub on_button_press: Callback<(ButtonGridLocation, ButtonCoordinate)>,
 }
 
@@ -46,6 +45,14 @@ impl Component for ButtonGrid {
             ..
         } = self.props.clone();
         let container_class = format!("button-grid button-grid--{}", location.css_name());
+        let columns = self.props.button_states.len();
+        let rows = self
+            .props
+            .button_states
+            .iter()
+            .map(|row| row.len())
+            .max()
+            .unwrap_or(0);
 
         let callback = callback_fn(move |coord: ButtonCoordinate| {
             on_button_press.emit((location.clone(), coord));
@@ -53,12 +60,12 @@ impl Component for ButtonGrid {
 
         html! {
             <div class={container_class}>
-                {(0..self.props.rows).map(|row_idx| html! {
+                {(0..rows).map(|row_idx| html! {
                     <div class="button-grid__row">
-                    {(0..self.props.columns).map(|column_idx| html! {
+                    {(0..columns).map(|column_idx| html! {
                         <Button
                             coordinate={ButtonCoordinate{ row_idx, column_idx }}
-                            state={ButtonState::Unused}
+                            state={get_button_state(&self.props.button_states, column_idx, row_idx)}
                             on_press={callback.clone()}
                         />
                     }).collect::<Html>()}
@@ -67,4 +74,16 @@ impl Component for ButtonGrid {
             </div>
         }
     }
+}
+
+fn get_button_state(
+    states: &Vec<Vec<ButtonState>>,
+    column_idx: usize,
+    row_idx: usize,
+) -> ButtonState {
+    states
+        .get(column_idx)
+        .and_then(|row| row.get(row_idx))
+        .cloned()
+        .unwrap_or(ButtonState::Unused)
 }

@@ -8,7 +8,7 @@ mod button;
 mod button_grid;
 mod utils;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ButtonCoordinate {
     pub row_idx: usize,
     pub column_idx: usize,
@@ -19,7 +19,7 @@ impl fmt::Display for ButtonCoordinate {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ButtonGridLocation {
     Main,
     MetaRight,
