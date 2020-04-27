@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use im_rc::{vector, HashMap, Vector};
 use yew::prelude::*;
 
 use crate::{
@@ -8,7 +8,7 @@ use crate::{
 
 pub struct App {
     link: ComponentLink<Self>,
-    button_states: HashMap<ButtonGridLocation, Vec<Vec<ButtonState>>>,
+    button_states: HashMap<ButtonGridLocation, Vector<Vector<ButtonState>>>,
 }
 
 #[derive(Debug)]
@@ -42,12 +42,14 @@ impl Component for App {
 
         button_states.insert(
             ButtonGridLocation::MetaRight,
-            vec![(0..8).map(|_row_idx| ButtonState::Inactive).collect()],
+            vector![(0..8).map(|_row_idx| ButtonState::Inactive).collect()],
         );
 
         button_states.insert(
             ButtonGridLocation::MetaBottom,
-            (0..8).map(|_col_idx| vec![ButtonState::Inactive]).collect(),
+            (0..8)
+                .map(|_col_idx| vector![ButtonState::Inactive])
+                .collect(),
         );
 
         App {

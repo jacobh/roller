@@ -1,3 +1,4 @@
+use im_rc::Vector;
 use yew::prelude::*;
 
 use crate::{
@@ -13,7 +14,7 @@ pub enum Msg {}
 #[derive(Properties, Clone, PartialEq)]
 pub struct ButtonGridProps {
     pub location: ButtonGridLocation,
-    pub button_states: Vec<Vec<ButtonState>>,
+    pub button_states: Vector<Vector<ButtonState>>,
     pub on_button_press: Callback<(ButtonGridLocation, ButtonCoordinate)>,
 }
 
@@ -77,7 +78,7 @@ impl Component for ButtonGrid {
 }
 
 fn get_button_state(
-    states: &Vec<Vec<ButtonState>>,
+    states: &Vector<Vector<ButtonState>>,
     column_idx: usize,
     row_idx: usize,
 ) -> ButtonState {
