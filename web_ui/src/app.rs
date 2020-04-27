@@ -7,9 +7,11 @@ use crate::{
 };
 
 pub struct App {
+    link: ComponentLink<Self>,
     button_states: HashMap<ButtonGridLocation, Vec<Vec<ButtonState>>>,
 }
 
+#[derive(Debug)]
 pub enum Msg {
     ButtonPressed(ButtonGridLocation, ButtonCoordinate),
 }
@@ -18,7 +20,7 @@ impl Component for App {
     type Message = Msg;
     type Properties = ();
 
-    fn create(_: Self::Properties, _: ComponentLink<Self>) -> Self {
+    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         let mut button_states = HashMap::new();
 
         button_states.insert(
@@ -48,10 +50,29 @@ impl Component for App {
             (0..8).map(|_col_idx| vec![ButtonState::Inactive]).collect(),
         );
 
-        App { button_states }
+        App {
+            link,
+            button_states,
+        }
     }
 
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        console_log!("{:?}", msg);
+        match msg {
+            Msg::ButtonPressed(location, coords) => {
+                let grid = self.button_states.get_mut(&location).unwrap();
+
+                let button_state = &mut grid[coords.column_idx][coords.row_idx];
+                let next_button_state = match button_state {
+                    ButtonState::Inactive => ButtonState::Active,
+                    ButtonState::Deactivated => ButtonState::Active,
+                    ButtonState::Active => ButtonState::Inactive,
+                    ButtonState::Unused => ButtonState::Unused,
+                };
+
+                *button_state = next_button_state;
+            }
+        };
         true
     }
 
@@ -60,8 +81,9 @@ impl Component for App {
     }
 
     fn view(&self) -> Html {
-        let button_callback_fn = callback_fn(|(location, coord)| {
-            console_log!("{:?}: {}", location, coord);
+        let link = self.link.to_owned();
+        let button_callback_fn = callback_fn(move |(location, coord)| {
+            link.send_message(Msg::ButtonPressed(location, coord));
         });
 
         html! {
