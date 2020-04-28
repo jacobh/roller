@@ -68,6 +68,7 @@ html {
     padding: 5px;
     background-color: #ccc;
     color: rgba(0.1, 0.1, 0.1, 0.9);
+    border-radius: 2px;
 }
 
 .button--active {
