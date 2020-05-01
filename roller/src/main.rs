@@ -12,11 +12,53 @@ mod position;
 mod project;
 mod utils;
 
-use crate::control::button::pad_states;
+use crate::control::button::{pad_states, AkaiPadState};
 use crate::lighting_engine::{ControlEvent, EngineState};
 
 #[global_allocator]
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
+
+async fn run_tick<'a>(
+    state: &mut EngineState<'a>,
+    fixtures: &mut Vec<fixture::Fixture>,
+    dmx_sender: &async_std::sync::Sender<(i32, [u8; 512])>,
+    midi_controller: &control::midi::MidiController,
+    started_at: &std::time::Instant,
+    current_pad_states: &mut rustc_hash::FxHashMap<midi::Note, AkaiPadState>,
+) {
+    state.update_fixtures(fixtures);
+    for (universe, dmx_data) in fixture::fold_fixture_dmx_data(fixtures.iter()).into_iter() {
+        dmx_sender.send((universe as i32, dmx_data)).await;
+    }
+
+    let new_pad_states = pad_states(
+        midi_controller.midi_mapping.pad_mappings().collect(),
+        &state
+            .control_fixture_group_state()
+            .button_states
+            .iter_group_toggle_states()
+            .collect(),
+        state.pad_events(),
+        started_at.elapsed(),
+    );
+
+    midi_controller
+        .set_pad_colors(
+            // find the pads that have updated since the last tick
+            new_pad_states
+                .iter()
+                .filter(|(note, state)| {
+                    current_pad_states
+                        .get(note)
+                        .map(|prev_state| state != &prev_state)
+                        .unwrap_or(true)
+                })
+                .map(|(note, state)| (*note, *state)),
+        )
+        .await;
+
+    *current_pad_states = new_pad_states;
+}
 
 #[async_std::main]
 async fn main() -> Result<(), async_std::io::Error> {
@@ -84,38 +126,14 @@ async fn main() -> Result<(), async_std::io::Error> {
     while let Some(event) = events.next().await {
         match event {
             Event::Tick => {
-                state.update_fixtures(&mut fixtures);
-                for (universe, dmx_data) in fixture::fold_fixture_dmx_data(&fixtures).into_iter() {
-                    dmx_sender.send((universe as i32, dmx_data)).await;
-                }
-
-                let new_pad_states = pad_states(
-                    midi_controller.midi_mapping.pad_mappings().collect(),
-                    &state
-                        .control_fixture_group_state()
-                        .button_states
-                        .iter_group_toggle_states()
-                        .collect(),
-                    state.pad_events(),
-                    started_at.elapsed(),
-                );
-
-                midi_controller
-                    .set_pad_colors(
-                        // find the pads that have updated since the last tick
-                        new_pad_states
-                            .iter()
-                            .filter(|(note, state)| {
-                                current_pad_states
-                                    .get(note)
-                                    .map(|prev_state| state != &prev_state)
-                                    .unwrap_or(true)
-                            })
-                            .map(|(note, state)| (*note, *state)),
-                    )
-                    .await;
-
-                current_pad_states = new_pad_states;
+                run_tick(
+                    &mut state,
+                    &mut fixtures,
+                    &dmx_sender,
+                    &midi_controller,
+                    &started_at,
+                    &mut current_pad_states,
+                ).await;
             }
             Event::Control(event) => {
                 state.apply_event(event);
