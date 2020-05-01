@@ -123,24 +123,28 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     pin_mut!(events);
 
-    while let Some(event) = events.next().await {
-        match event {
-            Event::Tick => {
-                run_tick(
-                    &mut state,
-                    &mut fixtures,
-                    &dmx_sender,
-                    &midi_controller,
-                    &started_at,
-                    &mut current_pad_states,
-                ).await;
+    loop {
+        futures::select! {
+            event = events.next() => {
+                if let Some(event) = event {
+                    match event {
+                        Event::Tick => {
+                            run_tick(
+                                &mut state,
+                                &mut fixtures,
+                                &dmx_sender,
+                                &midi_controller,
+                                &started_at,
+                                &mut current_pad_states,
+                            ).await;
+                        }
+                        Event::Control(event) => {
+                            state.apply_event(event);
+                        }
+                        Event::Clock(event) => state.clock.apply_event(event),
+                    }
+                }
             }
-            Event::Control(event) => {
-                state.apply_event(event);
-            }
-            Event::Clock(event) => state.clock.apply_event(event),
-        }
+        };
     }
-
-    unreachable!()
 }
