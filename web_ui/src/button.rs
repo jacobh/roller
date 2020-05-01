@@ -1,6 +1,7 @@
 use yew::prelude::*;
 
-use crate::{utils::callback_fn, ButtonCoordinate, ButtonState};
+use crate::utils::callback_fn;
+use roller_protocol::{ButtonCoordinate, ButtonState};
 
 pub struct Button {
     props: ButtonProps,

@@ -1,10 +1,8 @@
 use im_rc::{vector, HashMap, Vector};
 use yew::prelude::*;
 
-use crate::{
-    button_grid::ButtonGrid, console_log, utils::callback_fn, ButtonCoordinate, ButtonGridLocation,
-    ButtonState,
-};
+use crate::{button_grid::ButtonGrid, console_log, utils::callback_fn};
+use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState};
 
 pub struct App {
     link: ComponentLink<Self>,

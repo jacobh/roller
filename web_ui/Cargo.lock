@@ -360,9 +360,18 @@ name = "roller-web-ui"
 version = "0.1.0"
 dependencies = [
  "im-rc",
+ "roller_protocol",
  "wasm-bindgen",
  "web-sys",
  "yew",
+]
+
+[[package]]
+name = "roller_protocol"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
 ]
 
 [[package]]

@@ -1,9 +1,8 @@
 use im_rc::Vector;
 use yew::prelude::*;
 
-use crate::{
-    button::Button, utils::callback_fn, ButtonCoordinate, ButtonGridLocation, ButtonState,
-};
+use crate::{button::Button, utils::callback_fn};
+use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState};
 
 pub struct ButtonGrid {
     props: ButtonGridProps,
