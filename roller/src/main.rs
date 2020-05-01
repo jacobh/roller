@@ -124,37 +124,26 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     pin_mut!(events);
 
-    let web_frontend = web::serve_frontend();
-    let listener = async_std::net::TcpListener::bind("127.0.0.1:8080").await?;
-    let mut incoming = listener.incoming();
-    
-    loop {
-        futures::select! {
-            event = events.next() => {
-                if let Some(event) = event {
-                    match event {
-                        Event::Tick => {
-                            run_tick(
-                                &mut state,
-                                &mut fixtures,
-                                &dmx_sender,
-                                &midi_controller,
-                                &started_at,
-                                &mut current_pad_states,
-                            ).await;
-                        }
-                        Event::Control(event) => {
-                            state.apply_event(event);
-                        }
-                        Event::Clock(event) => state.clock.apply_event(event),
-                    }
-                }
-            },
-            stream = incoming.next() => {
-                if let Some(stream) = stream {
-                    warp::serve(web_frontend).serve_incoming(stream?).await;
-                }
+    web::serve_frontend();
+
+    while let Some(event) = events.next().await {
+        match event {
+            Event::Tick => {
+                run_tick(
+                    &mut state,
+                    &mut fixtures,
+                    &dmx_sender,
+                    &midi_controller,
+                    &started_at,
+                    &mut current_pad_states,
+                )
+                .await;
             }
-        };
+            Event::Control(event) => {
+                state.apply_event(event);
+            }
+            Event::Clock(event) => state.clock.apply_event(event),
+        }
     }
+    unreachable!()
 }
