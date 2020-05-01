@@ -1,5 +1,16 @@
 use std::fmt;
 
+pub enum Message {
+    Client(ClientMessage),
+    Server(ServerMessage),
+}
+
+pub enum ClientMessage {
+    ButtonPressed(ButtonGridLocation, ButtonCoordinate),
+}
+
+pub enum ServerMessage {}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ButtonCoordinate {
     pub row_idx: usize,
