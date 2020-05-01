@@ -1,17 +1,21 @@
 use std::fmt;
+use serde::{Serialize, Deserialize};
 
+#[derive(Debug, Serialize, Deserialize)]
 pub enum Message {
     Client(ClientMessage),
     Server(ServerMessage),
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ClientMessage {
     ButtonPressed(ButtonGridLocation, ButtonCoordinate),
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub enum ServerMessage {}
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ButtonCoordinate {
     pub row_idx: usize,
     pub column_idx: usize,
@@ -22,7 +26,7 @@ impl fmt::Display for ButtonCoordinate {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ButtonGridLocation {
     Main,
     MetaRight,
@@ -38,7 +42,7 @@ impl ButtonGridLocation {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ButtonState {
     Active,
     Inactive,

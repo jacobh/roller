@@ -106,6 +106,15 @@ async fn main() -> Result<(), async_std::io::Error> {
         .set_pad_colors(current_pad_states.clone())
         .await;
 
+    let (web_control_events_send, web_control_events_recv) =
+        async_std::sync::channel::<ControlEvent>(64);
+
+    let web_control_events = Some(
+        web_control_events_recv
+            .map(|event| Event::Control(event))
+            .boxed(),
+    );
+
     let ticks = Some(
         utils::tick_stream(Duration::from_millis(1000 / 40))
             .map(|()| Event::Tick)
@@ -117,14 +126,14 @@ async fn main() -> Result<(), async_std::io::Error> {
         .map(|events| events.map(Event::Clock).boxed());
 
     let events = stream::select_all(
-        vec![ticks, control_events, clock_events]
+        vec![ticks, control_events, clock_events, web_control_events]
             .into_iter()
             .flatten(),
     );
 
     pin_mut!(events);
 
-    web::serve_frontend();
+    web::serve_frontend(web_control_events_send);
 
     while let Some(event) = events.next().await {
         match event {

@@ -3,6 +3,8 @@ use warp::Filter;
 use midi::Note;
 use roller_protocol::{ButtonCoordinate, ButtonGridLocation};
 
+use crate::ControlEvent;
+
 // Specific for akai apc mini. really the internal button location should be specific with coords
 fn coordinate_to_note(loc: &ButtonGridLocation, coord: &ButtonCoordinate) -> Note {
     match loc {
@@ -12,7 +14,7 @@ fn coordinate_to_note(loc: &ButtonGridLocation, coord: &ButtonCoordinate) -> Not
     }
 }
 
-pub fn serve_frontend() {
+pub fn serve_frontend(_event_sender: async_std::sync::Sender<ControlEvent>) {
     let index = warp::get().and(warp::fs::file("web_ui/index.html"));
     let assets = warp::get().and(warp::fs::dir("web_ui"));
 
