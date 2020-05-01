@@ -34,6 +34,9 @@ pub struct SceneState {
     // Contains states for effects enabled for specific groups. These take
     // precedence over any effects set in the `default` state
     pub fixture_groups: FxHashMap<FixtureGroupId, FixtureGroupState>,
+
+    pub dimmer_effect_intensity: f64,
+    pub color_effect_intensity: f64,
 }
 impl SceneState {
     pub fn fixture_group_state(
@@ -64,7 +67,15 @@ impl SceneState {
         FixtureGroupValue<'_>,
         FxHashMap<FixtureGroupId, FixtureGroupValue<'_>>,
     ) {
-        let base_values = self.base.fixture_group_value();
+        let mut base_values = self.base.fixture_group_value();
+
+        // If fixture groups don't have intensities set, apply the default setting from the scene
+        if base_values.dimmer_effect_intensity == None {
+            base_values.dimmer_effect_intensity = Some(self.dimmer_effect_intensity);
+        }
+        if base_values.color_effect_intensity == None {
+            base_values.color_effect_intensity = Some(self.color_effect_intensity);
+        }
 
         let group_values = self
             .fixture_groups
@@ -91,6 +102,8 @@ impl FixtureGroupState {
 
         FixtureGroupValue {
             dimmer: self.dimmer,
+            dimmer_effect_intensity: None,
+            color_effect_intensity: None,
             clock_rate: self.clock_rate,
             global_color: buttons.global_color(),
             secondary_color: buttons.secondary_color(),

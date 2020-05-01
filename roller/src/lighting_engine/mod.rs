@@ -34,6 +34,8 @@ pub struct SceneId(usize);
 #[derive(Default)]
 pub struct FixtureGroupValue<'a> {
     pub dimmer: f64,
+    pub dimmer_effect_intensity: Option<f64>,
+    pub color_effect_intensity: Option<f64>,
     pub clock_rate: Rate,
     pub global_color: Option<Color>,
     pub secondary_color: Option<Color>,
@@ -55,6 +57,12 @@ impl<'a> FixtureGroupValue<'a> {
         if self.base_position == None {
             self.base_position = other.base_position;
         }
+        if self.dimmer_effect_intensity == None {
+            self.dimmer_effect_intensity = other.dimmer_effect_intensity;
+        }
+        if self.color_effect_intensity == None {
+            self.color_effect_intensity = other.color_effect_intensity;
+        }
         self.active_dimmer_effects
             .extend(other.active_dimmer_effects.iter());
         self.active_color_effects
@@ -71,6 +79,12 @@ impl<'a> FixtureGroupValue<'a> {
     }
     pub fn base_position(&self) -> BasePosition {
         self.base_position.unwrap_or_default()
+    }
+    pub fn dimmer_effect_intensity(&self) -> f64 {
+        self.dimmer_effect_intensity.unwrap_or(0.5)
+    }
+    pub fn color_effect_intensity(&self) -> f64 {
+        self.color_effect_intensity.unwrap_or(1.0)
     }
 }
 
@@ -98,8 +112,6 @@ pub struct EngineState<'a> {
     pub midi_mapping: &'a MidiMapping,
     pub clock: Clock,
     pub master_dimmer: f64,
-    pub dimmer_effect_intensity: f64,
-    pub color_effect_intensity: f64,
     pub control_mode: ControlMode,
     pub active_scene_id: SceneId,
     pub active_fixture_group_control: Option<FixtureGroupId>,
@@ -111,8 +123,6 @@ impl<'a> EngineState<'a> {
             midi_mapping,
             clock: Clock::new(128.0),
             master_dimmer: 1.0,
-            dimmer_effect_intensity: 0.5,
-            color_effect_intensity: 1.0,
             control_mode: ControlMode::Normal,
             active_scene_id: SceneId::new(1),
             active_fixture_group_control: None,
@@ -150,10 +160,10 @@ impl<'a> EngineState<'a> {
                 self.master_dimmer = dimmer;
             }
             (_, ControlEvent::UpdateDimmerEffectIntensity(intensity)) => {
-                self.dimmer_effect_intensity = intensity;
+                self.active_scene_state_mut().dimmer_effect_intensity = intensity;
             }
             (_, ControlEvent::UpdateColorEffectIntensity(intensity)) => {
-                self.color_effect_intensity = intensity;
+                self.active_scene_state_mut().color_effect_intensity = intensity;
             }
             (_, ControlEvent::UpdateClockRate(rate)) => {
                 let pressed_notes = self
@@ -236,7 +246,7 @@ impl<'a> EngineState<'a> {
                                         &fixture,
                                         &fixtures,
                                     )),
-                                    self.dimmer_effect_intensity,
+                                    values.dimmer_effect_intensity(),
                                 )
                         })
                 } else {
@@ -264,7 +274,7 @@ impl<'a> EngineState<'a> {
                                 )
                             },
                         ),
-                        self.color_effect_intensity,
+                        values.color_effect_intensity(),
                     )
                 } else {
                     base_color
