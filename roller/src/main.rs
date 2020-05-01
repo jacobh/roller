@@ -11,6 +11,7 @@ mod lighting_engine;
 mod position;
 mod project;
 mod utils;
+mod web;
 
 use crate::control::button::{pad_states, AkaiPadState};
 use crate::lighting_engine::{ControlEvent, EngineState};
@@ -123,6 +124,10 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     pin_mut!(events);
 
+    let web_frontend = web::serve_frontend();
+    let listener = async_std::net::TcpListener::bind("127.0.0.1:8080").await?;
+    let mut incoming = listener.incoming();
+    
     loop {
         futures::select! {
             event = events.next() => {
@@ -143,6 +148,11 @@ async fn main() -> Result<(), async_std::io::Error> {
                         }
                         Event::Clock(event) => state.clock.apply_event(event),
                     }
+                }
+            },
+            stream = incoming.next() => {
+                if let Some(stream) = stream {
+                    warp::serve(web_frontend).serve_incoming(stream?).await;
                 }
             }
         };
