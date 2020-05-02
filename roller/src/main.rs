@@ -26,6 +26,7 @@ async fn run_tick<'a>(
     midi_controller: &control::midi::MidiController,
     started_at: &std::time::Instant,
     current_pad_states: &mut rustc_hash::FxHashMap<midi::Note, AkaiPadState>,
+    web_pad_state_update_send: &async_std::sync::Sender<(midi::Note, AkaiPadState)>,
 ) {
     state.update_fixtures(fixtures);
     for (universe, dmx_data) in fixture::fold_fixture_dmx_data(fixtures.iter()).into_iter() {
@@ -43,20 +44,25 @@ async fn run_tick<'a>(
         started_at.elapsed(),
     );
 
+    // find the pads that have updated since the last tick
+    let changed_pad_states: Vec<(midi::Note, AkaiPadState)> = new_pad_states
+        .iter()
+        .filter(|(note, state)| {
+            current_pad_states
+                .get(note)
+                .map(|prev_state| state != &prev_state)
+                .unwrap_or(true)
+        })
+        .map(|(note, state)| (*note, *state))
+        .collect();
+
     midi_controller
-        .set_pad_colors(
-            // find the pads that have updated since the last tick
-            new_pad_states
-                .iter()
-                .filter(|(note, state)| {
-                    current_pad_states
-                        .get(note)
-                        .map(|prev_state| state != &prev_state)
-                        .unwrap_or(true)
-                })
-                .map(|(note, state)| (*note, *state)),
-        )
+        .set_pad_colors(changed_pad_states.clone().into_iter())
         .await;
+
+    for note_state in changed_pad_states {
+        web_pad_state_update_send.send(note_state).await;
+    }
 
     *current_pad_states = new_pad_states;
 }
@@ -108,6 +114,8 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     let (web_control_events_send, web_control_events_recv) =
         async_std::sync::channel::<ControlEvent>(64);
+    let (web_pad_state_update_send, web_pad_state_update_recv) =
+        async_std::sync::channel::<(midi::Note, AkaiPadState)>(64);
 
     let web_control_events = Some(
         web_control_events_recv
@@ -136,6 +144,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     web::serve_frontend(
         midi_controller.midi_mapping.clone(),
         &current_pad_states,
+        web_pad_state_update_recv,
         web_control_events_send,
     );
 
@@ -149,6 +158,7 @@ async fn main() -> Result<(), async_std::io::Error> {
                     &midi_controller,
                     &started_at,
                     &mut current_pad_states,
+                    &web_pad_state_update_send,
                 )
                 .await;
             }

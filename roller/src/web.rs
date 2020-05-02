@@ -1,4 +1,4 @@
-use async_std::sync::Sender;
+use async_std::sync::{Mutex, Receiver, Sender};
 use futures::prelude::*;
 use rustc_hash::FxHashMap;
 use std::sync::Arc;
@@ -135,19 +135,34 @@ async fn browser_session(
 pub fn serve_frontend(
     midi_mapping: Arc<MidiMapping>,
     initial_pad_states: &FxHashMap<Note, AkaiPadState>,
+    mut pad_state_update_recv: Receiver<(Note, AkaiPadState)>,
     event_sender: Sender<ControlEvent>,
 ) {
-    let initial_button_states: FxHashMap<_, _> = initial_pad_states
-        .iter()
-        .filter_map(|(note, pad_state)| {
-            let coord = note_to_coordinate(*note);
+    let initial_button_states: Arc<Mutex<FxHashMap<_, _>>> = Arc::new(Mutex::new(
+        initial_pad_states
+            .iter()
+            .filter_map(|(note, pad_state)| {
+                let coord = note_to_coordinate(*note);
+                if let Some(coord) = coord {
+                    Some((coord, akai_pad_state_to_button_state(pad_state)))
+                } else {
+                    None
+                }
+            })
+            .collect(),
+    ));
+
+    // Update initial button states with incoming messages
+    let initial_button_states2 = initial_button_states.clone();
+    async_std::task::spawn(async move {
+        while let Some((note, state)) = pad_state_update_recv.next().await {
+            let coord = note_to_coordinate(note);
             if let Some(coord) = coord {
-                Some((coord, akai_pad_state_to_button_state(pad_state)))
-            } else {
-                None
+                let mut states = initial_button_states2.lock().await;
+                states.insert(coord, akai_pad_state_to_button_state(&state));
             }
-        })
-        .collect();
+        }
+    });
 
     let index = warp::get().and(warp::fs::file("web_ui/index.html"));
     let assets = warp::get().and(warp::fs::dir("web_ui"));
@@ -158,7 +173,8 @@ pub fn serve_frontend(
         .map(move |ws: Ws| {
             let midi_mapping = midi_mapping.clone();
             let event_sender = event_sender.clone();
-            let initial_button_states = initial_button_states.clone();
+            let initial_button_states =
+                async_std::task::block_on(initial_button_states.lock()).clone();
 
             ws.on_upgrade(move |websocket| {
                 browser_session(websocket, midi_mapping, initial_button_states, event_sender)
