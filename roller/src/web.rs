@@ -1,7 +1,7 @@
 use async_std::sync::{Mutex, Receiver, Sender};
 use futures::prelude::*;
 use rustc_hash::FxHashMap;
-use std::sync::Arc;
+use std::sync::{Arc, atomic::{AtomicUsize, Ordering}};
 use warp::{
     ws::{self, WebSocket, Ws},
     Filter,
@@ -69,12 +69,13 @@ fn akai_pad_state_to_button_state(state: &AkaiPadState) -> ButtonState {
     }
 }
 
-async fn browser_session(
+async fn browser_session<F: FnOnce()>(
     websocket: WebSocket,
     midi_mapping: Arc<MidiMapping>,
     initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState>,
     server_message_recv: Receiver<ServerMessage>,
-    event_sender: Sender<ControlEvent>
+    event_sender: Sender<ControlEvent>,
+    on_complete: F,
 ) {
     let (mut tx, rx) = websocket.split();
 
@@ -107,6 +108,7 @@ async fn browser_session(
                     Ok(()) => {},
                     Err(_) => {
                         dbg!("Client has hung up");
+                        on_complete();
                         return;
                     }
                 }
@@ -164,6 +166,8 @@ pub fn serve_frontend(
     mut pad_state_update_recv: Receiver<(Note, AkaiPadState)>,
     event_sender: Sender<ControlEvent>,
 ) {
+    let browser_session_seq = Arc::new(AtomicUsize::new(0));
+
     let initial_button_states: Arc<Mutex<FxHashMap<_, _>>> = Arc::new(Mutex::new(
         initial_pad_states
             .iter()
@@ -178,8 +182,9 @@ pub fn serve_frontend(
             .collect(),
     ));
 
-    let server_message_senders: Arc<Mutex<Vec<Sender<ServerMessage>>>> =
-        Arc::new(Mutex::new(Vec::new()));
+    type BrowserSessionId = usize;
+    let server_message_senders: Arc<Mutex<FxHashMap<BrowserSessionId, Sender<ServerMessage>>>> =
+        Arc::new(Mutex::new(FxHashMap::default()));
 
     // Update initial button states with incoming messages
     let initial_button_states2 = initial_button_states.clone();
@@ -193,7 +198,7 @@ pub fn serve_frontend(
                 states.insert((loc.clone(), coord.clone()), state.clone());
 
                 let message = ServerMessage::ButtonStatesUpdated(vec![(loc, coord, state)]);
-                for sender in server_message_senders2.lock().await.iter() {
+                for sender in server_message_senders2.lock().await.values() {
                     sender.send(message.clone()).await;
                 }
             }
@@ -207,10 +212,12 @@ pub fn serve_frontend(
         .and(warp::path("ws"))
         .and(warp::ws())
         .map(move |ws: Ws| {
+            let session_id = browser_session_seq.fetch_add(1, Ordering::SeqCst);
             let midi_mapping = midi_mapping.clone();
             let event_sender = event_sender.clone();
             let initial_button_states =
                 async_std::task::block_on(initial_button_states.lock()).clone();
+            let server_message_senders = server_message_senders.clone();
 
             // hook up channel to send state update messages
             let (server_message_sender, server_message_recv) =
@@ -220,7 +227,7 @@ pub fn serve_frontend(
                 server_message_senders
                     .lock()
                     .await
-                    .push(server_message_sender);
+                    .insert(session_id, server_message_sender);
             });
 
             ws.on_upgrade(move |websocket| {
@@ -230,6 +237,12 @@ pub fn serve_frontend(
                     initial_button_states,
                     server_message_recv,
                     event_sender,
+                    move || {
+                        async_std::task::block_on(async {
+                            println!("dropping sender now!!");
+                            server_message_senders.lock().await.remove(&session_id);
+                        });
+                    }
                 )
             })
         });
