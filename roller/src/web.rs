@@ -162,7 +162,7 @@ async fn browser_session(
 pub fn serve_frontend(
     midi_mapping: Arc<MidiMapping>,
     initial_pad_states: &FxHashMap<Note, AkaiPadState>,
-    mut pad_state_update_recv: Receiver<(Note, AkaiPadState)>,
+    mut pad_state_update_recv: Receiver<Vec<(Note, AkaiPadState)>>,
     event_sender: Sender<ControlEvent>,
 ) {
     let initial_button_states: Arc<Mutex<FxHashMap<_, _>>> = Arc::new(Mutex::new(
@@ -185,16 +185,25 @@ pub fn serve_frontend(
     let initial_button_states2 = initial_button_states.clone();
     let (mut server_message_sender, _) = server_message_channel.clone().split();
     async_std::task::spawn(async move {
-        while let Some((note, state)) = pad_state_update_recv.next().await {
-            let coord = note_to_coordinate(note);
-            let state = akai_pad_state_to_button_state(&state);
-            if let Some((loc, coord)) = coord {
-                let mut states = initial_button_states2.lock().await;
-                states.insert((loc.clone(), coord.clone()), state.clone());
+        while let Some(note_states) = pad_state_update_recv.next().await {
+            let coord_states: Vec<_> = note_states
+                .into_iter()
+                .filter_map(|(note, state)| match note_to_coordinate(note) {
+                    Some((loc, coord)) => {
+                        let state = akai_pad_state_to_button_state(&state);
+                        Some((loc, coord, state))
+                    }
+                    None => None,
+                })
+                .collect();
 
-                let message = ServerMessage::ButtonStatesUpdated(vec![(loc, coord, state)]);
-                server_message_sender.send(message).await.unwrap();
+            let mut states = initial_button_states2.lock().await;
+            for (loc, coord, state) in coord_states.iter() {
+                states.insert((loc.clone(), coord.clone()), state.clone());
             }
+
+            let message = ServerMessage::ButtonStatesUpdated(coord_states);
+            server_message_sender.send(message).await.unwrap();
         }
     });
 
