@@ -7,9 +7,12 @@ use warp::{
 };
 
 use midi::{MidiEvent, Note};
-use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ClientMessage};
+use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage};
 
-use crate::{control::midi::MidiMapping, ControlEvent};
+use crate::{
+    control::{button::AkaiPadState, midi::MidiMapping},
+    ControlEvent,
+};
 
 // Specific for akai apc mini. really the internal button location should be specific with coords
 fn coordinate_to_note(loc: &ButtonGridLocation, coord: &ButtonCoordinate) -> Note {
@@ -17,6 +20,47 @@ fn coordinate_to_note(loc: &ButtonGridLocation, coord: &ButtonCoordinate) -> Not
         ButtonGridLocation::Main => Note::new((8 * coord.row_idx + coord.column_idx) as u8),
         ButtonGridLocation::MetaRight => Note::new((89 - coord.row_idx) as u8),
         ButtonGridLocation::MetaBottom => Note::new((64 + coord.column_idx) as u8),
+    }
+}
+
+fn note_to_coordinate(note: Note) -> (ButtonGridLocation, ButtonCoordinate) {
+    let note = u8::from(note) as usize;
+    if note < 64 {
+        (
+            ButtonGridLocation::Main,
+            ButtonCoordinate {
+                row_idx: note / 8,
+                column_idx: note % 8,
+            },
+        )
+    } else if note < 72 {
+        (
+            ButtonGridLocation::MetaBottom,
+            ButtonCoordinate {
+                row_idx: 0,
+                column_idx: note - 64,
+            },
+        )
+    } else {
+        (
+            ButtonGridLocation::MetaRight,
+            ButtonCoordinate {
+                row_idx: 89 - note,
+                column_idx: 0,
+            },
+        )
+    }
+}
+
+fn akai_pad_state_to_button_state(state: AkaiPadState) -> ButtonState {
+    match state {
+        AkaiPadState::Off => ButtonState::Unused,
+        AkaiPadState::Green => ButtonState::Active,
+        AkaiPadState::GreenBlink => ButtonState::Active,
+        AkaiPadState::Red => ButtonState::Deactivated,
+        AkaiPadState::RedBlink => ButtonState::Deactivated,
+        AkaiPadState::Yellow => ButtonState::Inactive,
+        AkaiPadState::YellowBlink => ButtonState::Inactive,
     }
 }
 
