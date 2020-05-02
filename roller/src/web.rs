@@ -1,13 +1,16 @@
 use async_std::sync::Sender;
 use futures::prelude::*;
+use rustc_hash::FxHashMap;
 use std::sync::Arc;
 use warp::{
-    ws::{WebSocket, Ws},
+    ws::{self, WebSocket, Ws},
     Filter,
 };
 
 use midi::{MidiEvent, Note};
-use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage};
+use roller_protocol::{
+    ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, ServerMessage,
+};
 
 use crate::{
     control::{button::AkaiPadState, midi::MidiMapping},
@@ -52,7 +55,7 @@ fn note_to_coordinate(note: Note) -> (ButtonGridLocation, ButtonCoordinate) {
     }
 }
 
-fn akai_pad_state_to_button_state(state: AkaiPadState) -> ButtonState {
+fn akai_pad_state_to_button_state(state: &AkaiPadState) -> ButtonState {
     match state {
         AkaiPadState::Off => ButtonState::Unused,
         AkaiPadState::Green => ButtonState::Active,
@@ -67,9 +70,19 @@ fn akai_pad_state_to_button_state(state: AkaiPadState) -> ButtonState {
 async fn browser_session(
     websocket: WebSocket,
     midi_mapping: Arc<MidiMapping>,
+    initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState>,
     event_sender: Sender<ControlEvent>,
 ) {
-    let (_tx, mut rx) = websocket.split();
+    let (mut tx, mut rx) = websocket.split();
+
+    let server_messages = initial_button_states
+        .into_iter()
+        .map(|((loc, coord), state)| ServerMessage::ButtonStateUpdated(loc, coord, state));
+
+    for message in server_messages {
+        let msg = bincode::serialize::<ServerMessage>(&message).unwrap();
+        tx.send(ws::Message::binary(msg)).await.unwrap();
+    }
 
     while let Some(message) = rx.next().await {
         match message {
@@ -115,7 +128,21 @@ async fn browser_session(
     }
 }
 
-pub fn serve_frontend(midi_mapping: Arc<MidiMapping>, event_sender: Sender<ControlEvent>) {
+pub fn serve_frontend(
+    midi_mapping: Arc<MidiMapping>,
+    initial_pad_states: &FxHashMap<Note, AkaiPadState>,
+    event_sender: Sender<ControlEvent>,
+) {
+    let initial_button_states: FxHashMap<_, _> = initial_pad_states
+        .iter()
+        .map(|(note, pad_state)| {
+            (
+                note_to_coordinate(*note),
+                akai_pad_state_to_button_state(pad_state),
+            )
+        })
+        .collect();
+
     let index = warp::get().and(warp::fs::file("web_ui/index.html"));
     let assets = warp::get().and(warp::fs::dir("web_ui"));
 
@@ -125,8 +152,11 @@ pub fn serve_frontend(midi_mapping: Arc<MidiMapping>, event_sender: Sender<Contr
         .map(move |ws: Ws| {
             let midi_mapping = midi_mapping.clone();
             let event_sender = event_sender.clone();
+            let initial_button_states = initial_button_states.clone();
 
-            ws.on_upgrade(move |websocket| browser_session(websocket, midi_mapping, event_sender))
+            ws.on_upgrade(move |websocket| {
+                browser_session(websocket, midi_mapping, initial_button_states, event_sender)
+            })
         });
 
     let app = warp::path::end().and(index).or(websocket).or(assets);

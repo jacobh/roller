@@ -135,6 +135,7 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     web::serve_frontend(
         midi_controller.midi_mapping.clone(),
+        &current_pad_states,
         web_control_events_send,
     );
 

@@ -13,7 +13,9 @@ pub enum ClientMessage {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum ServerMessage {}
+pub enum ServerMessage {
+    ButtonStateUpdated(ButtonGridLocation, ButtonCoordinate, ButtonState),
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ButtonCoordinate {
