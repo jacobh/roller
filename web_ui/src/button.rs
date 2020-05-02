@@ -1,6 +1,6 @@
 use yew::prelude::*;
 
-use crate::utils::callback_fn;
+use crate::{app::ButtonAction, utils::callback_fn};
 use roller_protocol::{ButtonCoordinate, ButtonState};
 
 pub struct Button {
@@ -13,7 +13,7 @@ pub enum Msg {}
 pub struct ButtonProps {
     pub state: ButtonState,
     pub coordinate: ButtonCoordinate,
-    pub on_press: Callback<ButtonCoordinate>,
+    pub on_action: Callback<(ButtonCoordinate, ButtonAction)>,
 }
 
 impl Component for Button {
@@ -40,13 +40,18 @@ impl Component for Button {
     fn view(&self) -> Html {
         let ButtonProps {
             coordinate,
-            on_press,
+            on_action,
             ..
         } = self.props.clone();
-        let click_callback = callback_fn(move |_evt| on_press.emit(coordinate.clone()));
+        let on_action2 = on_action.clone();
+
+        let onmousedown_callback =
+            callback_fn(move |_evt| on_action.emit((coordinate, ButtonAction::Press)));
+        let onmouseup_callback =
+            callback_fn(move |_evt| on_action2.emit((coordinate, ButtonAction::Release)));
 
         html! {
-            <div class=format!("button {}", self.props.state.css_class()) onclick={click_callback}>
+            <div class=format!("button {}", self.props.state.css_class()) onmousedown={onmousedown_callback} onmouseup={onmouseup_callback}>
                 <span>{self.props.coordinate.to_string()}</span>
             </div>
         }

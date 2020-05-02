@@ -10,6 +10,12 @@ use roller_protocol::{
     ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, ServerMessage,
 };
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ButtonAction {
+    Press,
+    Release,
+}
+
 pub struct App {
     link: ComponentLink<Self>,
     websocket: WebSocketTask,
@@ -19,6 +25,7 @@ pub struct App {
 #[derive(Debug)]
 pub enum AppMsg {
     ButtonPressed(ButtonGridLocation, ButtonCoordinate),
+    ButtonReleased(ButtonGridLocation, ButtonCoordinate),
     ServerMessage(ServerMessage),
     NoOp,
 }
@@ -86,10 +93,14 @@ impl Component for App {
         match msg {
             AppMsg::ButtonPressed(location, coords) => {
                 // send button press up to the server
-                let msg = ClientMessage::ButtonPressed(location.clone(), coords.clone());
-
+                let msg = ClientMessage::ButtonPressed(location, coords);
                 let packet = bincode::serialize(&msg).expect("bincode::serialize");
-
+                let _ = self.websocket.send_binary(Ok(packet));
+            }
+            AppMsg::ButtonReleased(location, coords) => {
+                // send button press up to the server
+                let msg = ClientMessage::ButtonReleased(location, coords);
+                let packet = bincode::serialize(&msg).expect("bincode::serialize");
                 let _ = self.websocket.send_binary(Ok(packet));
             }
             AppMsg::ServerMessage(ServerMessage::ButtonStatesUpdated(updates)) => {
@@ -109,8 +120,13 @@ impl Component for App {
 
     fn view(&self) -> Html {
         let link = self.link.to_owned();
-        let button_callback_fn = callback_fn(move |(location, coord)| {
-            link.send_message(AppMsg::ButtonPressed(location, coord));
+        let button_callback_fn = callback_fn(move |(location, coord, action)| match action {
+            ButtonAction::Press => {
+                link.send_message(AppMsg::ButtonPressed(location, coord));
+            }
+            ButtonAction::Release => {
+                link.send_message(AppMsg::ButtonReleased(location, coord));
+            }
         });
 
         html! {
@@ -119,19 +135,19 @@ impl Component for App {
                     <ButtonGrid
                         location={ButtonGridLocation::Main}
                         button_states={self.button_states[&ButtonGridLocation::Main].clone()}
-                        on_button_press={button_callback_fn.clone()}
+                        on_button_action={button_callback_fn.clone()}
                     />
                     <ButtonGrid
                         location={ButtonGridLocation::MetaRight}
                         button_states={self.button_states[&ButtonGridLocation::MetaRight].clone()}
-                        on_button_press={button_callback_fn.clone()}
+                        on_button_action={button_callback_fn.clone()}
                     />
                 </div>
                 <div class="row row--bottom">
                     <ButtonGrid
                         location={ButtonGridLocation::MetaBottom}
                         button_states={self.button_states[&ButtonGridLocation::MetaBottom].clone()}
-                        on_button_press={button_callback_fn.clone()}
+                        on_button_action={button_callback_fn.clone()}
                     />
                 </div>
             </div>

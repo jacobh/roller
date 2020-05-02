@@ -10,6 +10,7 @@ pub enum Message {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ClientMessage {
     ButtonPressed(ButtonGridLocation, ButtonCoordinate),
+    ButtonReleased(ButtonGridLocation, ButtonCoordinate),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -17,7 +18,7 @@ pub enum ServerMessage {
     ButtonStatesUpdated(Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ButtonCoordinate {
     pub row_idx: usize,
     pub column_idx: usize,
@@ -28,7 +29,7 @@ impl fmt::Display for ButtonCoordinate {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ButtonGridLocation {
     Main,
     MetaRight,
@@ -44,7 +45,7 @@ impl ButtonGridLocation {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Copy, Serialize, Deserialize)]
 pub enum ButtonState {
     Active,
     Inactive,

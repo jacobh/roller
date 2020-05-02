@@ -1,7 +1,7 @@
 use im_rc::Vector;
 use yew::prelude::*;
 
-use crate::{button::Button, utils::callback_fn};
+use crate::{app::ButtonAction, button::Button, utils::callback_fn};
 use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState};
 
 pub struct ButtonGrid {
@@ -14,7 +14,7 @@ pub enum Msg {}
 pub struct ButtonGridProps {
     pub location: ButtonGridLocation,
     pub button_states: Vector<Vector<ButtonState>>,
-    pub on_button_press: Callback<(ButtonGridLocation, ButtonCoordinate)>,
+    pub on_button_action: Callback<(ButtonGridLocation, ButtonCoordinate, ButtonAction)>,
 }
 
 impl Component for ButtonGrid {
@@ -41,7 +41,7 @@ impl Component for ButtonGrid {
     fn view(&self) -> Html {
         let ButtonGridProps {
             location,
-            on_button_press,
+            on_button_action,
             ..
         } = self.props.clone();
         let container_class = format!("button-grid button-grid--{}", location.css_name());
@@ -54,8 +54,8 @@ impl Component for ButtonGrid {
             .max()
             .unwrap_or(0);
 
-        let callback = callback_fn(move |coord: ButtonCoordinate| {
-            on_button_press.emit((location.clone(), coord));
+        let callback = callback_fn(move |(coord, action)| {
+            on_button_action.emit((location.clone(), coord, action));
         });
 
         html! {
@@ -66,7 +66,7 @@ impl Component for ButtonGrid {
                         <Button
                             coordinate={ButtonCoordinate{ row_idx, column_idx }}
                             state={get_button_state(&self.props.button_states, column_idx, row_idx)}
-                            on_press={callback.clone()}
+                            on_action={callback.clone()}
                         />
                     }).collect::<Html>()}
                     </div>

@@ -103,7 +103,13 @@ async fn browser_session(
         match event {
             Event::ServerMessage(msg) => {
                 let msg = bincode::serialize::<ServerMessage>(&msg).unwrap();
-                tx.send(ws::Message::binary(msg)).await.unwrap();
+                match tx.send(ws::Message::binary(msg)).await {
+                    Ok(()) => {},
+                    Err(_) => {
+                        dbg!("Client has hung up");
+                        return;
+                    }
+                }
             }
             Event::ClientMessage(Err(e)) => {
                 println!("error reading from client: {:?}", e);
@@ -123,22 +129,27 @@ async fn browser_session(
                     ClientMessage::ButtonPressed(loc, coord) => {
                         let note = coordinate_to_note(&loc, &coord);
 
-                        let midi_events = [
-                            MidiEvent::NoteOn {
-                                note,
-                                velocity: 100,
-                            },
-                            MidiEvent::NoteOff {
-                                note,
-                                velocity: 100,
-                            },
-                        ];
+                        let midi_event = MidiEvent::NoteOn {
+                            note,
+                            velocity: 100,
+                        };
 
-                        for midi_event in &midi_events {
-                            let control_event = midi_mapping.midi_to_control_event(midi_event);
-                            if let Some(control_event) = control_event {
-                                event_sender.send(control_event).await;
-                            }
+                        let control_event = midi_mapping.midi_to_control_event(&midi_event);
+                        if let Some(control_event) = control_event {
+                            event_sender.send(control_event).await;
+                        }
+                    }
+                    ClientMessage::ButtonReleased(loc, coord) => {
+                        let note = coordinate_to_note(&loc, &coord);
+
+                        let midi_event = MidiEvent::NoteOff {
+                            note,
+                            velocity: 100,
+                        };
+
+                        let control_event = midi_mapping.midi_to_control_event(&midi_event);
+                        if let Some(control_event) = control_event {
+                            event_sender.send(control_event).await;
                         }
                     }
                 };
