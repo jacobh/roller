@@ -1,13 +1,15 @@
+use async_std::sync::Sender;
 use futures::prelude::*;
+use std::sync::Arc;
 use warp::{
     ws::{WebSocket, Ws},
     Filter,
 };
 
-use midi::Note;
+use midi::{MidiEvent, Note};
 use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ClientMessage};
 
-use crate::ControlEvent;
+use crate::{control::midi::MidiMapping, ControlEvent};
 
 // Specific for akai apc mini. really the internal button location should be specific with coords
 fn coordinate_to_note(loc: &ButtonGridLocation, coord: &ButtonCoordinate) -> Note {
@@ -20,7 +22,8 @@ fn coordinate_to_note(loc: &ButtonGridLocation, coord: &ButtonCoordinate) -> Not
 
 async fn browser_session(
     websocket: WebSocket,
-    event_sender: async_std::sync::Sender<ControlEvent>,
+    midi_mapping: Arc<MidiMapping>,
+    event_sender: Sender<ControlEvent>,
 ) {
     let (_tx, mut rx) = websocket.split();
 
@@ -40,33 +43,47 @@ async fn browser_session(
 
                 println!("{:?}", msg);
 
-                let control_event = match msg {
+                match msg {
                     ClientMessage::ButtonPressed(loc, coord) => {
-                        let _note = coordinate_to_note(&loc, &coord);
-                        // TODO we need the button mapping here to determine which button was pressed
-                        // Placeholder
-                        ControlEvent::TapTempo(std::time::Instant::now())
+                        let note = coordinate_to_note(&loc, &coord);
+
+                        let midi_events = [
+                            MidiEvent::NoteOn {
+                                note,
+                                velocity: 100,
+                            },
+                            MidiEvent::NoteOff {
+                                note,
+                                velocity: 100,
+                            },
+                        ];
+
+                        for midi_event in &midi_events {
+                            let control_event = midi_mapping.midi_to_control_event(midi_event);
+                            if let Some(control_event) = control_event {
+                                event_sender.send(control_event).await;
+                            }
+                        }
                     }
                 };
-                event_sender.send(control_event).await;
             }
         }
     }
 }
 
-pub fn serve_frontend(event_sender: async_std::sync::Sender<ControlEvent>) {
+pub fn serve_frontend(midi_mapping: Arc<MidiMapping>, event_sender: Sender<ControlEvent>) {
     let index = warp::get().and(warp::fs::file("web_ui/index.html"));
     let assets = warp::get().and(warp::fs::dir("web_ui"));
 
     let websocket = warp::get()
         .and(warp::path("ws"))
         .and(warp::ws())
-        .and(warp::any().map(move || event_sender.clone()))
-        .map(
-            move |ws: Ws, sender: async_std::sync::Sender<ControlEvent>| {
-                ws.on_upgrade(move |websocket| browser_session(websocket, sender))
-            },
-        );
+        .map(move |ws: Ws| {
+            let midi_mapping = midi_mapping.clone();
+            let event_sender = event_sender.clone();
+
+            ws.on_upgrade(move |websocket| browser_session(websocket, midi_mapping, event_sender))
+        });
 
     let app = warp::path::end().and(index).or(websocket).or(assets);
 

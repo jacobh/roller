@@ -47,7 +47,7 @@ impl MidiMapping {
             .iter()
             .flat_map(|group| group.buttons().map(move |button| (group, button)))
     }
-    fn midi_to_control_event(&self, midi_event: &MidiEvent) -> Option<ControlEvent> {
+    pub fn midi_to_control_event(&self, midi_event: &MidiEvent) -> Option<ControlEvent> {
         let now = Instant::now();
 
         match dbg!(midi_event) {

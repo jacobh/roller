@@ -133,7 +133,10 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     pin_mut!(events);
 
-    web::serve_frontend(web_control_events_send);
+    web::serve_frontend(
+        midi_controller.midi_mapping.clone(),
+        web_control_events_send,
+    );
 
     while let Some(event) = events.next().await {
         match event {
