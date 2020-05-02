@@ -14,7 +14,7 @@ pub enum ClientMessage {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ServerMessage {
-    ButtonStateUpdated(ButtonGridLocation, ButtonCoordinate, ButtonState),
+    ButtonStatesUpdated(Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

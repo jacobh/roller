@@ -92,10 +92,11 @@ impl Component for App {
 
                 let _ = self.websocket.send_binary(Ok(packet));
             }
-            AppMsg::ServerMessage(ServerMessage::ButtonStateUpdated(location, coords, state)) => {
-                let grid = self.button_states.get_mut(&location).unwrap();
-
-                grid[coords.column_idx][coords.row_idx] = state;
+            AppMsg::ServerMessage(ServerMessage::ButtonStatesUpdated(updates)) => {
+                for (location, coords, state) in updates {
+                    let grid = self.button_states.get_mut(&location).unwrap();
+                    grid[coords.column_idx][coords.row_idx] = state;
+                }
             }
             AppMsg::NoOp => {}
         };

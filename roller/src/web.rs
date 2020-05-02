@@ -77,14 +77,16 @@ async fn browser_session(
 ) {
     let (mut tx, mut rx) = websocket.split();
 
-    let server_messages = initial_button_states
-        .into_iter()
-        .map(|((loc, coord), state)| ServerMessage::ButtonStateUpdated(loc, coord, state));
+    // Send through initial button states
+    let initial_states_message = ServerMessage::ButtonStatesUpdated(
+        initial_button_states
+            .into_iter()
+            .map(|((loc, coord), state)| (loc, coord, state))
+            .collect(),
+    );
 
-    for message in server_messages {
-        let msg = bincode::serialize::<ServerMessage>(&message).unwrap();
-        tx.send(ws::Message::binary(msg)).await.unwrap();
-    }
+    let msg = bincode::serialize::<ServerMessage>(&initial_states_message).unwrap();
+    tx.send(ws::Message::binary(msg)).await.unwrap();
 
     while let Some(message) = rx.next().await {
         match message {
