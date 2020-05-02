@@ -74,7 +74,7 @@ async fn browser_session(
     websocket: WebSocket,
     midi_mapping: Arc<MidiMapping>,
     initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState>,
-    server_message_channel: BroadcastChannel<ServerMessage>,
+    server_message_recv: impl Stream<Item = ServerMessage> + Unpin,
     event_sender: Sender<ControlEvent>,
 ) {
     let (mut tx, rx) = websocket.split();
@@ -97,7 +97,7 @@ async fn browser_session(
 
     let mut events = stream::select(
         rx.map(Event::ClientMessage),
-        server_message_channel.map(Event::ServerMessage),
+        server_message_recv.map(Event::ServerMessage),
     );
 
     while let Some(event) = events.next().await {
@@ -183,7 +183,7 @@ pub fn serve_frontend(
 
     // Update initial button states with incoming messages
     let initial_button_states2 = initial_button_states.clone();
-    let server_message_channel2 = server_message_channel.clone();
+    let (mut server_message_sender, _) = server_message_channel.clone().split();
     async_std::task::spawn(async move {
         while let Some((note, state)) = pad_state_update_recv.next().await {
             let coord = note_to_coordinate(note);
@@ -193,7 +193,7 @@ pub fn serve_frontend(
                 states.insert((loc.clone(), coord.clone()), state.clone());
 
                 let message = ServerMessage::ButtonStatesUpdated(vec![(loc, coord, state)]);
-                server_message_channel2.send(&message).await.unwrap();
+                server_message_sender.send(message).await.unwrap();
             }
         }
     });
@@ -209,14 +209,14 @@ pub fn serve_frontend(
             let event_sender = event_sender.clone();
             let initial_button_states =
                 async_std::task::block_on(initial_button_states.lock()).clone();
-            let server_message_channel = server_message_channel.clone();
+            let (_, server_message_recv) = server_message_channel.clone().split();
 
             ws.on_upgrade(move |websocket| {
                 browser_session(
                     websocket,
                     midi_mapping,
                     initial_button_states,
-                    server_message_channel,
+                    server_message_recv,
                     event_sender,
                 )
             })
