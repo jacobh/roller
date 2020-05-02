@@ -73,9 +73,10 @@ async fn browser_session(
     websocket: WebSocket,
     midi_mapping: Arc<MidiMapping>,
     initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState>,
-    event_sender: Sender<ControlEvent>,
+    server_message_recv: Receiver<ServerMessage>,
+    event_sender: Sender<ControlEvent>
 ) {
-    let (mut tx, mut rx) = websocket.split();
+    let (mut tx, rx) = websocket.split();
 
     // Send through initial button states
     let initial_states_message = ServerMessage::ButtonStatesUpdated(
@@ -88,13 +89,27 @@ async fn browser_session(
     let msg = bincode::serialize::<ServerMessage>(&initial_states_message).unwrap();
     tx.send(ws::Message::binary(msg)).await.unwrap();
 
-    while let Some(message) = rx.next().await {
-        match message {
-            Err(e) => {
+    enum Event {
+        ServerMessage(ServerMessage),
+        ClientMessage(Result<ws::Message, warp::Error>),
+    }
+
+    let mut events = stream::select(
+        rx.map(Event::ClientMessage),
+        server_message_recv.map(Event::ServerMessage),
+    );
+
+    while let Some(event) = events.next().await {
+        match event {
+            Event::ServerMessage(msg) => {
+                let msg = bincode::serialize::<ServerMessage>(&msg).unwrap();
+                tx.send(ws::Message::binary(msg)).await.unwrap();
+            }
+            Event::ClientMessage(Err(e)) => {
                 println!("error reading from client: {:?}", e);
                 return;
             }
-            Ok(msg) => {
+            Event::ClientMessage(Ok(msg)) => {
                 if !msg.is_binary() {
                     continue;
                 }
@@ -152,14 +167,24 @@ pub fn serve_frontend(
             .collect(),
     ));
 
+    let server_message_senders: Arc<Mutex<Vec<Sender<ServerMessage>>>> =
+        Arc::new(Mutex::new(Vec::new()));
+
     // Update initial button states with incoming messages
     let initial_button_states2 = initial_button_states.clone();
+    let server_message_senders2 = server_message_senders.clone();
     async_std::task::spawn(async move {
         while let Some((note, state)) = pad_state_update_recv.next().await {
             let coord = note_to_coordinate(note);
-            if let Some(coord) = coord {
+            let state = akai_pad_state_to_button_state(&state);
+            if let Some((loc, coord)) = coord {
                 let mut states = initial_button_states2.lock().await;
-                states.insert(coord, akai_pad_state_to_button_state(&state));
+                states.insert((loc.clone(), coord.clone()), state.clone());
+
+                let message = ServerMessage::ButtonStatesUpdated(vec![(loc, coord, state)]);
+                for sender in server_message_senders2.lock().await.iter() {
+                    sender.send(message.clone()).await;
+                }
             }
         }
     });
@@ -176,8 +201,25 @@ pub fn serve_frontend(
             let initial_button_states =
                 async_std::task::block_on(initial_button_states.lock()).clone();
 
+            // hook up channel to send state update messages
+            let (server_message_sender, server_message_recv) =
+                async_std::sync::channel::<ServerMessage>(64);
+
+            async_std::task::block_on(async {
+                server_message_senders
+                    .lock()
+                    .await
+                    .push(server_message_sender);
+            });
+
             ws.on_upgrade(move |websocket| {
-                browser_session(websocket, midi_mapping, initial_button_states, event_sender)
+                browser_session(
+                    websocket,
+                    midi_mapping,
+                    initial_button_states,
+                    server_message_recv,
+                    event_sender,
+                )
             })
         });
 
