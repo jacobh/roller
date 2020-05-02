@@ -359,6 +359,7 @@ dependencies = [
 name = "roller-web-ui"
 version = "0.1.0"
 dependencies = [
+ "bincode",
  "im-rc",
  "roller_protocol",
  "wasm-bindgen",

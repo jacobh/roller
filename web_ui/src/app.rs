@@ -1,24 +1,57 @@
 use im_rc::{vector, HashMap, Vector};
-use yew::prelude::*;
+use yew::{
+    format::Binary,
+    prelude::*,
+    services::websocket::{WebSocketService, WebSocketStatus, WebSocketTask},
+};
 
 use crate::{button_grid::ButtonGrid, console_log, utils::callback_fn};
-use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState};
+use roller_protocol::{
+    ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, ServerMessage,
+};
 
 pub struct App {
     link: ComponentLink<Self>,
+    websocket: WebSocketTask,
     button_states: HashMap<ButtonGridLocation, Vector<Vector<ButtonState>>>,
 }
 
 #[derive(Debug)]
-pub enum Msg {
+pub enum AppMsg {
     ButtonPressed(ButtonGridLocation, ButtonCoordinate),
+    ServerMessage(ServerMessage),
+    NoOp,
 }
 
 impl Component for App {
-    type Message = Msg;
+    type Message = AppMsg;
     type Properties = ();
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
+        let mut websocket = WebSocketService::new();
+
+        let websocket = websocket
+            .connect_binary(
+                "ws://localhost:8888/ws",
+                link.callback(|msg: Binary| match msg {
+                    Ok(buff) => {
+                        let msg = bincode::deserialize::<ServerMessage>(&buff)
+                            .expect("bincode::deserialize");
+
+                        AppMsg::ServerMessage(msg)
+                    }
+                    Err(e) => {
+                        crate::console_log!("websocket recv error: {:?}", e);
+                        AppMsg::NoOp
+                    }
+                }),
+                link.callback(|status: WebSocketStatus| {
+                    crate::console_log!("websocket status: {:?}", status);
+                    AppMsg::NoOp
+                }),
+            )
+            .expect("websocket.connect_binary");
+
         let mut button_states = HashMap::new();
 
         button_states.insert(
@@ -52,6 +85,7 @@ impl Component for App {
 
         App {
             link,
+            websocket,
             button_states,
         }
     }
@@ -59,7 +93,16 @@ impl Component for App {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         console_log!("{:?}", msg);
         match msg {
-            Msg::ButtonPressed(location, coords) => {
+            AppMsg::ButtonPressed(location, coords) => {
+                {
+                    // send button press up to the server
+                    let msg = ClientMessage::ButtonPressed(location.clone(), coords.clone());
+
+                    let packet = bincode::serialize(&msg).expect("bincode::serialize");
+
+                    let _ = self.websocket.send_binary(Ok(packet));
+                }
+
                 let grid = self.button_states.get_mut(&location).unwrap();
 
                 let button_state = &mut grid[coords.column_idx][coords.row_idx];
@@ -72,6 +115,7 @@ impl Component for App {
 
                 *button_state = next_button_state;
             }
+            _ => {}
         };
         true
     }
@@ -83,7 +127,7 @@ impl Component for App {
     fn view(&self) -> Html {
         let link = self.link.to_owned();
         let button_callback_fn = callback_fn(move |(location, coord)| {
-            link.send_message(Msg::ButtonPressed(location, coord));
+            link.send_message(AppMsg::ButtonPressed(location, coord));
         });
 
         html! {
