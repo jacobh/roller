@@ -57,29 +57,19 @@ impl Component for App {
         button_states.insert(
             ButtonGridLocation::Main,
             (0..8)
-                .map(|column_idx| {
-                    (0..8)
-                        .map(|row_idx| {
-                            if column_idx < 4 && row_idx > 1 && row_idx < 6 {
-                                ButtonState::Inactive
-                            } else {
-                                ButtonState::Unused
-                            }
-                        })
-                        .collect()
-                })
+                .map(|_column_idx| (0..8).map(|_row_idx| ButtonState::Unused).collect())
                 .collect(),
         );
 
         button_states.insert(
             ButtonGridLocation::MetaRight,
-            vector![(0..8).map(|_row_idx| ButtonState::Inactive).collect()],
+            vector![(0..8).map(|_row_idx| ButtonState::Unused).collect()],
         );
 
         button_states.insert(
             ButtonGridLocation::MetaBottom,
             (0..8)
-                .map(|_col_idx| vector![ButtonState::Inactive])
+                .map(|_col_idx| vector![ButtonState::Unused])
                 .collect(),
         );
 
@@ -92,30 +82,22 @@ impl Component for App {
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         console_log!("{:?}", msg);
+
         match msg {
             AppMsg::ButtonPressed(location, coords) => {
-                {
-                    // send button press up to the server
-                    let msg = ClientMessage::ButtonPressed(location.clone(), coords.clone());
+                // send button press up to the server
+                let msg = ClientMessage::ButtonPressed(location.clone(), coords.clone());
 
-                    let packet = bincode::serialize(&msg).expect("bincode::serialize");
+                let packet = bincode::serialize(&msg).expect("bincode::serialize");
 
-                    let _ = self.websocket.send_binary(Ok(packet));
-                }
-
+                let _ = self.websocket.send_binary(Ok(packet));
+            }
+            AppMsg::ServerMessage(ServerMessage::ButtonStateUpdated(location, coords, state)) => {
                 let grid = self.button_states.get_mut(&location).unwrap();
 
-                let button_state = &mut grid[coords.column_idx][coords.row_idx];
-                let next_button_state = match button_state {
-                    ButtonState::Inactive => ButtonState::Active,
-                    ButtonState::Deactivated => ButtonState::Active,
-                    ButtonState::Active => ButtonState::Inactive,
-                    ButtonState::Unused => ButtonState::Unused,
-                };
-
-                *button_state = next_button_state;
+                grid[coords.column_idx][coords.row_idx] = state;
             }
-            _ => {}
+            AppMsg::NoOp => {}
         };
         true
     }

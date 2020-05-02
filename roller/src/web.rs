@@ -26,32 +26,34 @@ fn coordinate_to_note(loc: &ButtonGridLocation, coord: &ButtonCoordinate) -> Not
     }
 }
 
-fn note_to_coordinate(note: Note) -> (ButtonGridLocation, ButtonCoordinate) {
+fn note_to_coordinate(note: Note) -> Option<(ButtonGridLocation, ButtonCoordinate)> {
     let note = u8::from(note) as usize;
     if note < 64 {
-        (
+        Some((
             ButtonGridLocation::Main,
             ButtonCoordinate {
                 row_idx: note / 8,
                 column_idx: note % 8,
             },
-        )
+        ))
     } else if note < 72 {
-        (
+        Some((
             ButtonGridLocation::MetaBottom,
             ButtonCoordinate {
                 row_idx: 0,
                 column_idx: note - 64,
             },
-        )
-    } else {
-        (
+        ))
+    } else if note < 90 {
+        Some((
             ButtonGridLocation::MetaRight,
             ButtonCoordinate {
                 row_idx: 89 - note,
                 column_idx: 0,
             },
-        )
+        ))
+    } else {
+        None
     }
 }
 
@@ -135,11 +137,13 @@ pub fn serve_frontend(
 ) {
     let initial_button_states: FxHashMap<_, _> = initial_pad_states
         .iter()
-        .map(|(note, pad_state)| {
-            (
-                note_to_coordinate(*note),
-                akai_pad_state_to_button_state(pad_state),
-            )
+        .filter_map(|(note, pad_state)| {
+            let coord = note_to_coordinate(*note);
+            if let Some(coord) = coord {
+                Some((coord, akai_pad_state_to_button_state(pad_state)))
+            } else {
+                None
+            }
         })
         .collect();
 
