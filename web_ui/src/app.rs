@@ -2,7 +2,8 @@ use im_rc::{vector, HashMap, Vector};
 use yew::{
     format::Binary,
     prelude::*,
-    services::websocket::{WebSocketService, WebSocketStatus, WebSocketTask},
+    services::{websocket::{WebSocketService, WebSocketStatus, WebSocketTask}},
+    utils::window,
 };
 
 use crate::{button_grid::ButtonGrid, console_log, utils::callback_fn};
@@ -42,11 +43,12 @@ impl Component for App {
     type Properties = ();
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
+        let host = window().location().host().unwrap();
         let mut websocket = WebSocketService::new();
 
         let websocket = websocket
             .connect_binary(
-                "ws://localhost:8888/ws",
+                &format!("ws://{}/ws", host),
                 link.callback(|msg: Binary| match msg {
                     Ok(buff) => {
                         let msg = bincode::deserialize::<ServerMessage>(&buff)
