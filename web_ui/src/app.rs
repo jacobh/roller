@@ -22,6 +22,13 @@ pub struct App {
     button_states: HashMap<ButtonGridLocation, Vector<Vector<ButtonState>>>,
 }
 
+impl App {
+    fn send_client_message(&mut self, message: ClientMessage) {
+        let packet = bincode::serialize(&message).expect("bincode::serialize");
+        self.websocket.send_binary(Ok(packet))
+    }
+}
+
 #[derive(Debug)]
 pub enum AppMsg {
     ButtonPressed(ButtonGridLocation, ButtonCoordinate),
@@ -92,16 +99,10 @@ impl Component for App {
 
         match msg {
             AppMsg::ButtonPressed(location, coords) => {
-                // send button press up to the server
-                let msg = ClientMessage::ButtonPressed(location, coords);
-                let packet = bincode::serialize(&msg).expect("bincode::serialize");
-                let _ = self.websocket.send_binary(Ok(packet));
+                self.send_client_message(ClientMessage::ButtonPressed(location, coords));
             }
             AppMsg::ButtonReleased(location, coords) => {
-                // send button press up to the server
-                let msg = ClientMessage::ButtonReleased(location, coords);
-                let packet = bincode::serialize(&msg).expect("bincode::serialize");
-                let _ = self.websocket.send_binary(Ok(packet));
+                self.send_client_message(ClientMessage::ButtonReleased(location, coords));
             }
             AppMsg::ServerMessage(ServerMessage::ButtonStatesUpdated(updates)) => {
                 for (location, coords, state) in updates {
