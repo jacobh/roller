@@ -1,3 +1,4 @@
+use async_std::sync::Arc;
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
 use std::time::{Duration, Instant};
@@ -23,7 +24,7 @@ async fn run_tick<'a>(
     state: &mut EngineState<'a>,
     fixtures: &mut Vec<fixture::Fixture>,
     dmx_sender: &async_std::sync::Sender<(i32, [u8; 512])>,
-    midi_controller: &control::midi::MidiController,
+    midi_controller: Option<&control::midi::MidiController>,
     started_at: &std::time::Instant,
     current_pad_states: &mut rustc_hash::FxHashMap<midi::Note, AkaiPadState>,
     web_pad_state_update_send: &async_std::sync::Sender<Vec<(midi::Note, AkaiPadState)>>,
@@ -34,7 +35,7 @@ async fn run_tick<'a>(
     }
 
     let new_pad_states = pad_states(
-        midi_controller.midi_mapping.pad_mappings().collect(),
+        state.midi_mapping.pad_mappings().collect(),
         &state
             .control_fixture_group_state()
             .button_states
@@ -56,9 +57,11 @@ async fn run_tick<'a>(
         .map(|(note, state)| (*note, *state))
         .collect();
 
-    midi_controller
-        .set_pad_colors(changed_pad_states.clone().into_iter())
-        .await;
+    if let Some(midi_controller) = midi_controller {
+        midi_controller
+            .set_pad_colors(changed_pad_states.clone().into_iter())
+            .await;
+    }
 
     web_pad_state_update_send.send(changed_pad_states).await;
 
@@ -70,12 +73,18 @@ async fn main() -> Result<(), async_std::io::Error> {
     let project = project::Project::load("./roller_project.toml").await?;
     let mut fixtures = project.fixtures().await?;
 
-    let midi_controller_name = project.midi_controller.as_ref().unwrap();
-    let midi_controller =
-        control::midi::MidiController::new_for_device_name(midi_controller_name).unwrap();
+    let midi_mapping = Arc::new(control::default_midi_mapping());
+    let midi_controller = match project.midi_controller.as_ref() {
+        Some(midi_controller_name) => control::midi::MidiController::new_for_device_name(
+            midi_controller_name,
+            midi_mapping.clone(),
+        )
+        .ok(),
+        None => None,
+    };
 
     let started_at = Instant::now();
-    let mut state = EngineState::new(&midi_controller.midi_mapping);
+    let mut state = EngineState::new(&midi_mapping);
 
     let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
 
@@ -95,9 +104,8 @@ async fn main() -> Result<(), async_std::io::Error> {
         Clock(clock::ClockEvent),
     }
 
-    midi_controller.run_pad_startup().await;
     let mut current_pad_states = pad_states(
-        midi_controller.midi_mapping.pad_mappings().collect(),
+        midi_mapping.pad_mappings().collect(),
         &state
             .control_fixture_group_state()
             .button_states
@@ -106,9 +114,12 @@ async fn main() -> Result<(), async_std::io::Error> {
         state.pad_events(),
         started_at.elapsed(),
     );
-    midi_controller
-        .set_pad_colors(current_pad_states.clone())
-        .await;
+    if let Some(midi_controller) = &midi_controller {
+        midi_controller.run_pad_startup().await;
+        midi_controller
+            .set_pad_colors(current_pad_states.clone())
+            .await;
+    }
 
     let (web_control_events_send, web_control_events_recv) =
         async_std::sync::channel::<ControlEvent>(64);
@@ -126,7 +137,9 @@ async fn main() -> Result<(), async_std::io::Error> {
             .map(|()| Event::Tick)
             .boxed(),
     );
-    let control_events = Some(midi_controller.control_events().map(Event::Control).boxed());
+    let control_events = midi_controller
+        .as_ref()
+        .map(|controller| controller.control_events().map(Event::Control).boxed());
     let clock_events = project
         .midi_clock_events()
         .map(|events| events.map(Event::Clock).boxed());
@@ -140,7 +153,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     pin_mut!(events);
 
     web::serve_frontend(
-        midi_controller.midi_mapping.clone(),
+        midi_mapping.clone(),
         &current_pad_states,
         web_pad_state_update_recv,
         web_control_events_send,
@@ -153,7 +166,7 @@ async fn main() -> Result<(), async_std::io::Error> {
                     &mut state,
                     &mut fixtures,
                     &dmx_sender,
-                    &midi_controller,
+                    midi_controller.as_ref(),
                     &started_at,
                     &mut current_pad_states,
                     &web_pad_state_update_send,
