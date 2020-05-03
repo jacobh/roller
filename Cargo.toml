@@ -3,8 +3,11 @@
 members = [
     "midi",
     "roller",
-    "ola_client"
+    "ola_client",
+    "roller_protocol"
 ]
+
+exclude = ["web_ui"]
 
 [profile.release]
 lto = "fat"

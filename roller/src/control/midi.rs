@@ -6,7 +6,6 @@ use std::time::{Duration, Instant};
 use crate::{
     control::{
         button::{AkaiPadState, ButtonGroup, ButtonMapping, MetaButtonMapping, PadMapping},
-        default_midi_mapping,
         fader::MidiFaderMapping,
     },
     lighting_engine::ControlEvent,
@@ -47,7 +46,7 @@ impl MidiMapping {
             .iter()
             .flat_map(|group| group.buttons().map(move |button| (group, button)))
     }
-    fn midi_to_control_event(&self, midi_event: &MidiEvent) -> Option<ControlEvent> {
+    pub fn midi_to_control_event(&self, midi_event: &MidiEvent) -> Option<ControlEvent> {
         let now = Instant::now();
 
         match dbg!(midi_event) {
@@ -93,17 +92,20 @@ impl MidiMapping {
 }
 
 pub struct MidiController {
-    pub midi_mapping: Arc<MidiMapping>,
+    midi_mapping: Arc<MidiMapping>,
     midi_input: MidiInput,
     midi_output: MidiOutput,
 }
 impl MidiController {
-    pub fn new_for_device_name(name: &str) -> Result<MidiController, ()> {
+    pub fn new_for_device_name(
+        name: &str,
+        midi_mapping: Arc<MidiMapping>,
+    ) -> Result<MidiController, ()> {
         let midi_input = MidiInput::new(name).map_err(|_| ())?;
         let midi_output = MidiOutput::new(name).map_err(|_| ())?;
 
         Ok(MidiController {
-            midi_mapping: Arc::new(default_midi_mapping()),
+            midi_mapping,
             midi_input,
             midi_output,
         })

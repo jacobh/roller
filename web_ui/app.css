@@ -1,0 +1,88 @@
+* {
+    box-sizing: border-box;
+    border-collapse: collapse;
+}
+
+html {
+    background-color: #656660;
+    font-family: sans-serif;
+    user-select: none;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+}
+
+.row {
+    display: flex;
+    width: 100%;
+}
+
+.row--top {
+    height: 85%;
+}
+
+.row--bottom {
+    height: 15%;
+}
+
+.button-grid {
+    display: flex;
+    flex-direction: column-reverse;
+    width: 100%;
+    height: 100%;
+
+    padding-top: 20px;
+    padding-left: 20px;
+}
+
+.row .button-grid:last-child {
+    padding-right: 20px;
+}
+
+.row:last-child .button-grid {
+    padding-bottom: 20px;
+}
+
+.button-grid--main {
+    width: 85%;
+}
+
+.button-grid--meta-right {
+    width: 15%;
+}
+
+.button-grid__row {
+    display: flex;
+    justify-content: center;
+    height: 100%;
+}
+
+.button {
+    width: 100%;
+    margin: 5px;
+    padding: 5px;
+    background-color: #ccc;
+    color: rgba(0.1, 0.1, 0.1, 0.9);
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.button--active {
+    background-color: #72cb86;
+}
+
+.button--inactive {
+    background-color: #eded4c;
+}
+
+.button--deactivated {
+    background-color: #f0544f;
+}
+
+.button--unused {
+    background-color: #ccc;
+}
