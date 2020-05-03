@@ -6,6 +6,7 @@
 html {
     background-color: #656660;
     font-family: sans-serif;
+    user-select: none;
 }
 
 #app {
@@ -67,6 +68,7 @@ html {
     background-color: #ccc;
     color: rgba(0.1, 0.1, 0.1, 0.9);
     border-radius: 2px;
+    cursor: pointer;
 }
 
 .button--active {
