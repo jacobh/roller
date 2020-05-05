@@ -27,3 +27,4 @@ warp = "*"
 tokio = { version = "0.2" }
 bincode = "*"
 broadcaster = "*"
+structopt = "*"
