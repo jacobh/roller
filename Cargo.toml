@@ -9,7 +9,7 @@ members = [
 
 exclude = ["web_ui"]
 
-[profile.release]
-lto = "fat"
-codegen-units = 1
-panic = "abort"
+# [profile.release]
+# lto = "fat"
+# codegen-units = 1
+# panic = "abort"
