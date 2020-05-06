@@ -32,6 +32,11 @@ struct CliArgs {
         parse(from_os_str)
     )]
     config: PathBuf,
+    #[structopt(
+        long,
+        default_value = "localhost:9010",
+    )]
+    ola_host: String,
 }
 
 async fn run_tick<'a>(
@@ -102,7 +107,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     let started_at = Instant::now();
     let mut state = EngineState::new(&midi_mapping);
 
-    let mut ola_client = ola_client::OlaClient::connect_localhost().await?;
+    let mut ola_client = ola_client::OlaClient::connect(args.ola_host).await?;
 
     let (dmx_sender, mut dmx_receiver) = async_std::sync::channel::<(i32, [u8; 512])>(10);
     async_std::task::spawn(async move {
