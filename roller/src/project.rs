@@ -51,7 +51,7 @@ struct ProjectUniverse {
 pub struct Project {
     label: String,
     pub midi_controller: Option<String>,
-    #[serde(default="Vec::new")]
+    #[serde(default = "Vec::new")]
     pub midi_clocks: Vec<String>,
     universes: Vec<ProjectUniverse>,
 }

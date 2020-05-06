@@ -25,17 +25,9 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[derive(StructOpt, Debug)]
 #[structopt(name = "roller")]
 struct CliArgs {
-    #[structopt(
-        short,
-        long,
-        default_value = "roller_project.toml",
-        parse(from_os_str)
-    )]
+    #[structopt(short, long, default_value = "roller_project.toml", parse(from_os_str))]
     config: PathBuf,
-    #[structopt(
-        long,
-        default_value = "localhost:9010",
-    )]
+    #[structopt(long, default_value = "localhost:9010")]
     ola_host: String,
 }
 
@@ -90,7 +82,7 @@ async fn run_tick<'a>(
 #[async_std::main]
 async fn main() -> Result<(), async_std::io::Error> {
     let args = CliArgs::from_args();
-    
+
     let project = project::Project::load(args.config).await?;
     let mut fixtures = project.fixtures().await?;
 
@@ -107,7 +99,9 @@ async fn main() -> Result<(), async_std::io::Error> {
     let started_at = Instant::now();
     let mut state = EngineState::new(&midi_mapping);
 
-    let mut ola_client = ola_client::OlaClient::connect(args.ola_host).await?;
+    let mut ola_client = ola_client::OlaClient::connect(&args.ola_host)
+        .await
+        .expect(&format!("Ola server at {} is not running", &args.ola_host));
 
     let (dmx_sender, mut dmx_receiver) = async_std::sync::channel::<(i32, [u8; 512])>(10);
     async_std::task::spawn(async move {
