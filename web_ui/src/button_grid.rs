@@ -63,8 +63,9 @@ impl Component for ButtonGrid {
                 {(0..rows).map(|row_idx| html! {
                     <div class="button-grid__row">
                     {(0..columns).map(|column_idx| html! {
-                        <Button
-                            coordinate={ButtonCoordinate{ row_idx, column_idx }}
+                        <Button<ButtonCoordinate>
+                            id={ButtonCoordinate{ row_idx, column_idx }}
+                            label={ButtonCoordinate{ row_idx, column_idx }.to_string()}
                             state={get_button_state(&self.props.button_states, column_idx, row_idx)}
                             on_action={callback.clone()}
                         />

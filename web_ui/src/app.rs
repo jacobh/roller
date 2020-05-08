@@ -2,11 +2,11 @@ use im_rc::{vector, HashMap, Vector};
 use yew::{
     format::Binary,
     prelude::*,
-    services::{websocket::{WebSocketService, WebSocketStatus, WebSocketTask}},
+    services::websocket::{WebSocketService, WebSocketStatus, WebSocketTask},
     utils::window,
 };
 
-use crate::{button_grid::ButtonGrid, console_log, utils::callback_fn};
+use crate::{button::Button, button_grid::ButtonGrid, console_log, utils::callback_fn};
 use roller_protocol::{
     ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, ServerMessage,
 };
@@ -148,7 +148,10 @@ impl Component for App {
                 </div>
                 <div class="row row--bottom">
                     <div class="mode-select">
-                        <div class="button">{"Faders"}</div>
+                        <Button<()>
+                            id={()}
+                            label={"Faders"}
+                        />
                     </div>
                     <ButtonGrid
                         location={ButtonGridLocation::MetaBottom}

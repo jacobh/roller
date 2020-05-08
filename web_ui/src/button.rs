@@ -1,24 +1,37 @@
 use yew::prelude::*;
 
 use crate::{app::ButtonAction, utils::callback_fn};
-use roller_protocol::{ButtonCoordinate, ButtonState};
+use roller_protocol::ButtonState;
 
-pub struct Button {
-    props: ButtonProps,
+pub struct Button<T>
+where
+    T: Clone,
+{
+    props: ButtonProps<T>,
 }
 
 pub enum Msg {}
 
 #[derive(Properties, Clone, PartialEq)]
-pub struct ButtonProps {
+pub struct ButtonProps<T>
+where
+    T: Clone,
+{
+    pub id: T,
+    #[prop_or_default]
+    pub label: Option<String>,
+    #[prop_or_default]
     pub state: ButtonState,
-    pub coordinate: ButtonCoordinate,
-    pub on_action: Callback<(ButtonCoordinate, ButtonAction)>,
+    #[prop_or_default]
+    pub on_action: Option<Callback<(T, ButtonAction)>>,
 }
 
-impl Component for Button {
+impl<T> Component for Button<T>
+where
+    T: 'static + Clone + Copy + PartialEq,
+{
     type Message = Msg;
-    type Properties = ButtonProps;
+    type Properties = ButtonProps<T>;
 
     fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
         Button { props }
@@ -38,21 +51,30 @@ impl Component for Button {
     }
 
     fn view(&self) -> Html {
-        let ButtonProps {
-            coordinate,
-            on_action,
-            ..
-        } = self.props.clone();
+        let ButtonProps { id, on_action, .. } = self.props.clone();
         let on_action2 = on_action.clone();
 
-        let onmousedown_callback =
-            callback_fn(move |_evt| on_action.emit((coordinate, ButtonAction::Press)));
-        let onmouseup_callback =
-            callback_fn(move |_evt| on_action2.emit((coordinate, ButtonAction::Release)));
+        let onmousedown_callback = callback_fn(move |_evt| {
+            if let Some(on_action) = &on_action {
+                on_action.emit((id.clone(), ButtonAction::Press));
+            }
+        });
+
+        let onmouseup_callback = callback_fn(move |_evt| {
+            if let Some(on_action) = &on_action2 {
+                on_action.emit((id.clone(), ButtonAction::Release));
+            }
+        });
+
+        let label = self.props.label.as_deref().unwrap_or("");
 
         html! {
-            <div class=format!("button {}", self.props.state.css_class()) onmousedown={onmousedown_callback} onmouseup={onmouseup_callback}>
-                <span>{self.props.coordinate.to_string()}</span>
+            <div
+                class=format!("button {}", self.props.state.css_class())
+                onmousedown={onmousedown_callback}
+                onmouseup={onmouseup_callback}
+            >
+                <span>{label}</span>
             </div>
         }
     }
