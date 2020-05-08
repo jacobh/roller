@@ -153,6 +153,19 @@ async fn browser_session(
                             event_sender.send(control_event).await;
                         }
                     }
+                    ClientMessage::FaderUpdated(id, value) => {
+                        let midi_control_channel = usize::from(id) + 48;
+
+                        let midi_event = MidiEvent::ControlChange {
+                            control: midi::ControlChannel::new(midi_control_channel as u8),
+                            value: (value * 255.0) as u8
+                        };
+
+                        let control_event = midi_mapping.midi_to_control_event(&midi_event);
+                        if let Some(control_event) = control_event {
+                            event_sender.send(control_event).await;
+                        }
+                    }
                 };
             }
         }

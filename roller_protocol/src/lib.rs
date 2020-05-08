@@ -1,3 +1,4 @@
+use derive_more::{From, Into};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -11,6 +12,7 @@ pub enum Message {
 pub enum ClientMessage {
     ButtonPressed(ButtonGridLocation, ButtonCoordinate),
     ButtonReleased(ButtonGridLocation, ButtonCoordinate),
+    FaderUpdated(FaderId, f64),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -67,3 +69,6 @@ impl Default for ButtonState {
         ButtonState::Unused
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, From, Into)]
+pub struct FaderId(usize);

@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 thiserror = "1.0"
 serde = "1.0"
+derive_more = "*"
