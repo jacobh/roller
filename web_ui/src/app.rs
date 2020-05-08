@@ -147,6 +147,9 @@ impl Component for App {
                     />
                 </div>
                 <div class="row row--bottom">
+                    <div class="mode-select">
+                        <div class="button">{"Faders"}</div>
+                    </div>
                     <ButtonGrid
                         location={ButtonGridLocation::MetaBottom}
                         button_states={self.button_states[&ButtonGridLocation::MetaBottom].clone()}
