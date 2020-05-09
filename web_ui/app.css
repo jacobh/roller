@@ -116,13 +116,16 @@ html {
 
 .fader {
     width: 100%;
-    border: 1px solid #4f4f4f;
+    border: 1px solid #4f504b;
     margin: 10px;
     border-radius: 2px;
+    background-color: #4f504b;
+    display: flex;
 }
 
 .fader__fill {
     width: 100%;
-    height: 50%;
+    height: 67%;
     background-color: #eded4c;
+    align-self: end;
 }
