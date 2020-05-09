@@ -5,7 +5,6 @@ pub struct Fader {
     link: ComponentLink<Self>,
     props: FaderProps,
     input_active: bool,
-    value: f64,
 }
 
 pub enum Msg {
@@ -20,8 +19,7 @@ pub struct FaderProps {
     #[prop_or_default]
     pub label: Option<String>,
     pub value: f64,
-    #[prop_or_default]
-    pub on_update: Option<Callback<f64>>,
+    pub on_update: Callback<f64>,
 }
 
 impl Component for Fader {
@@ -29,11 +27,9 @@ impl Component for Fader {
     type Properties = FaderProps;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
-        let value = props.value;
         Fader {
             link,
             props,
-            value,
             input_active: false,
         }
     }
@@ -41,15 +37,15 @@ impl Component for Fader {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::MouseDown(value) => {
-                self.value = value;
                 self.input_active = true;
+                self.props.on_update.emit(value);
             }
             Msg::MouseUp(value) => {
-                self.value = value;
                 self.input_active = false;
+                self.props.on_update.emit(value);
             }
             Msg::ValueUpdated(value) => {
-                self.value = value;
+                self.props.on_update.emit(value);
             }
             Msg::NoOp => {}
         }
@@ -68,7 +64,7 @@ impl Component for Fader {
     fn view(&self) -> Html {
         let input_active = self.input_active;
         let _label = self.props.label.as_deref().unwrap_or("");
-        let fill_style = format!("height: {}%", self.value * 100.0);
+        let fill_style = format!("height: {}%", self.props.value * 100.0);
 
         let onmousedown_callback = self.link.callback(|evt: MouseEvent| {
             let value = mouse_event_to_fader_percent(evt);

@@ -1,4 +1,4 @@
-use im_rc::{vector, HashMap, Vector};
+use im_rc::{vector, HashMap, OrdMap, Vector};
 use yew::{
     format::Binary,
     prelude::*,
@@ -13,7 +13,7 @@ use crate::{
     utils::callback_fn,
 };
 use roller_protocol::{
-    ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, ServerMessage,
+    ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, FaderId, ServerMessage,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -22,10 +22,13 @@ pub enum ButtonAction {
     Release,
 }
 
+type FaderValue = f64;
+
 pub struct App {
     link: ComponentLink<Self>,
     websocket: WebSocketTask,
     button_states: HashMap<ButtonGridLocation, Vector<Vector<ButtonState>>>,
+    fader_states: OrdMap<FaderId, FaderValue>,
     fader_overlay_open: bool,
 }
 
@@ -40,6 +43,7 @@ impl App {
 pub enum AppMsg {
     ButtonPressed(ButtonGridLocation, ButtonCoordinate),
     ButtonReleased(ButtonGridLocation, ButtonCoordinate),
+    FaderValueUpdated(FaderId, FaderValue),
     ServerMessage(ServerMessage),
     FaderOverlayToggled,
     NoOp,
@@ -96,10 +100,15 @@ impl Component for App {
                 .collect(),
         );
 
+        let fader_states = (0..9)
+            .map(|fader_idx| (FaderId::new(fader_idx), 0.667))
+            .collect();
+
         App {
             link,
             websocket,
             button_states,
+            fader_states,
             fader_overlay_open: false,
         }
     }
@@ -113,6 +122,10 @@ impl Component for App {
             }
             AppMsg::ButtonReleased(location, coords) => {
                 self.send_client_message(ClientMessage::ButtonReleased(location, coords));
+            }
+            AppMsg::FaderValueUpdated(fader_id, fader_value) => {
+                self.fader_states.insert(fader_id, fader_value);
+                self.send_client_message(ClientMessage::FaderUpdated(fader_id, fader_value));
             }
             AppMsg::ServerMessage(ServerMessage::ButtonStatesUpdated(updates)) => {
                 for (location, coords, state) in updates {
@@ -150,6 +163,8 @@ impl Component for App {
             }
         });
 
+        let link = self.link.to_owned();
+
         html! {
             <div id="app">
                 <div class="row row--top">
@@ -185,14 +200,22 @@ impl Component for App {
                         if self.fader_overlay_open {"fader-overlay--open"} else {"fader-overlay--closed"}
                     )}
                 >
-                    <Fader value={0.75}/>
-                    <Fader value={0.75}/>
-                    <Fader value={0.75}/>
-                    <Fader value={0.75}/>
-                    <Fader value={0.75}/>
-                    <Fader value={0.75}/>
-                    <Fader value={0.75}/>
-                    <Fader value={0.75}/>
+                {self.fader_states
+                    .clone()
+                    .into_iter()
+                    .map(|(fader_id, fader_value)| {
+                        let link = link.clone();
+                        let on_update_fn = callback_fn(move |value| {
+                            link.send_message(AppMsg::FaderValueUpdated(fader_id, value))
+                        });
+                        html! {
+                            <Fader
+                                value={fader_value}
+                                on_update={on_update_fn}
+                            />
+                        }
+                    })
+                    .collect::<Html>()}
                 </div>
             </div>
         }
