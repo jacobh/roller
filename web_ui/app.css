@@ -99,3 +99,30 @@ html {
     height: 85%;
     padding-top: 25%;
 }
+
+.fader-overlay {
+    background-color: #828479;
+    position: absolute;
+    height: 75%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+}
+
+.fader-overlay--closed {
+    display: none;
+}
+
+.fader {
+    width: 100%;
+    border: 1px solid #4f4f4f;
+    margin: 10px;
+    border-radius: 2px;
+}
+
+.fader__fill {
+    width: 100%;
+    height: 50%;
+    background-color: #eded4c;
+}

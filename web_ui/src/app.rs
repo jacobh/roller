@@ -21,6 +21,7 @@ pub struct App {
     link: ComponentLink<Self>,
     websocket: WebSocketTask,
     button_states: HashMap<ButtonGridLocation, Vector<Vector<ButtonState>>>,
+    fader_overlay_open: bool,
 }
 
 impl App {
@@ -35,8 +36,10 @@ pub enum AppMsg {
     ButtonPressed(ButtonGridLocation, ButtonCoordinate),
     ButtonReleased(ButtonGridLocation, ButtonCoordinate),
     ServerMessage(ServerMessage),
+    FaderOverlayToggled,
     NoOp,
 }
+
 
 impl Component for App {
     type Message = AppMsg;
@@ -93,6 +96,7 @@ impl Component for App {
             link,
             websocket,
             button_states,
+            fader_overlay_open: false,
         }
     }
 
@@ -112,6 +116,9 @@ impl Component for App {
                     grid[coords.column_idx][coords.row_idx] = state;
                 }
             }
+            AppMsg::FaderOverlayToggled => {
+                self.fader_overlay_open = !self.fader_overlay_open;
+            }
             AppMsg::NoOp => {}
         };
         true
@@ -129,6 +136,13 @@ impl Component for App {
             }
             ButtonAction::Release => {
                 link.send_message(AppMsg::ButtonReleased(location, coord));
+            }
+        });
+
+        let link = self.link.to_owned();
+        let fader_button_callback_fn = callback_fn(move |((), action)| {
+            if action == ButtonAction::Press {
+                link.send_message(AppMsg::FaderOverlayToggled)
             }
         });
 
@@ -151,6 +165,8 @@ impl Component for App {
                         <Button<()>
                             id={()}
                             label={"Faders"}
+                            state={if self.fader_overlay_open {ButtonState::Active} else {ButtonState::Unused}}
+                            on_action={fader_button_callback_fn}
                         />
                     </div>
                     <ButtonGrid
@@ -158,6 +174,37 @@ impl Component for App {
                         button_states={self.button_states[&ButtonGridLocation::MetaBottom].clone()}
                         on_button_action={button_callback_fn.clone()}
                     />
+                </div>
+                <div
+                    class={format!(
+                        "fader-overlay {}",
+                        if self.fader_overlay_open {"fader-overlay--open"} else {"fader-overlay--closed"}
+                    )}
+                >
+                    <div class="fader">
+                        <div class="fader__fill"></div>
+                    </div>
+                    <div class="fader">
+                        <div class="fader__fill"></div>
+                    </div>
+                    <div class="fader">
+                        <div class="fader__fill"></div>
+                    </div>
+                    <div class="fader">
+                        <div class="fader__fill"></div>
+                    </div>
+                    <div class="fader">
+                        <div class="fader__fill"></div>
+                    </div>
+                    <div class="fader">
+                        <div class="fader__fill"></div>
+                    </div>
+                    <div class="fader">
+                        <div class="fader__fill"></div>
+                    </div>
+                    <div class="fader">
+                        <div class="fader__fill"></div>
+                    </div>
                 </div>
             </div>
         }
