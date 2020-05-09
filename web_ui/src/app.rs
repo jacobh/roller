@@ -6,7 +6,7 @@ use yew::{
     utils::window,
 };
 
-use crate::{button::Button, button_grid::ButtonGrid, console_log, utils::callback_fn};
+use crate::{ui::button::Button, button_grid::ButtonGrid, console_log, utils::callback_fn};
 use roller_protocol::{
     ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, ServerMessage,
 };

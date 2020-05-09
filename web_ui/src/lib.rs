@@ -3,8 +3,8 @@
 use wasm_bindgen::prelude::*;
 
 mod app;
-mod button;
 mod button_grid;
+mod ui;
 mod utils;
 
 #[wasm_bindgen]
