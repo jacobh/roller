@@ -6,7 +6,7 @@ use yew::{
     utils::window,
 };
 
-use crate::{ui::button::Button, button_grid::ButtonGrid, console_log, utils::callback_fn};
+use crate::{button_grid::ButtonGrid, console_log, ui::{fader::Fader, button::Button}, utils::callback_fn};
 use roller_protocol::{
     ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, ServerMessage,
 };
@@ -39,7 +39,6 @@ pub enum AppMsg {
     FaderOverlayToggled,
     NoOp,
 }
-
 
 impl Component for App {
     type Message = AppMsg;
@@ -181,30 +180,14 @@ impl Component for App {
                         if self.fader_overlay_open {"fader-overlay--open"} else {"fader-overlay--closed"}
                     )}
                 >
-                    <div class="fader">
-                        <div class="fader__fill"></div>
-                    </div>
-                    <div class="fader">
-                        <div class="fader__fill"></div>
-                    </div>
-                    <div class="fader">
-                        <div class="fader__fill"></div>
-                    </div>
-                    <div class="fader">
-                        <div class="fader__fill"></div>
-                    </div>
-                    <div class="fader">
-                        <div class="fader__fill"></div>
-                    </div>
-                    <div class="fader">
-                        <div class="fader__fill"></div>
-                    </div>
-                    <div class="fader">
-                        <div class="fader__fill"></div>
-                    </div>
-                    <div class="fader">
-                        <div class="fader__fill"></div>
-                    </div>
+                    <Fader value={0.75}/>
+                    <Fader value={0.75}/>
+                    <Fader value={0.75}/>
+                    <Fader value={0.75}/>
+                    <Fader value={0.75}/>
+                    <Fader value={0.75}/>
+                    <Fader value={0.75}/>
+                    <Fader value={0.75}/>
                 </div>
             </div>
         }
