@@ -114,7 +114,7 @@ impl Component for App {
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
-        console_log!("{:?}", msg);
+        // console_log!("{:?}", msg);
 
         match msg {
             AppMsg::ButtonPressed(location, coords) => {

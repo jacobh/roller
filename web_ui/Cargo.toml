@@ -13,6 +13,14 @@ crate-type = ["cdylib"]
 roller_protocol = {path = "../roller_protocol"}
 wasm-bindgen = "^0.2"
 yew = { version = "0.15", features = ["web_sys"] }
-web-sys = "0.3"
 im-rc = "*"
 bincode = "*"
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+    "DomRect",
+    "Touch",
+    "TouchEvent",
+    "TouchList"
+]
