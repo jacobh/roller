@@ -4,12 +4,9 @@ use yew::prelude::*;
 pub struct Fader {
     link: ComponentLink<Self>,
     props: FaderProps,
-    input_active: bool,
 }
 
 pub enum Msg {
-    TouchStart(f64),
-    TouchEnd(f64),
     ValueUpdated(f64),
     NoOp,
 }
@@ -27,29 +24,19 @@ impl Component for Fader {
     type Properties = FaderProps;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
-        Fader {
-            link,
-            props,
-            input_active: false,
-        }
+        Fader { link, props }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            Msg::TouchStart(value) => {
-                self.input_active = true;
-                self.props.on_update.emit(value);
-            }
-            Msg::TouchEnd(value) => {
-                self.input_active = false;
-                self.props.on_update.emit(value);
-            }
             Msg::ValueUpdated(value) => {
                 self.props.on_update.emit(value);
+                true
             }
-            Msg::NoOp => {}
+            Msg::NoOp => {
+                false
+            }
         }
-        true
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
@@ -62,7 +49,6 @@ impl Component for Fader {
     }
 
     fn view(&self) -> Html {
-        let input_active = self.input_active;
         let _label = self.props.label.as_deref().unwrap_or("");
         let fill_style = format!("height: {}%", 100.0 - (self.props.value * 100.0));
 
@@ -78,34 +64,26 @@ impl Component for Fader {
             let touch = evt.target_touches().get(0).unwrap();
             let value = target_touch_height_percent(evt.target().unwrap(), &touch);
 
-            Msg::TouchStart(value)
+            Msg::ValueUpdated(value)
         });
         let ontouchend_callback = self.link.callback(move |evt: TouchEvent| {
-            if input_active {
-                let touch = evt.changed_touches().get(0);
-                match touch {
-                    Some(touch) => {
-                        let value = target_touch_height_percent(evt.target().unwrap(), &touch);
-                        Msg::TouchEnd(value)
-                    }
-                    None => Msg::NoOp,
+            let touch = evt.changed_touches().get(0);
+            match touch {
+                Some(touch) => {
+                    let value = target_touch_height_percent(evt.target().unwrap(), &touch);
+                    Msg::ValueUpdated(value)
                 }
-            } else {
-                Msg::NoOp
+                None => Msg::NoOp,
             }
         });
         let ontouchmove_callback = self.link.callback(move |evt: TouchEvent| {
-            if input_active {
-                let touch = evt.changed_touches().get(0);
-                match touch {
-                    Some(touch) => {
-                        let value = target_touch_height_percent(evt.target().unwrap(), &touch);
-                        Msg::ValueUpdated(value)
-                    }
-                    None => Msg::NoOp,
+            let touch = evt.changed_touches().get(0);
+            match touch {
+                Some(touch) => {
+                    let value = target_touch_height_percent(evt.target().unwrap(), &touch);
+                    Msg::ValueUpdated(value)
                 }
-            } else {
-                Msg::NoOp
+                None => Msg::NoOp,
             }
         });
 
