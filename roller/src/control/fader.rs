@@ -1,6 +1,7 @@
-use midi::ControlChannel;
 use ordered_float::OrderedFloat;
 use serde::{Deserialize, Serialize};
+
+use roller_protocol::FaderId;
 
 use crate::{effect::sigmoid, lighting_engine::ControlEvent, project::FixtureGroupId};
 
@@ -24,7 +25,7 @@ impl FaderType {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct FaderControlMapping {
-    pub control_channel: ControlChannel,
+    pub id: FaderId,
     pub fader_type: FaderType,
     pub fader_curve: FaderCurve,
 }

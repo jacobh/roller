@@ -1,5 +1,6 @@
 use async_std::{prelude::*, sync::Arc};
-use midi::{ControlChannel, MidiEvent, MidiInput, MidiOutput, Note};
+use midi::{MidiEvent, MidiInput, MidiOutput, Note};
+use roller_protocol::FaderId;
 use rustc_hash::FxHashMap;
 use std::time::{Duration, Instant};
 
@@ -19,7 +20,7 @@ pub enum NoteState {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MidiMapping {
-    faders: FxHashMap<ControlChannel, FaderControlMapping>,
+    pub faders: FxHashMap<FaderId, FaderControlMapping>,
     pub button_groups: Vec<ButtonGroup>,
     pub meta_buttons: FxHashMap<Note, MetaButtonMapping>,
 }
@@ -32,7 +33,7 @@ impl MidiMapping {
         MidiMapping {
             faders: faders
                 .into_iter()
-                .map(|mapping| (mapping.control_channel, mapping))
+                .map(|mapping| (mapping.id, mapping))
                 .collect(),
             button_groups,
             meta_buttons: meta_buttons
@@ -50,10 +51,14 @@ impl MidiMapping {
         let now = Instant::now();
 
         match dbg!(midi_event) {
-            MidiEvent::ControlChange { control, value } => self
-                .faders
-                .get(control)
-                .map(|fader| fader.control_event(1.0 / 127.0 * (*value as f64))),
+            MidiEvent::ControlChange { control, value } => {
+                // TODO this should be moved to a "control device mapping"
+                let fader_id = FaderId::new((u8::from(*control) - 48) as usize);
+
+                self.faders
+                    .get(&fader_id)
+                    .map(|fader| fader.control_event(1.0 / 127.0 * (*value as f64)))
+            }
             MidiEvent::NoteOn { note, .. } => self
                 .group_buttons()
                 .find(|(_, button)| button.note == *note)

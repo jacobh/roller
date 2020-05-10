@@ -1,4 +1,5 @@
-use midi::{ControlChannel, Note};
+use midi::Note;
+use roller_protocol::FaderId;
 
 use crate::{
     clock::{Beats, ClockOffset, ClockOffsetMode, Rate},
@@ -8,7 +9,7 @@ use crate::{
             ButtonAction, ButtonGroup, ButtonMapping, ButtonType, MetaButtonAction,
             MetaButtonMapping,
         },
-        fader::{FaderCurve, FaderType, FaderControlMapping},
+        fader::{FaderControlMapping, FaderCurve, FaderType},
         midi::MidiMapping,
     },
     effect::{
@@ -24,32 +25,32 @@ pub fn default_midi_mapping() -> MidiMapping {
     MidiMapping::new(
         vec![
             FaderControlMapping {
-                control_channel: ControlChannel::new(48),
+                id: FaderId::new(0),
                 fader_type: FaderType::GroupDimmer(FixtureGroupId::new(1)),
                 fader_curve: FaderCurve::root(0.8),
             },
             FaderControlMapping {
-                control_channel: ControlChannel::new(49),
+                id: FaderId::new(1),
                 fader_type: FaderType::GroupDimmer(FixtureGroupId::new(2)),
                 fader_curve: FaderCurve::root(0.8),
             },
             FaderControlMapping {
-                control_channel: ControlChannel::new(50),
+                id: FaderId::new(2),
                 fader_type: FaderType::GroupDimmer(FixtureGroupId::new(3)),
                 fader_curve: FaderCurve::root(0.8),
             },
             FaderControlMapping {
-                control_channel: ControlChannel::new(54),
+                id: FaderId::new(6),
                 fader_type: FaderType::ColorEffectIntensity,
                 fader_curve: FaderCurve::linear(),
             },
             FaderControlMapping {
-                control_channel: ControlChannel::new(55),
+                id: FaderId::new(7),
                 fader_type: FaderType::DimmerEffectIntensity,
                 fader_curve: FaderCurve::sigmoid(0.75),
             },
             FaderControlMapping {
-                control_channel: ControlChannel::new(56),
+                id: FaderId::new(8),
                 fader_type: FaderType::MasterDimmer,
                 fader_curve: FaderCurve::root(0.8),
             },

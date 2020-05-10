@@ -25,6 +25,11 @@ impl ControlChannel {
         ControlChannel(control_channel)
     }
 }
+impl From<ControlChannel> for u8 {
+    fn from(control_channel: ControlChannel) -> u8 {
+        control_channel.0
+    }
+}
 
 /// Borrowed from https://github.com/RustAudio/rimd/blob/54fd9bd2bd3caaa6fe1c31fbf71c0f3c6597fd1a/src/midi.rs#L51-L77
 /// The status field of a midi message indicates what midi command it
