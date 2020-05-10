@@ -27,37 +27,6 @@ fn coordinate_to_note(loc: &ButtonGridLocation, coord: &ButtonCoordinate) -> Not
     }
 }
 
-fn note_to_coordinate(note: Note) -> Option<(ButtonGridLocation, ButtonCoordinate)> {
-    let note = u8::from(note) as usize;
-    if note < 64 {
-        Some((
-            ButtonGridLocation::Main,
-            ButtonCoordinate {
-                row_idx: note / 8,
-                column_idx: note % 8,
-            },
-        ))
-    } else if note < 72 {
-        Some((
-            ButtonGridLocation::MetaBottom,
-            ButtonCoordinate {
-                row_idx: 0,
-                column_idx: note - 64,
-            },
-        ))
-    } else if note < 90 {
-        Some((
-            ButtonGridLocation::MetaRight,
-            ButtonCoordinate {
-                row_idx: 89 - note,
-                column_idx: 0,
-            },
-        ))
-    } else {
-        None
-    }
-}
-
 fn akai_pad_state_to_button_state(state: &AkaiPadState) -> ButtonState {
     match state {
         AkaiPadState::Off => ButtonState::Unused,
@@ -166,21 +135,16 @@ async fn browser_session(
 
 pub fn serve_frontend(
     midi_mapping: Arc<MidiMapping>,
-    initial_pad_states: &FxHashMap<Note, AkaiPadState>,
-    mut pad_state_update_recv: Receiver<Vec<(Note, AkaiPadState)>>,
+    initial_pad_states: &FxHashMap<(ButtonGridLocation, ButtonCoordinate), AkaiPadState>,
+    mut pad_state_update_recv: Receiver<Vec<(ButtonGridLocation, ButtonCoordinate, AkaiPadState)>>,
     event_sender: Sender<ControlEvent>,
 ) {
-    let initial_button_states: Arc<Mutex<FxHashMap<_, _>>> = Arc::new(Mutex::new(
+    let initial_button_states: Arc<
+        Mutex<FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState>>,
+    > = Arc::new(Mutex::new(
         initial_pad_states
-            .iter()
-            .filter_map(|(note, pad_state)| {
-                let coord = note_to_coordinate(*note);
-                if let Some(coord) = coord {
-                    Some((coord, akai_pad_state_to_button_state(pad_state)))
-                } else {
-                    None
-                }
-            })
+            .into_iter()
+            .map(|(loc_coord, state)| (*loc_coord, akai_pad_state_to_button_state(&state)))
             .collect(),
     ));
 
@@ -190,16 +154,11 @@ pub fn serve_frontend(
     let initial_button_states2 = initial_button_states.clone();
     let (mut server_message_sender, _) = server_message_channel.clone().split();
     async_std::task::spawn(async move {
-        while let Some(note_states) = pad_state_update_recv.next().await {
-            let coord_states: Vec<_> = note_states
+        while let Some(coord_states) = pad_state_update_recv.next().await {
+            // remap akai states to button states
+            let coord_states: Vec<_> = coord_states
                 .into_iter()
-                .filter_map(|(note, state)| match note_to_coordinate(note) {
-                    Some((loc, coord)) => {
-                        let state = akai_pad_state_to_button_state(&state);
-                        Some((loc, coord, state))
-                    }
-                    None => None,
-                })
+                .map(|(loc, coord, state)| (loc, coord, akai_pad_state_to_button_state(&state)))
                 .collect();
 
             let mut states = initial_button_states2.lock().await;

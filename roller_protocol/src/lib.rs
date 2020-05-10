@@ -25,6 +25,14 @@ pub struct ButtonCoordinate {
     pub row_idx: usize,
     pub column_idx: usize,
 }
+impl ButtonCoordinate {
+    pub fn new(column_idx: usize, row_idx: usize) -> ButtonCoordinate {
+        ButtonCoordinate {
+            column_idx,
+            row_idx,
+        }
+    }
+}
 impl fmt::Display for ButtonCoordinate {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({}, {})", self.column_idx, self.row_idx)

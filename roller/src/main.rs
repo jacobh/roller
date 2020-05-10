@@ -5,6 +5,8 @@ use std::path::PathBuf;
 use std::time::{Duration, Instant};
 use structopt::StructOpt;
 
+use roller_protocol::{ButtonCoordinate, ButtonGridLocation};
+
 mod clock;
 mod color;
 mod control;
@@ -37,8 +39,13 @@ async fn run_tick<'a>(
     dmx_sender: &async_std::sync::Sender<(i32, [u8; 512])>,
     midi_controller: Option<&control::midi::MidiController>,
     started_at: &std::time::Instant,
-    current_pad_states: &mut rustc_hash::FxHashMap<midi::Note, AkaiPadState>,
-    web_pad_state_update_send: &async_std::sync::Sender<Vec<(midi::Note, AkaiPadState)>>,
+    current_pad_states: &mut rustc_hash::FxHashMap<
+        (ButtonGridLocation, ButtonCoordinate),
+        AkaiPadState,
+    >,
+    web_pad_state_update_send: &async_std::sync::Sender<
+        Vec<(ButtonGridLocation, ButtonCoordinate, AkaiPadState)>,
+    >,
 ) {
     state.update_fixtures(fixtures);
     for (universe, dmx_data) in fixture::fold_fixture_dmx_data(fixtures.iter()).into_iter() {
@@ -57,16 +64,17 @@ async fn run_tick<'a>(
     );
 
     // find the pads that have updated since the last tick
-    let changed_pad_states: Vec<(midi::Note, AkaiPadState)> = new_pad_states
-        .iter()
-        .filter(|(note, state)| {
-            current_pad_states
-                .get(note)
-                .map(|prev_state| state != &prev_state)
-                .unwrap_or(true)
-        })
-        .map(|(note, state)| (*note, *state))
-        .collect();
+    let changed_pad_states: Vec<(ButtonGridLocation, ButtonCoordinate, AkaiPadState)> =
+        new_pad_states
+            .iter()
+            .filter(|(location_coord, state)| {
+                current_pad_states
+                    .get(location_coord)
+                    .map(|prev_state| state != &prev_state)
+                    .unwrap_or(true)
+            })
+            .map(|((loc, coord), state)| (*loc, *coord, *state))
+            .collect();
 
     if let Some(midi_controller) = midi_controller {
         midi_controller
@@ -132,14 +140,18 @@ async fn main() -> Result<(), async_std::io::Error> {
     if let Some(midi_controller) = &midi_controller {
         midi_controller.run_pad_startup().await;
         midi_controller
-            .set_pad_colors(current_pad_states.clone())
+            .set_pad_colors(
+                current_pad_states
+                    .iter()
+                    .map(|((loc, coord), val)| (*loc, *coord, *val)),
+            )
             .await;
     }
 
     let (web_control_events_send, web_control_events_recv) =
         async_std::sync::channel::<ControlEvent>(64);
     let (web_pad_state_update_send, web_pad_state_update_recv) =
-        async_std::sync::channel::<Vec<(midi::Note, AkaiPadState)>>(64);
+        async_std::sync::channel::<Vec<(ButtonGridLocation, ButtonCoordinate, AkaiPadState)>>(64);
 
     let web_control_events = Some(
         web_control_events_recv

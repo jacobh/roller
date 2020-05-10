@@ -166,13 +166,13 @@ impl<'a> EngineState<'a> {
                 self.active_scene_state_mut().color_effect_intensity = intensity;
             }
             (_, ControlEvent::UpdateClockRate(rate)) => {
-                let pressed_notes = self
+                let pressed_coords = self
                     .control_fixture_group_state()
                     .button_states
-                    .pressed_notes();
+                    .pressed_coords();
 
                 // If there are any buttons currently pressed, update the rate of those buttons, note the global rate
-                if !pressed_notes.is_empty() {
+                if !pressed_coords.is_empty() {
                     self.control_fixture_group_state_mut()
                         .button_states
                         .update_pressed_button_rates(rate);

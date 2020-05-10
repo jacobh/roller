@@ -1,8 +1,9 @@
-use midi::Note;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
+
+use roller_protocol::{ButtonCoordinate, ButtonGridLocation};
 
 use crate::{
     clock::Rate,
@@ -37,19 +38,19 @@ impl ButtonGroupId {
 /// different note, it will stay on with the internal note updated
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum GroupToggleState {
-    On(Note),
+    On(ButtonCoordinate),
     Off,
 }
 impl GroupToggleState {
-    pub fn toggle(self, note: Note) -> GroupToggleState {
-        if self == GroupToggleState::On(note) {
+    pub fn toggle(self, coord: ButtonCoordinate) -> GroupToggleState {
+        if self == GroupToggleState::On(coord) {
             GroupToggleState::Off
         } else {
-            GroupToggleState::On(note)
+            GroupToggleState::On(coord)
         }
     }
-    pub fn toggle_mut(&mut self, note: Note) {
-        *self = self.toggle(note);
+    pub fn toggle_mut(&mut self, coord: ButtonCoordinate) {
+        *self = self.toggle(coord);
     }
 }
 
@@ -77,7 +78,7 @@ pub enum ButtonType {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ButtonMapping {
-    pub note: Note,
+    pub coordinate: ButtonCoordinate,
     pub on_action: ButtonAction,
 }
 impl ButtonMapping {
@@ -125,7 +126,8 @@ impl MetaButtonAction {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct MetaButtonMapping {
-    pub note: Note,
+    pub location: ButtonGridLocation,
+    pub coordinate: ButtonCoordinate,
     pub on_action: MetaButtonAction,
     pub off_action: Option<MetaButtonAction>,
 }
@@ -134,7 +136,7 @@ pub struct MetaButtonMapping {
 pub struct ButtonGroup {
     pub id: ButtonGroupId,
     pub button_type: ButtonType,
-    buttons: FxHashMap<Note, ButtonMapping>,
+    buttons: FxHashMap<ButtonCoordinate, ButtonMapping>,
 }
 impl ButtonGroup {
     pub fn buttons(&self) -> impl Iterator<Item = &'_ ButtonMapping> {
@@ -148,7 +150,7 @@ impl ButtonGroup {
             id: ButtonGroupId::new(),
             buttons: buttons
                 .into_iter()
-                .map(|button| (button.note, button))
+                .map(|button| (button.coordinate, button))
                 .collect(),
             button_type,
         }
@@ -203,14 +205,14 @@ pub struct Pad<'a> {
     mapping: PadMapping<'a>,
     group_toggle_state: GroupToggleState,
     state: PadIllumination,
-    active_group_notes: Vec<Note>,
+    active_group_coords: Vec<ButtonCoordinate>,
 }
 impl<'a> Pad<'a> {
     fn new(mapping: PadMapping<'a>, group_toggle_state: GroupToggleState) -> Pad<'a> {
         Pad {
             mapping,
             group_toggle_state,
-            active_group_notes: Vec::with_capacity(8),
+            active_group_coords: Vec::with_capacity(8),
             state: PadIllumination::Solid(AkaiPadState::Yellow),
         }
     }
@@ -232,8 +234,8 @@ impl<'a> Pad<'a> {
                 }
             }
             ButtonType::Toggle => match self.group_toggle_state {
-                GroupToggleState::On(note) => {
-                    if note == self.mapping.note() {
+                GroupToggleState::On(coord) => {
+                    if &coord == self.mapping.coordinate() {
                         self.state = self.mapping.active_color();
                     } else {
                         self.state = self.mapping.inactive_color();
@@ -250,24 +252,24 @@ impl<'a> Pad<'a> {
                     }
 
                     if group_id_match.is_match() {
-                        self.active_group_notes.push(event.mapping.note());
+                        self.active_group_coords.push(*event.mapping.coordinate());
 
-                        if !self.active_group_notes.contains(&self.mapping.note()) {
+                        if !self.active_group_coords.contains(self.mapping.coordinate()) {
                             self.state = self.mapping.deactivated_color();
                         }
                     }
                 }
                 NoteState::Off => {
                     if group_id_match.is_match() {
-                        shift_remove_vec(&mut self.active_group_notes, &event.mapping.note());
+                        shift_remove_vec(&mut self.active_group_coords, event.mapping.coordinate());
 
                         if event.mapping == self.mapping {
-                            if self.active_group_notes.is_empty() {
+                            if self.active_group_coords.is_empty() {
                                 // leave as green
                             } else {
                                 self.state = self.mapping.deactivated_color();
                             }
-                        } else if self.active_group_notes.is_empty() {
+                        } else if self.active_group_coords.is_empty() {
                             self.state = self.mapping.inactive_color();
                         }
                     }
@@ -310,10 +312,16 @@ pub enum PadMapping<'a> {
     Meta(&'a MetaButtonMapping),
 }
 impl<'a> PadMapping<'a> {
-    fn note(&self) -> Note {
+    fn location(&self) -> ButtonGridLocation {
         match self {
-            PadMapping::Standard(mapping, _, _) => mapping.note,
-            PadMapping::Meta(mapping) => mapping.note,
+            PadMapping::Standard(_, _, _) => ButtonGridLocation::Main,
+            PadMapping::Meta(mapping) => mapping.location,
+        }
+    }
+    fn coordinate(&self) -> &ButtonCoordinate {
+        match self {
+            PadMapping::Standard(mapping, _, _) => &mapping.coordinate,
+            PadMapping::Meta(mapping) => &mapping.coordinate,
         }
     }
     fn group_id(&self) -> Option<ButtonGroupId> {
@@ -401,7 +409,7 @@ pub fn pad_states<'a>(
     group_toggle_states: &FxHashMap<ButtonGroupId, GroupToggleState>,
     pad_events: impl IntoIterator<Item = PadEvent<'a>>,
     elapsed: Duration,
-) -> FxHashMap<Note, AkaiPadState> {
+) -> FxHashMap<(ButtonGridLocation, ButtonCoordinate), AkaiPadState> {
     let mut state: Vec<_> = all_pads
         .into_iter()
         .map(|mapping| {
@@ -422,6 +430,11 @@ pub fn pad_states<'a>(
 
     state
         .into_iter()
-        .map(|pad| (pad.mapping.note(), pad.state.state(elapsed)))
+        .map(|pad| {
+            (
+                (pad.mapping.location(), *pad.mapping.coordinate()),
+                pad.state.state(elapsed),
+            )
+        })
         .collect()
 }

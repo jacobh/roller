@@ -4,6 +4,8 @@ use roller_protocol::FaderId;
 use rustc_hash::FxHashMap;
 use std::time::{Duration, Instant};
 
+use roller_protocol::{ButtonCoordinate, ButtonGridLocation};
+
 use crate::{
     control::{
         button::{AkaiPadState, ButtonGroup, ButtonMapping, MetaButtonMapping, PadMapping},
@@ -11,6 +13,46 @@ use crate::{
     },
     lighting_engine::ControlEvent,
 };
+
+// Specific for akai apc mini. really the internal button location should be specific with coords
+fn coordinate_to_note(loc: &ButtonGridLocation, coord: &ButtonCoordinate) -> Note {
+    match loc {
+        ButtonGridLocation::Main => Note::new((8 * coord.row_idx + coord.column_idx) as u8),
+        ButtonGridLocation::MetaRight => Note::new((89 - coord.row_idx) as u8),
+        ButtonGridLocation::MetaBottom => Note::new((64 + coord.column_idx) as u8),
+    }
+}
+
+fn note_to_coordinate(note: Note) -> Option<(ButtonGridLocation, ButtonCoordinate)> {
+    let note = u8::from(note) as usize;
+    if note < 64 {
+        Some((
+            ButtonGridLocation::Main,
+            ButtonCoordinate {
+                row_idx: note / 8,
+                column_idx: note % 8,
+            },
+        ))
+    } else if note < 72 {
+        Some((
+            ButtonGridLocation::MetaBottom,
+            ButtonCoordinate {
+                row_idx: 0,
+                column_idx: note - 64,
+            },
+        ))
+    } else if note < 90 {
+        Some((
+            ButtonGridLocation::MetaRight,
+            ButtonCoordinate {
+                row_idx: 89 - note,
+                column_idx: 0,
+            },
+        ))
+    } else {
+        None
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum NoteState {
@@ -22,7 +64,7 @@ pub enum NoteState {
 pub struct MidiMapping {
     pub faders: FxHashMap<FaderId, FaderControlMapping>,
     pub button_groups: Vec<ButtonGroup>,
-    pub meta_buttons: FxHashMap<Note, MetaButtonMapping>,
+    pub meta_buttons: FxHashMap<(ButtonGridLocation, ButtonCoordinate), MetaButtonMapping>,
 }
 impl MidiMapping {
     pub fn new(
@@ -38,7 +80,7 @@ impl MidiMapping {
             button_groups,
             meta_buttons: meta_buttons
                 .into_iter()
-                .map(|mapping| (mapping.note, mapping))
+                .map(|mapping| ((mapping.location, mapping.coordinate), mapping))
                 .collect(),
         }
     }
@@ -54,38 +96,47 @@ impl MidiMapping {
             MidiEvent::ControlChange { control, value } => {
                 // TODO this should be moved to a "control device mapping"
                 let fader_id = FaderId::new((u8::from(*control) - 48) as usize);
-
                 self.faders
                     .get(&fader_id)
                     .map(|fader| fader.control_event(1.0 / 127.0 * (*value as f64)))
             }
-            MidiEvent::NoteOn { note, .. } => self
-                .group_buttons()
-                .find(|(_, button)| button.note == *note)
-                .map(|(group, button)| {
-                    button
-                        .clone()
-                        .into_control_event(group.clone(), NoteState::On, now)
-                })
-                .or_else(|| {
+            MidiEvent::NoteOn { note, .. } => {
+                let (loc, coord) = note_to_coordinate(*note)?;
+                if loc == ButtonGridLocation::Main {
+                    self.group_buttons()
+                        .find(|(_, button)| button.coordinate == coord)
+                        .map(|(group, button)| {
+                            button
+                                .clone()
+                                .into_control_event(group.clone(), NoteState::On, now)
+                        })
+                } else {
                     self.meta_buttons
-                        .get(note)
+                        .get(&(loc, coord))
                         .map(|meta_button| meta_button.on_action.control_event(now))
-                }),
-            MidiEvent::NoteOff { note, .. } => self
-                .group_buttons()
-                .find(|(_, button)| button.note == *note)
-                .map(|(group, button)| {
-                    button
-                        .clone()
-                        .into_control_event(group.clone(), NoteState::Off, now)
-                })
-                .or_else(|| {
+                }
+            }
+            MidiEvent::NoteOff { note, .. } => {
+                let (loc, coord) = note_to_coordinate(*note)?;
+                if loc == ButtonGridLocation::Main {
+                    self.group_buttons()
+                        .find(|(_, button)| button.coordinate == coord)
+                        .map(|(group, button)| {
+                            button
+                                .clone()
+                                .into_control_event(group.clone(), NoteState::Off, now)
+                        })
+                } else {
                     self.meta_buttons
-                        .get(note)
-                        .and_then(|meta_button| meta_button.off_action.as_ref())
-                        .map(|off_action| off_action.control_event(now))
-                }),
+                        .get(&(loc, coord))
+                        .and_then(|meta_button| {
+                            meta_button
+                                .off_action
+                                .as_ref()
+                                .map(|action| action.control_event(now))
+                        })
+                }
+            }
             _ => None,
         }
     }
@@ -124,25 +175,55 @@ impl MidiController {
             .filter(|control_event| control_event.is_some())
             .map(|control_event| control_event.unwrap())
     }
-    pub async fn set_pad_color(&self, note: Note, pad_color: AkaiPadState) {
+    pub async fn set_pad_color(
+        &self,
+        location: ButtonGridLocation,
+        coordinate: ButtonCoordinate,
+        pad_color: AkaiPadState,
+    ) {
+        let note = coordinate_to_note(&location, &coordinate);
+
         self.midi_output
             .send_packet(vec![0x90, u8::from(note), pad_color.as_byte()])
             .await
     }
-    pub async fn set_pad_colors(&self, pad_colors: impl IntoIterator<Item = (Note, AkaiPadState)>) {
-        for (note, pad_color) in pad_colors {
-            self.set_pad_color(note, pad_color).await
+    pub async fn set_pad_colors(
+        &self,
+        pad_colors: impl IntoIterator<Item = (ButtonGridLocation, ButtonCoordinate, AkaiPadState)>,
+    ) {
+        for (location, coordinate, pad_color) in pad_colors {
+            self.set_pad_color(location, coordinate, pad_color).await
         }
     }
     pub async fn reset_pads(&self) {
-        for i in 0..64 {
-            self.set_pad_color(Note::new(i), AkaiPadState::Off).await;
+        for row_idx in 0..8 {
+            for column_idx in 0..8 {
+                self.set_pad_color(
+                    ButtonGridLocation::Main,
+                    ButtonCoordinate {
+                        row_idx,
+                        column_idx,
+                    },
+                    AkaiPadState::Off,
+                )
+                .await;
+            }
         }
     }
     pub async fn run_pad_startup(&self) {
-        for i in 0..64 {
-            self.set_pad_color(Note::new(i), AkaiPadState::Green).await;
-            async_std::task::sleep(Duration::from_millis(10)).await;
+        for row_idx in 0..8 {
+            for column_idx in 0..8 {
+                self.set_pad_color(
+                    ButtonGridLocation::Main,
+                    ButtonCoordinate {
+                        row_idx,
+                        column_idx,
+                    },
+                    AkaiPadState::Green,
+                )
+                .await;
+                async_std::task::sleep(Duration::from_millis(10)).await;
+            }
         }
         async_std::task::sleep(Duration::from_millis(150)).await;
         self.reset_pads().await;

@@ -1,6 +1,7 @@
-use midi::Note;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
+
+use roller_protocol::ButtonCoordinate;
 
 use crate::{
     clock::Rate,
@@ -194,7 +195,7 @@ impl ButtonStates {
                     },
                     ButtonType::Toggle => match button_info.note_state {
                         NoteState::On => {
-                            if GroupToggleState::On(button_info.button.note)
+                            if GroupToggleState::On(button_info.button.coordinate)
                                 == group_info.toggle_state
                             {
                                 effects.insert(effect, button_info.effect_rate);
@@ -223,22 +224,22 @@ impl ButtonStates {
             },
         )
     }
-    pub fn pressed_notes(&self) -> FxHashSet<Note> {
+    pub fn pressed_coords(&self) -> FxHashSet<ButtonCoordinate> {
         self.pressed_buttons()
             .into_iter()
-            .map(|(button, _)| button.note)
+            .map(|(button, _)| button.coordinate)
             .collect()
     }
     pub fn global_color(&self) -> Option<Color> {
-        let mut on_colors: Vec<(Note, Color)> = Vec::new();
-        let mut last_off: Option<(Note, Color)> = None;
+        let mut on_colors: Vec<(ButtonCoordinate, Color)> = Vec::new();
+        let mut last_off: Option<(ButtonCoordinate, Color)> = None;
 
         let color_buttons =
             self.iter_info().flat_map(|(group_info, button_info)| {
                 match button_info.button.on_action {
                     ButtonAction::UpdateGlobalColor(color) => match group_info.button_type {
                         ButtonType::Switch => {
-                            Some((button_info.button.note, button_info.note_state, color))
+                            Some((button_info.button.coordinate, button_info.note_state, color))
                         }
                         _ => panic!("only switch button type implemented for colors"),
                     },
@@ -246,14 +247,14 @@ impl ButtonStates {
                 }
             });
 
-        for (note, state, color) in color_buttons {
+        for (coordinate, state, color) in color_buttons {
             match state {
                 NoteState::On => {
-                    on_colors.push((note, color));
+                    on_colors.push((coordinate, color));
                 }
                 NoteState::Off => {
-                    shift_remove_vec(&mut on_colors, &(note, color));
-                    last_off = Some((note, color));
+                    shift_remove_vec(&mut on_colors, &(coordinate, color));
+                    last_off = Some((coordinate, color));
                 }
             }
         }
@@ -269,9 +270,11 @@ impl ButtonStates {
                 |(group_info, button_info)| match button_info.button.on_action {
                     ButtonAction::UpdateGlobalSecondaryColor(color) => match group_info.button_type
                     {
-                        ButtonType::Toggle => {
-                            Some((button_info.button.note, group_info.toggle_state, color))
-                        }
+                        ButtonType::Toggle => Some((
+                            button_info.button.coordinate,
+                            group_info.toggle_state,
+                            color,
+                        )),
                         _ => panic!("only toggle button type implemented for secondary colors"),
                     },
                     _ => None,
@@ -334,15 +337,20 @@ impl ButtonStates {
 
         button_states
     }
-    pub fn toggle_button_group(&mut self, id: ButtonGroupId, button_type: ButtonType, note: Note) {
+    pub fn toggle_button_group(
+        &mut self,
+        id: ButtonGroupId,
+        button_type: ButtonType,
+        coordinate: ButtonCoordinate,
+    ) {
         self.group_states
             .entry(id)
             .and_modify(|(_, toggle_state, _)| {
-                toggle_state.toggle_mut(note);
+                toggle_state.toggle_mut(coordinate);
             })
             .or_insert((
                 button_type,
-                GroupToggleState::On(note),
+                GroupToggleState::On(coordinate),
                 FxIndexMap::default(),
             ));
     }
@@ -354,7 +362,7 @@ impl ButtonStates {
         now: Instant,
     ) {
         if note_state == NoteState::On {
-            self.toggle_button_group(group.id, group.button_type, button.note);
+            self.toggle_button_group(group.id, group.button_type, button.coordinate);
         }
 
         let button_states = self.button_group_state_mut(group.id, group.button_type);
@@ -367,17 +375,17 @@ impl ButtonStates {
         button_states.insert(key, (now, effect_rate));
     }
     pub fn update_pressed_button_rates(&mut self, rate: Rate) -> usize {
-        let pressed_notes = self.pressed_notes();
+        let pressed_coords = self.pressed_coords();
 
         for button_states in self.iter_states_mut() {
             for ((button, _), (_, button_rate)) in button_states.iter_mut() {
-                if pressed_notes.contains(&button.note) {
+                if pressed_coords.contains(&button.coordinate) {
                     *button_rate = rate;
                 }
             }
         }
 
-        pressed_notes.len()
+        pressed_coords.len()
     }
 }
 
