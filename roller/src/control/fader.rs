@@ -23,12 +23,12 @@ impl FaderType {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct MidiFaderMapping {
+pub struct FaderControlMapping {
     pub control_channel: ControlChannel,
     pub fader_type: FaderType,
     pub fader_curve: FaderCurve,
 }
-impl MidiFaderMapping {
+impl FaderControlMapping {
     pub fn control_event(&self, value: f64) -> ControlEvent {
         self.fader_type.control_event(self.fader_curve.apply(value))
     }

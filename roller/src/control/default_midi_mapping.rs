@@ -8,7 +8,7 @@ use crate::{
             ButtonAction, ButtonGroup, ButtonMapping, ButtonType, MetaButtonAction,
             MetaButtonMapping,
         },
-        fader::{FaderCurve, FaderType, MidiFaderMapping},
+        fader::{FaderCurve, FaderType, FaderControlMapping},
         midi::MidiMapping,
     },
     effect::{
@@ -23,32 +23,32 @@ use crate::{
 pub fn default_midi_mapping() -> MidiMapping {
     MidiMapping::new(
         vec![
-            MidiFaderMapping {
+            FaderControlMapping {
                 control_channel: ControlChannel::new(48),
                 fader_type: FaderType::GroupDimmer(FixtureGroupId::new(1)),
                 fader_curve: FaderCurve::root(0.8),
             },
-            MidiFaderMapping {
+            FaderControlMapping {
                 control_channel: ControlChannel::new(49),
                 fader_type: FaderType::GroupDimmer(FixtureGroupId::new(2)),
                 fader_curve: FaderCurve::root(0.8),
             },
-            MidiFaderMapping {
+            FaderControlMapping {
                 control_channel: ControlChannel::new(50),
                 fader_type: FaderType::GroupDimmer(FixtureGroupId::new(3)),
                 fader_curve: FaderCurve::root(0.8),
             },
-            MidiFaderMapping {
+            FaderControlMapping {
                 control_channel: ControlChannel::new(54),
                 fader_type: FaderType::ColorEffectIntensity,
                 fader_curve: FaderCurve::linear(),
             },
-            MidiFaderMapping {
+            FaderControlMapping {
                 control_channel: ControlChannel::new(55),
                 fader_type: FaderType::DimmerEffectIntensity,
                 fader_curve: FaderCurve::sigmoid(0.75),
             },
-            MidiFaderMapping {
+            FaderControlMapping {
                 control_channel: ControlChannel::new(56),
                 fader_type: FaderType::MasterDimmer,
                 fader_curve: FaderCurve::root(0.8),

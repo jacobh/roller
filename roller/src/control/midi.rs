@@ -6,7 +6,7 @@ use std::time::{Duration, Instant};
 use crate::{
     control::{
         button::{AkaiPadState, ButtonGroup, ButtonMapping, MetaButtonMapping, PadMapping},
-        fader::MidiFaderMapping,
+        fader::FaderControlMapping,
     },
     lighting_engine::ControlEvent,
 };
@@ -19,13 +19,13 @@ pub enum NoteState {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MidiMapping {
-    faders: FxHashMap<ControlChannel, MidiFaderMapping>,
+    faders: FxHashMap<ControlChannel, FaderControlMapping>,
     pub button_groups: Vec<ButtonGroup>,
     pub meta_buttons: FxHashMap<Note, MetaButtonMapping>,
 }
 impl MidiMapping {
     pub fn new(
-        faders: Vec<MidiFaderMapping>,
+        faders: Vec<FaderControlMapping>,
         button_groups: Vec<ButtonGroup>,
         meta_buttons: Vec<MetaButtonMapping>,
     ) -> MidiMapping {
