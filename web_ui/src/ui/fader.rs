@@ -30,7 +30,7 @@ impl Component for Fader {
         Fader {
             link,
             props,
-            input_active: false
+            input_active: false,
         }
     }
 
@@ -65,6 +65,13 @@ impl Component for Fader {
         let input_active = self.input_active;
         let _label = self.props.label.as_deref().unwrap_or("");
         let fill_style = format!("height: {}%", 100.0 - (self.props.value * 100.0));
+
+        // mouse callback
+        let onmousedown_callback = self.link.callback(|evt: MouseEvent| {
+            let value = target_touch_height_percent(evt.target().unwrap(), &evt);
+
+            Msg::ValueUpdated(value)
+        });
 
         // touch callbacks
         let ontouchstart_callback = self.link.callback(|evt: TouchEvent| {
@@ -105,6 +112,7 @@ impl Component for Fader {
         html! {
             <div
                 class="fader"
+                onmousedown={onmousedown_callback}
                 ontouchstart={ontouchstart_callback}
                 ontouchend={ontouchend_callback}
                 ontouchmove={ontouchmove_callback}
@@ -130,10 +138,32 @@ fn event_target_bounds(target: web_sys::EventTarget) -> web_sys::DomRect {
     element.get_bounding_client_rect()
 }
 
+struct PageCoords {
+    x: f64,
+    y: f64,
+}
+impl From<&web_sys::Touch> for PageCoords {
+    fn from(touch: &web_sys::Touch) -> PageCoords {
+        PageCoords {
+            x: touch.page_x() as f64,
+            y: touch.page_y() as f64,
+        }
+    }
+}
+impl From<&MouseEvent> for PageCoords {
+    fn from(evt: &MouseEvent) -> PageCoords {
+        PageCoords {
+            x: evt.page_x() as f64,
+            y: evt.page_y() as f64,
+        }
+    }
+}
+
 // percent in range 0.0 - 1.0, bottom to top, of how far up the touch event is
-fn target_touch_height_percent(target: web_sys::EventTarget, touch: &web_sys::Touch) -> f64 {
+fn target_touch_height_percent(target: web_sys::EventTarget, coords: impl Into<PageCoords>) -> f64 {
+    let coords = coords.into();
     let bounds = event_target_bounds(target);
     let fader_height = bounds.height() as f64;
-    let offset_y = touch.page_y() as f64 - bounds.top() as f64;
+    let offset_y = coords.y - bounds.top() as f64;
     clamp(1.0 / fader_height * (fader_height - offset_y))
 }
