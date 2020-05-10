@@ -158,7 +158,7 @@ async fn browser_session(
 
                         let midi_event = MidiEvent::ControlChange {
                             control: midi::ControlChannel::new(midi_control_channel as u8),
-                            value: (value * 255.0) as u8
+                            value: (value * 127.0) as u8
                         };
 
                         let control_event = midi_mapping.midi_to_control_event(&midi_event);
