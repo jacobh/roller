@@ -7,6 +7,12 @@ html {
     background-color: #656660;
     font-family: sans-serif;
     user-select: none;
+    position: fixed;
+}
+
+body {
+    position: fixed;
+    width: 100%;
 }
 
 #app {
@@ -119,13 +125,11 @@ html {
     border: 1px solid #4f504b;
     margin: 10px;
     border-radius: 2px;
-    background-color: #4f504b;
-    display: flex;
+    background-color: #eded4c;
 }
 
 .fader__fill {
     width: 100%;
-    background-color: #eded4c;
-    align-self: end;
+    background-color: #4f504b;
     pointer-events: none;
 }

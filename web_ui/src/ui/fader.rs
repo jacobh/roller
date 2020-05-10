@@ -64,7 +64,7 @@ impl Component for Fader {
     fn view(&self) -> Html {
         let input_active = self.input_active;
         let _label = self.props.label.as_deref().unwrap_or("");
-        let fill_style = format!("height: {}%", self.props.value * 100.0);
+        let fill_style = format!("height: {}%", 100.0 - (self.props.value * 100.0));
 
         let onmousedown_callback = self.link.callback(|evt: MouseEvent| {
             let value = mouse_event_to_fader_percent(evt);
@@ -101,10 +101,20 @@ impl Component for Fader {
     }
 }
 
+fn clamp(x: f64) -> f64 {
+    if x > 1.0 {
+        1.0
+    } else if x < 0.0 {
+        0.0
+    } else {
+        x
+    }
+}
+
 fn mouse_event_to_fader_percent(evt: MouseEvent) -> f64 {
     let fader_element: web_sys::HtmlElement = evt.current_target().unwrap().dyn_into().unwrap();
 
     let fader_height = fader_element.offset_height() as f64;
     let offset_y = evt.offset_y() as f64;
-    1.0 / fader_height * (fader_height - offset_y)
+    clamp(1.0 / fader_height * (fader_height - offset_y))
 }
