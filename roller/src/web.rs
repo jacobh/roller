@@ -8,7 +8,6 @@ use warp::{
     Filter,
 };
 
-use midi::{MidiEvent, Note};
 use roller_protocol::{
     ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, ServerMessage,
 };
@@ -17,15 +16,6 @@ use crate::{
     control::{button::AkaiPadState, midi::MidiMapping},
     ControlEvent,
 };
-
-// Specific for akai apc mini. really the internal button location should be specific with coords
-fn coordinate_to_note(loc: &ButtonGridLocation, coord: &ButtonCoordinate) -> Note {
-    match loc {
-        ButtonGridLocation::Main => Note::new((8 * coord.row_idx + coord.column_idx) as u8),
-        ButtonGridLocation::MetaRight => Note::new((89 - coord.row_idx) as u8),
-        ButtonGridLocation::MetaBottom => Note::new((64 + coord.column_idx) as u8),
-    }
-}
 
 fn akai_pad_state_to_button_state(state: &AkaiPadState) -> ButtonState {
     match state {
@@ -97,27 +87,14 @@ async fn browser_session(
 
                 match msg {
                     ClientMessage::ButtonPressed(loc, coord) => {
-                        let note = coordinate_to_note(&loc, &coord);
-
-                        let midi_event = MidiEvent::NoteOn {
-                            note,
-                            velocity: 100,
-                        };
-
-                        let control_event = midi_mapping.midi_to_control_event(&midi_event);
+                        let control_event = midi_mapping.button_press_to_control_event(loc, coord);
                         if let Some(control_event) = control_event {
                             event_sender.send(control_event).await;
                         }
                     }
                     ClientMessage::ButtonReleased(loc, coord) => {
-                        let note = coordinate_to_note(&loc, &coord);
-
-                        let midi_event = MidiEvent::NoteOff {
-                            note,
-                            velocity: 100,
-                        };
-
-                        let control_event = midi_mapping.midi_to_control_event(&midi_event);
+                        let control_event =
+                            midi_mapping.button_release_to_control_event(loc, coord);
                         if let Some(control_event) = control_event {
                             event_sender.send(control_event).await;
                         }

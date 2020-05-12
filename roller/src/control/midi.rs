@@ -89,7 +89,7 @@ impl MidiMapping {
             .iter()
             .flat_map(|group| group.buttons().map(move |button| (group, button)))
     }
-    fn button_press_to_control_event(
+    pub fn button_press_to_control_event(
         &self,
         location: ButtonGridLocation,
         coordinate: ButtonCoordinate,
@@ -110,7 +110,7 @@ impl MidiMapping {
                 .map(|meta_button| meta_button.on_action.control_event(now))
         }
     }
-    fn button_release_to_control_event(
+    pub fn button_release_to_control_event(
         &self,
         location: ButtonGridLocation,
         coordinate: ButtonCoordinate,
