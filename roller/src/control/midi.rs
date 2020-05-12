@@ -89,9 +89,54 @@ impl MidiMapping {
             .iter()
             .flat_map(|group| group.buttons().map(move |button| (group, button)))
     }
-    pub fn midi_to_control_event(&self, midi_event: &MidiEvent) -> Option<ControlEvent> {
+    fn button_press_to_control_event(
+        &self,
+        location: ButtonGridLocation,
+        coordinate: ButtonCoordinate,
+    ) -> Option<ControlEvent> {
         let now = Instant::now();
 
+        if location == ButtonGridLocation::Main {
+            self.group_buttons()
+                .find(|(_, button)| button.coordinate == coordinate)
+                .map(|(group, button)| {
+                    button
+                        .clone()
+                        .into_control_event(group.clone(), NoteState::On, now)
+                })
+        } else {
+            self.meta_buttons
+                .get(&(location, coordinate))
+                .map(|meta_button| meta_button.on_action.control_event(now))
+        }
+    }
+    fn button_release_to_control_event(
+        &self,
+        location: ButtonGridLocation,
+        coordinate: ButtonCoordinate,
+    ) -> Option<ControlEvent> {
+        let now = Instant::now();
+
+        if location == ButtonGridLocation::Main {
+            self.group_buttons()
+                .find(|(_, button)| button.coordinate == coordinate)
+                .map(|(group, button)| {
+                    button
+                        .clone()
+                        .into_control_event(group.clone(), NoteState::Off, now)
+                })
+        } else {
+            self.meta_buttons
+                .get(&(location, coordinate))
+                .and_then(|meta_button| {
+                    meta_button
+                        .off_action
+                        .as_ref()
+                        .map(|action| action.control_event(now))
+                })
+        }
+    }
+    pub fn midi_to_control_event(&self, midi_event: &MidiEvent) -> Option<ControlEvent> {
         match dbg!(midi_event) {
             MidiEvent::ControlChange { control, value } => {
                 // TODO this should be moved to a "control device mapping"
@@ -102,40 +147,11 @@ impl MidiMapping {
             }
             MidiEvent::NoteOn { note, .. } => {
                 let (loc, coord) = note_to_coordinate(*note)?;
-                if loc == ButtonGridLocation::Main {
-                    self.group_buttons()
-                        .find(|(_, button)| button.coordinate == coord)
-                        .map(|(group, button)| {
-                            button
-                                .clone()
-                                .into_control_event(group.clone(), NoteState::On, now)
-                        })
-                } else {
-                    self.meta_buttons
-                        .get(&(loc, coord))
-                        .map(|meta_button| meta_button.on_action.control_event(now))
-                }
+                self.button_press_to_control_event(loc, coord)
             }
             MidiEvent::NoteOff { note, .. } => {
                 let (loc, coord) = note_to_coordinate(*note)?;
-                if loc == ButtonGridLocation::Main {
-                    self.group_buttons()
-                        .find(|(_, button)| button.coordinate == coord)
-                        .map(|(group, button)| {
-                            button
-                                .clone()
-                                .into_control_event(group.clone(), NoteState::Off, now)
-                        })
-                } else {
-                    self.meta_buttons
-                        .get(&(loc, coord))
-                        .and_then(|meta_button| {
-                            meta_button
-                                .off_action
-                                .as_ref()
-                                .map(|action| action.control_event(now))
-                        })
-                }
+                self.button_release_to_control_event(loc, coord)
             }
             _ => None,
         }
