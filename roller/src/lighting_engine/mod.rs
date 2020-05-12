@@ -97,7 +97,7 @@ pub enum ControlMode {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum ControlEvent {
+pub enum ControlEvent<'a> {
     UpdateMasterDimmer(f64),
     UpdateGroupDimmer(FixtureGroupId, f64),
     UpdateDimmerEffectIntensity(f64),
@@ -105,7 +105,7 @@ pub enum ControlEvent {
     UpdateClockRate(Rate),
     SelectScene(SceneId),
     SelectFixtureGroupControl(FixtureGroupId),
-    UpdateButton(ButtonGroup, ButtonMapping, NoteState, Instant),
+    UpdateButton(&'a ButtonGroup, &'a ButtonMapping, NoteState, Instant),
     TapTempo(Instant),
     UpdateControlMode(ControlMode),
 }
@@ -233,7 +233,7 @@ impl<'a> EngineState<'a> {
             (_, ControlEvent::UpdateButton(group, mapping, note_state, now)) => {
                 self.control_fixture_group_state_mut()
                     .button_states
-                    .update_button_state(&group, mapping, note_state, now);
+                    .update_button_state(&group, mapping.clone(), note_state, now);
             }
             (_, ControlEvent::TapTempo(now)) => {
                 self.clock.apply_event(ClockEvent::Tap(now));

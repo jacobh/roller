@@ -85,14 +85,6 @@ impl ButtonMapping {
     pub fn into_group(self, button_type: ButtonType) -> ButtonGroup {
         ButtonGroup::new(button_type, vec![self])
     }
-    pub fn into_control_event(
-        self,
-        group: ButtonGroup,
-        note_state: NoteState,
-        now: Instant,
-    ) -> ControlEvent {
-        ControlEvent::UpdateButton(group, self, note_state, now)
-    }
 }
 
 // Meta buttons are global controls for things like tap tempo, changing page, activating a bank
