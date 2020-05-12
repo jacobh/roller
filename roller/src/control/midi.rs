@@ -60,6 +60,29 @@ pub enum NoteState {
     Off,
 }
 
+pub enum ButtonRef<'a> {
+    Standard(&'a ButtonGroup, &'a ButtonMapping),
+    Meta(&'a MetaButtonMapping),
+}
+impl<'a> ButtonRef<'a> {
+    fn into_control_event(self, note_state: NoteState, now: Instant) -> Option<ControlEvent> {
+        match (self, note_state) {
+            (ButtonRef::Standard(group, button), _) => Some(button.clone().into_control_event(
+                group.clone(),
+                note_state,
+                now,
+            )),
+            (ButtonRef::Meta(meta_button), NoteState::On) => {
+                Some(meta_button.on_action.control_event(now))
+            }
+            (ButtonRef::Meta(meta_button), NoteState::Off) => meta_button
+                .off_action
+                .as_ref()
+                .map(|action| action.control_event(now)),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MidiMapping {
     pub faders: FxHashMap<FaderId, FaderControlMapping>,
@@ -89,52 +112,36 @@ impl MidiMapping {
             .iter()
             .flat_map(|group| group.buttons().map(move |button| (group, button)))
     }
+    fn find_button(
+        &self,
+        location: ButtonGridLocation,
+        coordinate: ButtonCoordinate,
+    ) -> Option<ButtonRef<'_>> {
+        if location == ButtonGridLocation::Main {
+            self.group_buttons()
+                .find(|(_, button)| button.coordinate == coordinate)
+                .map(|(group, button)| ButtonRef::Standard(group, button))
+        } else {
+            self.meta_buttons
+                .get(&(location, coordinate))
+                .map(|meta_button| ButtonRef::Meta(meta_button))
+        }
+    }
     pub fn button_press_to_control_event(
         &self,
         location: ButtonGridLocation,
         coordinate: ButtonCoordinate,
     ) -> Option<ControlEvent> {
-        let now = Instant::now();
-
-        if location == ButtonGridLocation::Main {
-            self.group_buttons()
-                .find(|(_, button)| button.coordinate == coordinate)
-                .map(|(group, button)| {
-                    button
-                        .clone()
-                        .into_control_event(group.clone(), NoteState::On, now)
-                })
-        } else {
-            self.meta_buttons
-                .get(&(location, coordinate))
-                .map(|meta_button| meta_button.on_action.control_event(now))
-        }
+        let button_ref = self.find_button(location, coordinate)?;
+        button_ref.into_control_event(NoteState::On, Instant::now())
     }
     pub fn button_release_to_control_event(
         &self,
         location: ButtonGridLocation,
         coordinate: ButtonCoordinate,
     ) -> Option<ControlEvent> {
-        let now = Instant::now();
-
-        if location == ButtonGridLocation::Main {
-            self.group_buttons()
-                .find(|(_, button)| button.coordinate == coordinate)
-                .map(|(group, button)| {
-                    button
-                        .clone()
-                        .into_control_event(group.clone(), NoteState::Off, now)
-                })
-        } else {
-            self.meta_buttons
-                .get(&(location, coordinate))
-                .and_then(|meta_button| {
-                    meta_button
-                        .off_action
-                        .as_ref()
-                        .map(|action| action.control_event(now))
-                })
-        }
+        let button_ref = self.find_button(location, coordinate)?;
+        button_ref.into_control_event(NoteState::Off, Instant::now())
     }
     pub fn midi_to_control_event(&self, midi_event: &MidiEvent) -> Option<ControlEvent> {
         match dbg!(midi_event) {
