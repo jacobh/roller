@@ -9,7 +9,7 @@ use warp::{
 };
 
 use roller_protocol::{
-    ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, ServerMessage,
+    ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, ServerMessage, InputEvent
 };
 
 use crate::{
@@ -86,20 +86,20 @@ async fn browser_session(
                 println!("{:?}", msg);
 
                 match msg {
-                    ClientMessage::ButtonPressed(loc, coord) => {
+                    ClientMessage::Input(InputEvent::ButtonPressed(loc, coord)) => {
                         let control_event = midi_mapping.button_press_to_control_event(loc, coord);
                         if let Some(control_event) = control_event {
                             event_sender.send(control_event).await;
                         }
                     }
-                    ClientMessage::ButtonReleased(loc, coord) => {
+                    ClientMessage::Input(InputEvent::ButtonReleased(loc, coord)) => {
                         let control_event =
                             midi_mapping.button_release_to_control_event(loc, coord);
                         if let Some(control_event) = control_event {
                             event_sender.send(control_event).await;
                         }
                     }
-                    ClientMessage::FaderUpdated(id, value) => {
+                    ClientMessage::Input(InputEvent::FaderUpdated(id, value)) => {
                         if let Some(fader) = midi_mapping.faders.get(&id) {
                             event_sender.send(fader.control_event(value)).await;
                         }

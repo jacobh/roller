@@ -13,7 +13,8 @@ use crate::{
     utils::callback_fn,
 };
 use roller_protocol::{
-    ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, FaderId, ServerMessage,
+    ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, FaderId, InputEvent,
+    ServerMessage,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -118,14 +119,21 @@ impl Component for App {
 
         match msg {
             AppMsg::ButtonPressed(location, coords) => {
-                self.send_client_message(ClientMessage::ButtonPressed(location, coords));
+                self.send_client_message(ClientMessage::Input(InputEvent::ButtonPressed(
+                    location, coords,
+                )));
             }
             AppMsg::ButtonReleased(location, coords) => {
-                self.send_client_message(ClientMessage::ButtonReleased(location, coords));
+                self.send_client_message(ClientMessage::Input(InputEvent::ButtonReleased(
+                    location, coords,
+                )));
             }
             AppMsg::FaderValueUpdated(fader_id, fader_value) => {
                 self.fader_states.insert(fader_id, fader_value);
-                self.send_client_message(ClientMessage::FaderUpdated(fader_id, fader_value));
+                self.send_client_message(ClientMessage::Input(InputEvent::FaderUpdated(
+                    fader_id,
+                    fader_value,
+                )));
             }
             AppMsg::ServerMessage(ServerMessage::ButtonStatesUpdated(updates)) => {
                 for (location, coords, state) in updates {

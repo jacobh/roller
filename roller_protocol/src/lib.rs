@@ -3,6 +3,13 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum InputEvent {
+    ButtonPressed(ButtonGridLocation, ButtonCoordinate),
+    ButtonReleased(ButtonGridLocation, ButtonCoordinate),
+    FaderUpdated(FaderId, f64),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Message {
     Client(ClientMessage),
     Server(ServerMessage),
@@ -10,9 +17,7 @@ pub enum Message {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ClientMessage {
-    ButtonPressed(ButtonGridLocation, ButtonCoordinate),
-    ButtonReleased(ButtonGridLocation, ButtonCoordinate),
-    FaderUpdated(FaderId, f64),
+    Input(InputEvent)
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
