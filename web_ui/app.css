@@ -1,6 +1,8 @@
 * {
     box-sizing: border-box;
     border-collapse: collapse;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 html {
