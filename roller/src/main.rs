@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::time::{Duration, Instant};
 use structopt::StructOpt;
 
-use roller_protocol::{ButtonCoordinate, ButtonGridLocation};
+use roller_protocol::{ButtonCoordinate, ButtonGridLocation, InputEvent};
 
 mod clock;
 mod color;
@@ -19,7 +19,7 @@ mod utils;
 mod web;
 
 use crate::control::button::{pad_states, AkaiPadState};
-use crate::lighting_engine::{ControlEvent, EngineState};
+use crate::lighting_engine::EngineState;
 
 #[global_allocator]
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
@@ -96,11 +96,9 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     let midi_mapping = Arc::new(control::default_midi_mapping());
     let midi_controller = match project.midi_controller.as_ref() {
-        Some(midi_controller_name) => control::midi::MidiController::new_for_device_name(
-            midi_controller_name,
-            midi_mapping.clone(),
-        )
-        .ok(),
+        Some(midi_controller_name) => {
+            control::midi::MidiController::new_for_device_name(midi_controller_name).ok()
+        }
         None => None,
     };
 
@@ -123,7 +121,7 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     enum Event {
         Tick,
-        Control(ControlEvent),
+        Input(InputEvent),
         Clock(clock::ClockEvent),
     }
 
@@ -148,14 +146,13 @@ async fn main() -> Result<(), async_std::io::Error> {
             .await;
     }
 
-    let (web_control_events_send, web_control_events_recv) =
-        async_std::sync::channel::<ControlEvent>(64);
+    let (web_input_events_send, web_input_events_recv) = async_std::sync::channel::<InputEvent>(64);
     let (web_pad_state_update_send, web_pad_state_update_recv) =
         async_std::sync::channel::<Vec<(ButtonGridLocation, ButtonCoordinate, AkaiPadState)>>(64);
 
-    let web_control_events = Some(
-        web_control_events_recv
-            .map(|event| Event::Control(event))
+    let web_input_events = Some(
+        web_input_events_recv
+            .map(|event| Event::Input(event))
             .boxed(),
     );
 
@@ -164,15 +161,15 @@ async fn main() -> Result<(), async_std::io::Error> {
             .map(|()| Event::Tick)
             .boxed(),
     );
-    let control_events = midi_controller
+    let input_events = midi_controller
         .as_ref()
-        .map(|controller| controller.control_events().map(Event::Control).boxed());
+        .map(|controller| controller.input_events().map(Event::Input).boxed());
     let clock_events = project
         .midi_clock_events()
         .map(|events| events.map(Event::Clock).boxed());
 
     let events = stream::select_all(
-        vec![ticks, control_events, clock_events, web_control_events]
+        vec![ticks, input_events, clock_events, web_input_events]
             .into_iter()
             .flatten(),
     );
@@ -180,10 +177,9 @@ async fn main() -> Result<(), async_std::io::Error> {
     pin_mut!(events);
 
     web::serve_frontend(
-        midi_mapping.clone(),
         &current_pad_states,
         web_pad_state_update_recv,
-        web_control_events_send,
+        web_input_events_send,
     );
 
     while let Some(event) = events.next().await {
@@ -200,8 +196,8 @@ async fn main() -> Result<(), async_std::io::Error> {
                 )
                 .await;
             }
-            Event::Control(event) => {
-                state.apply_event(event);
+            Event::Input(event) => {
+                state.apply_input_event(event);
             }
             Event::Clock(event) => state.clock.apply_event(event),
         }

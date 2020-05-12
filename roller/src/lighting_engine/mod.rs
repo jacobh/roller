@@ -2,6 +2,8 @@ use derive_more::Constructor;
 use rustc_hash::FxHashMap;
 use std::time::Instant;
 
+use roller_protocol::InputEvent;
+
 use crate::{
     clock::{offsetted_for_fixture, Clock, ClockEvent, Rate},
     color::Color,
@@ -150,7 +152,30 @@ impl<'a> EngineState<'a> {
         self.active_scene_state_mut()
             .fixture_group_state_mut(active_fixture_group_control)
     }
-    pub fn apply_event(&mut self, event: ControlEvent) {
+    pub fn apply_input_event(&mut self, event: InputEvent) {
+        let now = Instant::now();
+
+        let control_event = match event {
+            InputEvent::FaderUpdated(fader_id, value) => self
+                .midi_mapping
+                .faders
+                .get(&fader_id)
+                .map(|fader| fader.control_event(value)),
+            InputEvent::ButtonPressed(location, coordinate) => self
+                .midi_mapping
+                .find_button(location, coordinate)
+                .and_then(|button_ref| button_ref.into_control_event(NoteState::On, now)),
+            InputEvent::ButtonReleased(location, coordinate) => self
+                .midi_mapping
+                .find_button(location, coordinate)
+                .and_then(|button_ref| button_ref.into_control_event(NoteState::Off, now)),
+        };
+
+        if let Some(control_event) = control_event {
+            self.apply_event(control_event);
+        }
+    }
+    fn apply_event(&mut self, event: ControlEvent) {
         // dbg!(&event);
         match (&self.control_mode, event) {
             (_, ControlEvent::UpdateControlMode(mode)) => {

@@ -9,13 +9,10 @@ use warp::{
 };
 
 use roller_protocol::{
-    ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, ServerMessage, InputEvent
+    ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, InputEvent, ServerMessage,
 };
 
-use crate::{
-    control::{button::AkaiPadState, midi::MidiMapping},
-    ControlEvent,
-};
+use crate::control::button::AkaiPadState;
 
 fn akai_pad_state_to_button_state(state: &AkaiPadState) -> ButtonState {
     match state {
@@ -31,10 +28,9 @@ fn akai_pad_state_to_button_state(state: &AkaiPadState) -> ButtonState {
 
 async fn browser_session(
     websocket: WebSocket,
-    midi_mapping: Arc<MidiMapping>,
     initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState>,
     server_message_recv: impl Stream<Item = ServerMessage> + Unpin,
-    event_sender: Sender<ControlEvent>,
+    event_sender: Sender<InputEvent>,
 ) {
     let (mut tx, rx) = websocket.split();
 
@@ -86,23 +82,8 @@ async fn browser_session(
                 println!("{:?}", msg);
 
                 match msg {
-                    ClientMessage::Input(InputEvent::ButtonPressed(loc, coord)) => {
-                        let control_event = midi_mapping.button_press_to_control_event(loc, coord);
-                        if let Some(control_event) = control_event {
-                            event_sender.send(control_event).await;
-                        }
-                    }
-                    ClientMessage::Input(InputEvent::ButtonReleased(loc, coord)) => {
-                        let control_event =
-                            midi_mapping.button_release_to_control_event(loc, coord);
-                        if let Some(control_event) = control_event {
-                            event_sender.send(control_event).await;
-                        }
-                    }
-                    ClientMessage::Input(InputEvent::FaderUpdated(id, value)) => {
-                        if let Some(fader) = midi_mapping.faders.get(&id) {
-                            event_sender.send(fader.control_event(value)).await;
-                        }
+                    ClientMessage::Input(input_event) => {
+                        event_sender.send(input_event).await;
                     }
                 };
             }
@@ -111,10 +92,9 @@ async fn browser_session(
 }
 
 pub fn serve_frontend(
-    midi_mapping: Arc<MidiMapping>,
     initial_pad_states: &FxHashMap<(ButtonGridLocation, ButtonCoordinate), AkaiPadState>,
     mut pad_state_update_recv: Receiver<Vec<(ButtonGridLocation, ButtonCoordinate, AkaiPadState)>>,
-    event_sender: Sender<ControlEvent>,
+    event_sender: Sender<InputEvent>,
 ) {
     let initial_button_states: Arc<
         Mutex<FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState>>,
@@ -155,7 +135,6 @@ pub fn serve_frontend(
         .and(warp::path("ws"))
         .and(warp::ws())
         .map(move |ws: Ws| {
-            let midi_mapping = midi_mapping.clone();
             let event_sender = event_sender.clone();
             let initial_button_states =
                 async_std::task::block_on(initial_button_states.lock()).clone();
@@ -164,7 +143,6 @@ pub fn serve_frontend(
             ws.on_upgrade(move |websocket| {
                 browser_session(
                     websocket,
-                    midi_mapping,
                     initial_button_states,
                     server_message_recv,
                     event_sender,

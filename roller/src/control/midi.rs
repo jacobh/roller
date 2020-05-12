@@ -1,10 +1,10 @@
-use async_std::{prelude::*, sync::Arc};
+use async_std::prelude::*;
 use midi::{MidiEvent, MidiInput, MidiOutput, Note};
 use roller_protocol::FaderId;
 use rustc_hash::FxHashMap;
 use std::time::{Duration, Instant};
 
-use roller_protocol::{ButtonCoordinate, ButtonGridLocation};
+use roller_protocol::{ButtonCoordinate, ButtonGridLocation, InputEvent};
 
 use crate::{
     control::{
@@ -65,7 +65,7 @@ pub enum ButtonRef<'a> {
     Meta(&'a MetaButtonMapping),
 }
 impl<'a> ButtonRef<'a> {
-    fn into_control_event(self, note_state: NoteState, now: Instant) -> Option<ControlEvent> {
+    pub fn into_control_event(self, note_state: NoteState, now: Instant) -> Option<ControlEvent> {
         match (self, note_state) {
             (ButtonRef::Standard(group, button), _) => Some(button.clone().into_control_event(
                 group.clone(),
@@ -112,7 +112,7 @@ impl MidiMapping {
             .iter()
             .flat_map(|group| group.buttons().map(move |button| (group, button)))
     }
-    fn find_button(
+    pub fn find_button(
         &self,
         location: ButtonGridLocation,
         coordinate: ButtonCoordinate,
@@ -127,42 +127,6 @@ impl MidiMapping {
                 .map(|meta_button| ButtonRef::Meta(meta_button))
         }
     }
-    pub fn button_press_to_control_event(
-        &self,
-        location: ButtonGridLocation,
-        coordinate: ButtonCoordinate,
-    ) -> Option<ControlEvent> {
-        let button_ref = self.find_button(location, coordinate)?;
-        button_ref.into_control_event(NoteState::On, Instant::now())
-    }
-    pub fn button_release_to_control_event(
-        &self,
-        location: ButtonGridLocation,
-        coordinate: ButtonCoordinate,
-    ) -> Option<ControlEvent> {
-        let button_ref = self.find_button(location, coordinate)?;
-        button_ref.into_control_event(NoteState::Off, Instant::now())
-    }
-    pub fn midi_to_control_event(&self, midi_event: &MidiEvent) -> Option<ControlEvent> {
-        match dbg!(midi_event) {
-            MidiEvent::ControlChange { control, value } => {
-                // TODO this should be moved to a "control device mapping"
-                let fader_id = FaderId::new((u8::from(*control) - 48) as usize);
-                self.faders
-                    .get(&fader_id)
-                    .map(|fader| fader.control_event(1.0 / 127.0 * (*value as f64)))
-            }
-            MidiEvent::NoteOn { note, .. } => {
-                let (loc, coord) = note_to_coordinate(*note)?;
-                self.button_press_to_control_event(loc, coord)
-            }
-            MidiEvent::NoteOff { note, .. } => {
-                let (loc, coord) = note_to_coordinate(*note)?;
-                self.button_release_to_control_event(loc, coord)
-            }
-            _ => None,
-        }
-    }
     pub fn pad_mappings(&self) -> impl Iterator<Item = PadMapping<'_>> {
         self.group_buttons()
             .map(PadMapping::from)
@@ -171,30 +135,43 @@ impl MidiMapping {
 }
 
 pub struct MidiController {
-    midi_mapping: Arc<MidiMapping>,
     midi_input: MidiInput,
     midi_output: MidiOutput,
 }
 impl MidiController {
-    pub fn new_for_device_name(
-        name: &str,
-        midi_mapping: Arc<MidiMapping>,
-    ) -> Result<MidiController, ()> {
+    pub fn new_for_device_name(name: &str) -> Result<MidiController, ()> {
         let midi_input = MidiInput::new(name).map_err(|_| ())?;
         let midi_output = MidiOutput::new(name).map_err(|_| ())?;
 
         Ok(MidiController {
-            midi_mapping,
             midi_input,
             midi_output,
         })
     }
-    pub fn control_events(&self) -> impl Stream<Item = ControlEvent> {
-        let mapping = self.midi_mapping.clone();
+    pub fn input_events(&self) -> impl Stream<Item = InputEvent> {
+        // TODO this should be moved to a "control device mapping"
+        fn midi_to_input_event(midi_event: &MidiEvent) -> Option<InputEvent> {
+            match dbg!(midi_event) {
+                MidiEvent::ControlChange { control, value } => {
+                    let fader_id = FaderId::new((u8::from(*control) - 48) as usize);
+                    let value = 1.0 / 127.0 * (*value as f64);
+                    Some(InputEvent::FaderUpdated(fader_id, value))
+                }
+                MidiEvent::NoteOn { note, .. } => {
+                    let (loc, coord) = note_to_coordinate(*note)?;
+                    Some(InputEvent::ButtonPressed(loc, coord))
+                }
+                MidiEvent::NoteOff { note, .. } => {
+                    let (loc, coord) = note_to_coordinate(*note)?;
+                    Some(InputEvent::ButtonReleased(loc, coord))
+                }
+                _ => None,
+            }
+        }
 
         self.midi_input
             .clone()
-            .map(move |midi_event| mapping.midi_to_control_event(&midi_event))
+            .map(move |midi_event| midi_to_input_event(&midi_event))
             .filter(|control_event| control_event.is_some())
             .map(|control_event| control_event.unwrap())
     }

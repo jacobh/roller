@@ -17,7 +17,7 @@ pub enum Message {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ClientMessage {
-    Input(InputEvent)
+    Input(InputEvent),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
