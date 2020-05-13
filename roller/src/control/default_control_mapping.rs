@@ -8,8 +8,8 @@ use crate::{
             ButtonAction, ButtonGroup, ButtonMapping, ButtonType, MetaButtonAction,
             MetaButtonMapping,
         },
+        control_mapping::ControlMapping,
         fader::{FaderControlMapping, FaderCurve, FaderType},
-        midi::MidiMapping,
     },
     effect::{
         ColorEffect, ColorModulation, ColorModulator, DimmerEffect, DimmerModulator,
@@ -20,8 +20,8 @@ use crate::{
     project::FixtureGroupId,
 };
 
-pub fn default_midi_mapping() -> MidiMapping {
-    MidiMapping::new(
+pub fn default_control_mapping() -> ControlMapping {
+    ControlMapping::new(
         vec![
             FaderControlMapping {
                 id: FaderId::new(0),

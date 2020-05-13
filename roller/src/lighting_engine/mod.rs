@@ -9,7 +9,8 @@ use crate::{
     color::Color,
     control::{
         button::{ButtonGroup, ButtonMapping, MetaButtonAction, PadEvent},
-        midi::{MidiMapping, NoteState},
+        control_mapping::ControlMapping,
+        NoteState,
     },
     effect::{self, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet, PositionEffect},
     fixture::Fixture,
@@ -111,7 +112,7 @@ pub enum ControlEvent<'a> {
 }
 
 pub struct EngineState<'a> {
-    pub midi_mapping: &'a MidiMapping,
+    pub control_mapping: &'a ControlMapping,
     pub clock: Clock,
     pub master_dimmer: f64,
     pub control_mode: ControlMode,
@@ -120,9 +121,9 @@ pub struct EngineState<'a> {
     pub scene_fixture_group_button_states: FxHashMap<SceneId, SceneState>,
 }
 impl<'a> EngineState<'a> {
-    pub fn new(midi_mapping: &'a MidiMapping) -> EngineState<'a> {
+    pub fn new(control_mapping: &'a ControlMapping) -> EngineState<'a> {
         EngineState {
-            midi_mapping,
+            control_mapping,
             clock: Clock::new(128.0),
             master_dimmer: 1.0,
             control_mode: ControlMode::Normal,
@@ -157,16 +158,16 @@ impl<'a> EngineState<'a> {
 
         let control_event = match event {
             InputEvent::FaderUpdated(fader_id, value) => self
-                .midi_mapping
+                .control_mapping
                 .faders
                 .get(&fader_id)
                 .map(|fader| fader.control_event(value)),
             InputEvent::ButtonPressed(location, coordinate) => self
-                .midi_mapping
+                .control_mapping
                 .find_button(location, coordinate)
                 .and_then(|button_ref| button_ref.into_control_event(NoteState::On, now)),
             InputEvent::ButtonReleased(location, coordinate) => self
-                .midi_mapping
+                .control_mapping
                 .find_button(location, coordinate)
                 .and_then(|button_ref| button_ref.into_control_event(NoteState::Off, now)),
         };
@@ -375,7 +376,7 @@ impl<'a> EngineState<'a> {
     }
     fn meta_pad_events(&self) -> impl Iterator<Item = PadEvent<'_>> {
         let active_scene_button = self
-            .midi_mapping
+            .control_mapping
             .meta_buttons
             .values()
             .find(|button| button.on_action == MetaButtonAction::SelectScene(self.active_scene_id))
@@ -384,7 +385,7 @@ impl<'a> EngineState<'a> {
         let active_fixture_group_toggle_button =
             self.active_fixture_group_control
                 .map(|control_fixture_group_id| {
-                    self.midi_mapping
+                    self.control_mapping
                         .meta_buttons
                         .values()
                         .find(|button| {
@@ -406,7 +407,7 @@ impl<'a> EngineState<'a> {
 
         let clock_rate = self.control_fixture_group_state().clock_rate;
         let active_clock_rate_button = self
-            .midi_mapping
+            .control_mapping
             .meta_buttons
             .values()
             .find(|button| {

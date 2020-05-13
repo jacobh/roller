@@ -1,4 +1,3 @@
-use async_std::sync::Arc;
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
 use std::path::PathBuf;
@@ -53,7 +52,7 @@ async fn run_tick<'a>(
     }
 
     let new_pad_states = pad_states(
-        state.midi_mapping.pad_mappings().collect(),
+        state.control_mapping.pad_mappings().collect(),
         &state
             .control_fixture_group_state()
             .button_states
@@ -94,7 +93,6 @@ async fn main() -> Result<(), async_std::io::Error> {
     let project = project::Project::load(args.config).await?;
     let mut fixtures = project.fixtures().await?;
 
-    let midi_mapping = Arc::new(control::default_midi_mapping());
     let midi_controller = match project.midi_controller.as_ref() {
         Some(midi_controller_name) => {
             control::midi::MidiController::new_for_device_name(midi_controller_name).ok()
@@ -103,7 +101,8 @@ async fn main() -> Result<(), async_std::io::Error> {
     };
 
     let started_at = Instant::now();
-    let mut state = EngineState::new(&midi_mapping);
+    let control_mapping = control::default_control_mapping();
+    let mut state = EngineState::new(&control_mapping);
 
     let mut ola_client = ola_client::OlaClient::connect(&args.ola_host)
         .await
@@ -126,7 +125,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     }
 
     let mut current_pad_states = pad_states(
-        midi_mapping.pad_mappings().collect(),
+        control_mapping.pad_mappings().collect(),
         &state
             .control_fixture_group_state()
             .button_states

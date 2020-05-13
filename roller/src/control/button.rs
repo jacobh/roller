@@ -8,7 +8,7 @@ use roller_protocol::{ButtonCoordinate, ButtonGridLocation};
 use crate::{
     clock::Rate,
     color::Color,
-    control::midi::NoteState,
+    control::NoteState,
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
     lighting_engine::{ButtonGroupInfo, ButtonInfo, ControlEvent, ControlMode, SceneId},
     position::BasePosition,

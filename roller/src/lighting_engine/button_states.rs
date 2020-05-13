@@ -10,7 +10,7 @@ use crate::{
         button::{
             ButtonAction, ButtonGroup, ButtonGroupId, ButtonMapping, ButtonType, GroupToggleState,
         },
-        midi::NoteState,
+        NoteState,
     },
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
     lighting_engine::FixtureGroupValue,
