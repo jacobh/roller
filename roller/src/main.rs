@@ -38,7 +38,6 @@ async fn run_tick<'a>(
     fixtures: &mut Vec<fixture::Fixture>,
     dmx_sender: &async_std::sync::Sender<(i32, [u8; 512])>,
     midi_controller: Option<&control::midi::MidiController>,
-    started_at: &std::time::Instant,
     current_pad_states: &mut rustc_hash::FxHashMap<
         (ButtonGridLocation, ButtonCoordinate),
         AkaiPadState,
@@ -60,7 +59,6 @@ async fn run_tick<'a>(
             .iter_group_toggle_states()
             .collect(),
         state.pad_events(),
-        started_at.elapsed(),
     );
 
     // find the pads that have updated since the last tick
@@ -107,7 +105,6 @@ async fn main() -> Result<(), async_std::io::Error> {
         None => None,
     };
 
-    let started_at = Instant::now();
     let control_mapping = control::default_control_mapping();
     let mut state = EngineState::new(&control_mapping);
 
@@ -139,7 +136,6 @@ async fn main() -> Result<(), async_std::io::Error> {
             .iter_group_toggle_states()
             .collect(),
         state.pad_events(),
-        started_at.elapsed(),
     );
 
     // temporary shim
@@ -204,7 +200,6 @@ async fn main() -> Result<(), async_std::io::Error> {
                     &mut fixtures,
                     &dmx_sender,
                     midi_controller.as_ref(),
-                    &started_at,
                     &mut current_pad_states,
                     &web_pad_state_update_send,
                 )

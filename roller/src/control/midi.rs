@@ -99,6 +99,7 @@ impl MidiController {
         let note = coordinate_to_note(&location, &coordinate);
         let (pad_color, illumination) = button_state_to_akai_pad_color(location, state);
 
+        // TODO this is only updated when the button state changes, so strobing buttons aren't working properly
         let pad_color = match illumination {
             Illumination::Solid => pad_color,
             Illumination::Strobe => {
