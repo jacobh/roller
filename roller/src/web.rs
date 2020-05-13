@@ -12,20 +12,6 @@ use roller_protocol::{
     ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, InputEvent, ServerMessage,
 };
 
-use crate::control::button::AkaiPadState;
-
-fn akai_pad_state_to_button_state(state: &AkaiPadState) -> ButtonState {
-    match state {
-        AkaiPadState::Off => ButtonState::Unused,
-        AkaiPadState::Green => ButtonState::Active,
-        AkaiPadState::GreenBlink => ButtonState::Active,
-        AkaiPadState::Red => ButtonState::Deactivated,
-        AkaiPadState::RedBlink => ButtonState::Deactivated,
-        AkaiPadState::Yellow => ButtonState::Inactive,
-        AkaiPadState::YellowBlink => ButtonState::Inactive,
-    }
-}
-
 async fn browser_session(
     websocket: WebSocket,
     initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState>,
@@ -92,19 +78,11 @@ async fn browser_session(
 }
 
 pub fn serve_frontend(
-    initial_pad_states: &FxHashMap<(ButtonGridLocation, ButtonCoordinate), AkaiPadState>,
-    mut pad_state_update_recv: Receiver<Vec<(ButtonGridLocation, ButtonCoordinate, AkaiPadState)>>,
+    initial_button_states: &FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState>,
+    mut pad_state_update_recv: Receiver<Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>>,
     event_sender: Sender<InputEvent>,
 ) {
-    let initial_button_states: Arc<
-        Mutex<FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState>>,
-    > = Arc::new(Mutex::new(
-        initial_pad_states
-            .into_iter()
-            .map(|(loc_coord, state)| (*loc_coord, akai_pad_state_to_button_state(&state)))
-            .collect(),
-    ));
-
+    let initial_button_states = Arc::new(Mutex::new(initial_button_states.clone()));
     let server_message_channel: BroadcastChannel<ServerMessage> = BroadcastChannel::new();
 
     // Update initial button states with incoming messages
@@ -112,12 +90,6 @@ pub fn serve_frontend(
     let (mut server_message_sender, _) = server_message_channel.clone().split();
     async_std::task::spawn(async move {
         while let Some(coord_states) = pad_state_update_recv.next().await {
-            // remap akai states to button states
-            let coord_states: Vec<_> = coord_states
-                .into_iter()
-                .map(|(loc, coord, state)| (loc, coord, akai_pad_state_to_button_state(&state)))
-                .collect();
-
             let mut states = initial_button_states2.lock().await;
             for (loc, coord, state) in coord_states.iter() {
                 states.insert((loc.clone(), coord.clone()), state.clone());

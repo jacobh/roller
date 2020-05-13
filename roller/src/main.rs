@@ -1,10 +1,11 @@
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
+use rustc_hash::FxHashMap;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 use structopt::StructOpt;
 
-use roller_protocol::{ButtonCoordinate, ButtonGridLocation, InputEvent};
+use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent};
 
 mod clock;
 mod color;
@@ -43,7 +44,7 @@ async fn run_tick<'a>(
         AkaiPadState,
     >,
     web_pad_state_update_send: &async_std::sync::Sender<
-        Vec<(ButtonGridLocation, ButtonCoordinate, AkaiPadState)>,
+        Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>,
     >,
 ) {
     state.update_fixtures(fixtures);
@@ -81,7 +82,13 @@ async fn run_tick<'a>(
             .await;
     }
 
-    web_pad_state_update_send.send(changed_pad_states).await;
+    // temporary shim
+    let changed_button_states = changed_pad_states
+        .into_iter()
+        .map(|(loc, coord, state)| (loc, coord, akai_pad_state_to_button_state(&state)))
+        .collect();
+
+    web_pad_state_update_send.send(changed_button_states).await;
 
     *current_pad_states = new_pad_states;
 }
@@ -134,6 +141,14 @@ async fn main() -> Result<(), async_std::io::Error> {
         state.pad_events(),
         started_at.elapsed(),
     );
+
+    // temporary shim
+    let initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState> =
+        current_pad_states
+            .iter()
+            .map(|(loc_coord, state)| (*loc_coord, akai_pad_state_to_button_state(state)))
+            .collect();
+
     if let Some(midi_controller) = &midi_controller {
         midi_controller.run_pad_startup().await;
         midi_controller
@@ -147,7 +162,7 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     let (web_input_events_send, web_input_events_recv) = async_std::sync::channel::<InputEvent>(64);
     let (web_pad_state_update_send, web_pad_state_update_recv) =
-        async_std::sync::channel::<Vec<(ButtonGridLocation, ButtonCoordinate, AkaiPadState)>>(64);
+        async_std::sync::channel::<Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>>(64);
 
     let web_input_events = Some(
         web_input_events_recv
@@ -176,7 +191,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     pin_mut!(events);
 
     web::serve_frontend(
-        &current_pad_states,
+        &initial_button_states,
         web_pad_state_update_recv,
         web_input_events_send,
     );
@@ -202,4 +217,17 @@ async fn main() -> Result<(), async_std::io::Error> {
         }
     }
     unreachable!()
+}
+
+// temporary shim
+fn akai_pad_state_to_button_state(state: &AkaiPadState) -> ButtonState {
+    match state {
+        AkaiPadState::Off => ButtonState::Unused,
+        AkaiPadState::Green => ButtonState::Active,
+        AkaiPadState::GreenBlink => ButtonState::Active,
+        AkaiPadState::Red => ButtonState::Deactivated,
+        AkaiPadState::RedBlink => ButtonState::Deactivated,
+        AkaiPadState::Yellow => ButtonState::Inactive,
+        AkaiPadState::YellowBlink => ButtonState::Inactive,
+    }
 }
