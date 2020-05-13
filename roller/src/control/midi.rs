@@ -1,9 +1,9 @@
 use async_std::prelude::*;
 use midi::{MidiEvent, MidiInput, MidiOutput, Note};
 use roller_protocol::FaderId;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
-use roller_protocol::{ButtonCoordinate, ButtonGridLocation, InputEvent};
+use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent};
 
 use crate::control::button::AkaiPadState;
 
@@ -50,6 +50,7 @@ fn note_to_coordinate(note: Note) -> Option<(ButtonGridLocation, ButtonCoordinat
 pub struct MidiController {
     midi_input: MidiInput,
     midi_output: MidiOutput,
+    started_at: Instant,
 }
 impl MidiController {
     pub fn new_for_device_name(name: &str) -> Result<MidiController, ()> {
@@ -59,6 +60,7 @@ impl MidiController {
         Ok(MidiController {
             midi_input,
             midi_output,
+            started_at: Instant::now(),
         })
     }
     pub fn input_events(&self) -> impl Stream<Item = InputEvent> {
@@ -88,36 +90,48 @@ impl MidiController {
             .filter(|control_event| control_event.is_some())
             .map(|control_event| control_event.unwrap())
     }
-    pub async fn set_pad_color(
+    pub async fn set_button_state(
         &self,
         location: ButtonGridLocation,
         coordinate: ButtonCoordinate,
-        pad_color: AkaiPadState,
+        state: ButtonState,
     ) {
         let note = coordinate_to_note(&location, &coordinate);
+        let (pad_color, illumination) = button_state_to_akai_pad_color(location, state);
+
+        let pad_color = match illumination {
+            Illumination::Solid => pad_color,
+            Illumination::Strobe => {
+                if self.started_at.elapsed().as_millis() % 250 < 100 {
+                    pad_color
+                } else {
+                    AkaiPadState::Off
+                }
+            }
+        };
 
         self.midi_output
             .send_packet(vec![0x90, u8::from(note), pad_color.as_byte()])
             .await
     }
-    pub async fn set_pad_colors(
+    pub async fn set_button_states(
         &self,
-        pad_colors: impl IntoIterator<Item = (ButtonGridLocation, ButtonCoordinate, AkaiPadState)>,
+        states: impl IntoIterator<Item = (ButtonGridLocation, ButtonCoordinate, ButtonState)>,
     ) {
-        for (location, coordinate, pad_color) in pad_colors {
-            self.set_pad_color(location, coordinate, pad_color).await
+        for (location, coordinate, state) in states {
+            self.set_button_state(location, coordinate, state).await
         }
     }
     pub async fn reset_pads(&self) {
         for row_idx in 0..8 {
             for column_idx in 0..8 {
-                self.set_pad_color(
+                self.set_button_state(
                     ButtonGridLocation::Main,
                     ButtonCoordinate {
                         row_idx,
                         column_idx,
                     },
-                    AkaiPadState::Off,
+                    ButtonState::Unused,
                 )
                 .await;
             }
@@ -126,13 +140,13 @@ impl MidiController {
     pub async fn run_pad_startup(&self) {
         for row_idx in 0..8 {
             for column_idx in 0..8 {
-                self.set_pad_color(
+                self.set_button_state(
                     ButtonGridLocation::Main,
                     ButtonCoordinate {
                         row_idx,
                         column_idx,
                     },
-                    AkaiPadState::Green,
+                    ButtonState::Active,
                 )
                 .await;
                 async_std::task::sleep(Duration::from_millis(10)).await;
@@ -140,5 +154,30 @@ impl MidiController {
         }
         async_std::task::sleep(Duration::from_millis(150)).await;
         self.reset_pads().await;
+    }
+}
+
+enum Illumination {
+    Solid,
+    Strobe,
+}
+
+fn button_state_to_akai_pad_color(
+    location: ButtonGridLocation,
+    state: ButtonState,
+) -> (AkaiPadState, Illumination) {
+    match location {
+        ButtonGridLocation::Main => match state {
+            ButtonState::Active => (AkaiPadState::Green, Illumination::Solid),
+            ButtonState::Inactive => (AkaiPadState::Yellow, Illumination::Solid),
+            ButtonState::Deactivated => (AkaiPadState::Red, Illumination::Solid),
+            ButtonState::Unused => (AkaiPadState::Off, Illumination::Solid),
+        },
+        ButtonGridLocation::MetaBottom | ButtonGridLocation::MetaRight => match state {
+            ButtonState::Active => (AkaiPadState::Green, Illumination::Strobe),
+            ButtonState::Inactive => (AkaiPadState::Yellow, Illumination::Solid),
+            ButtonState::Deactivated => (AkaiPadState::Red, Illumination::Solid),
+            ButtonState::Unused => (AkaiPadState::Off, Illumination::Solid),
+        },
     }
 }

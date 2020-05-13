@@ -76,17 +76,17 @@ async fn run_tick<'a>(
             .map(|((loc, coord), state)| (*loc, *coord, *state))
             .collect();
 
-    if let Some(midi_controller) = midi_controller {
-        midi_controller
-            .set_pad_colors(changed_pad_states.clone().into_iter())
-            .await;
-    }
-
     // temporary shim
     let changed_button_states = changed_pad_states
         .into_iter()
         .map(|(loc, coord, state)| (loc, coord, akai_pad_state_to_button_state(&state)))
-        .collect();
+        .collect::<Vec<_>>();
+
+    if let Some(midi_controller) = midi_controller {
+        midi_controller
+            .set_button_states(changed_button_states.clone().into_iter())
+            .await;
+    }
 
     web_pad_state_update_send.send(changed_button_states).await;
 
@@ -152,8 +152,8 @@ async fn main() -> Result<(), async_std::io::Error> {
     if let Some(midi_controller) = &midi_controller {
         midi_controller.run_pad_startup().await;
         midi_controller
-            .set_pad_colors(
-                current_pad_states
+            .set_button_states(
+                initial_button_states
                     .iter()
                     .map(|((loc, coord), val)| (*loc, *coord, *val)),
             )
