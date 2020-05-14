@@ -17,7 +17,7 @@ mod project;
 mod utils;
 mod web;
 
-use crate::control::button::{pad_states, AkaiPadState};
+use crate::control::button::pad_states;
 use crate::lighting_engine::EngineState;
 
 #[global_allocator]

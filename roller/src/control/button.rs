@@ -1,5 +1,4 @@
 use rustc_hash::FxHashMap;
-use serde::Deserialize;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
@@ -145,30 +144,6 @@ impl ButtonGroup {
                 .map(|button| (button.coordinate, button))
                 .collect(),
             button_type,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-pub enum AkaiPadState {
-    Off,
-    Green,
-    GreenBlink,
-    Red,
-    RedBlink,
-    Yellow,
-    YellowBlink,
-}
-impl AkaiPadState {
-    pub fn as_byte(self) -> u8 {
-        match self {
-            AkaiPadState::Off => 0,
-            AkaiPadState::Green => 1,
-            AkaiPadState::GreenBlink => 2,
-            AkaiPadState::Red => 3,
-            AkaiPadState::RedBlink => 4,
-            AkaiPadState::Yellow => 5,
-            AkaiPadState::YellowBlink => 6,
         }
     }
 }

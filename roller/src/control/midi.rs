@@ -5,7 +5,29 @@ use std::time::{Duration, Instant};
 
 use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent};
 
-use crate::control::button::AkaiPadState;
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum AkaiPadState {
+    Off,
+    Green,
+    GreenBlink,
+    Red,
+    RedBlink,
+    Yellow,
+    YellowBlink,
+}
+impl AkaiPadState {
+    fn as_byte(self) -> u8 {
+        match self {
+            AkaiPadState::Off => 0,
+            AkaiPadState::Green => 1,
+            AkaiPadState::GreenBlink => 2,
+            AkaiPadState::Red => 3,
+            AkaiPadState::RedBlink => 4,
+            AkaiPadState::Yellow => 5,
+            AkaiPadState::YellowBlink => 6,
+        }
+    }
+}
 
 // Specific for akai apc mini. really the internal button location should be specific with coords
 fn coordinate_to_note(loc: &ButtonGridLocation, coord: &ButtonCoordinate) -> Note {
