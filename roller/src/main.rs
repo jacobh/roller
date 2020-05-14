@@ -50,7 +50,7 @@ async fn run_tick<'a>(
         dmx_sender.send((universe as i32, dmx_data)).await;
     }
 
-    let new_pad_states = pad_states(
+    let new_button_states = pad_states(
         state.control_mapping.pad_mappings().collect(),
         &state
             .control_fixture_group_state()
@@ -61,7 +61,7 @@ async fn run_tick<'a>(
     );
 
     // find the buttons that have updated since the last tick
-    let changed_button_states: Vec<_> = new_pad_states
+    let changed_button_states: Vec<_> = new_button_states
         .iter()
         .filter(|(location_coord, state)| {
             current_button_states
@@ -80,7 +80,7 @@ async fn run_tick<'a>(
 
     web_pad_state_update_send.send(changed_button_states).await;
 
-    *current_button_states = new_pad_states;
+    *current_button_states = new_button_states;
 }
 
 #[async_std::main]
