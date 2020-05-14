@@ -1,4 +1,4 @@
-use midi::{ControlChannel, Note};
+use roller_protocol::{ButtonCoordinate, ButtonGridLocation, FaderId};
 
 use crate::{
     clock::{Beats, ClockOffset, ClockOffsetMode, Rate},
@@ -8,8 +8,8 @@ use crate::{
             ButtonAction, ButtonGroup, ButtonMapping, ButtonType, MetaButtonAction,
             MetaButtonMapping,
         },
-        fader::{FaderCurve, FaderType, MidiFaderMapping},
-        midi::MidiMapping,
+        control_mapping::ControlMapping,
+        fader::{FaderControlMapping, FaderCurve, FaderType},
     },
     effect::{
         ColorEffect, ColorModulation, ColorModulator, DimmerEffect, DimmerModulator,
@@ -20,36 +20,36 @@ use crate::{
     project::FixtureGroupId,
 };
 
-pub fn default_midi_mapping() -> MidiMapping {
-    MidiMapping::new(
+pub fn default_control_mapping() -> ControlMapping {
+    ControlMapping::new(
         vec![
-            MidiFaderMapping {
-                control_channel: ControlChannel::new(48),
+            FaderControlMapping {
+                id: FaderId::new(0),
                 fader_type: FaderType::GroupDimmer(FixtureGroupId::new(1)),
                 fader_curve: FaderCurve::root(0.8),
             },
-            MidiFaderMapping {
-                control_channel: ControlChannel::new(49),
+            FaderControlMapping {
+                id: FaderId::new(1),
                 fader_type: FaderType::GroupDimmer(FixtureGroupId::new(2)),
                 fader_curve: FaderCurve::root(0.8),
             },
-            MidiFaderMapping {
-                control_channel: ControlChannel::new(50),
+            FaderControlMapping {
+                id: FaderId::new(2),
                 fader_type: FaderType::GroupDimmer(FixtureGroupId::new(3)),
                 fader_curve: FaderCurve::root(0.8),
             },
-            MidiFaderMapping {
-                control_channel: ControlChannel::new(54),
+            FaderControlMapping {
+                id: FaderId::new(6),
                 fader_type: FaderType::ColorEffectIntensity,
                 fader_curve: FaderCurve::linear(),
             },
-            MidiFaderMapping {
-                control_channel: ControlChannel::new(55),
+            FaderControlMapping {
+                id: FaderId::new(7),
                 fader_type: FaderType::DimmerEffectIntensity,
                 fader_curve: FaderCurve::sigmoid(0.75),
             },
-            MidiFaderMapping {
-                control_channel: ControlChannel::new(56),
+            FaderControlMapping {
+                id: FaderId::new(8),
                 fader_type: FaderType::MasterDimmer,
                 fader_curve: FaderCurve::root(0.8),
             },
@@ -60,35 +60,35 @@ pub fn default_midi_mapping() -> MidiMapping {
                 ButtonType::Switch,
                 vec![
                     ButtonMapping {
-                        note: Note::new(56),
+                        coordinate: ButtonCoordinate::new(0, 7),
                         on_action: ButtonAction::UpdateGlobalColor(Color::White),
                     },
                     ButtonMapping {
-                        note: Note::new(48),
+                        coordinate: ButtonCoordinate::new(0, 6),
                         on_action: ButtonAction::UpdateGlobalColor(Color::Yellow),
                     },
                     ButtonMapping {
-                        note: Note::new(40),
+                        coordinate: ButtonCoordinate::new(0, 5),
                         on_action: ButtonAction::UpdateGlobalColor(Color::DeepOrange),
                     },
                     ButtonMapping {
-                        note: Note::new(32),
+                        coordinate: ButtonCoordinate::new(0, 4),
                         on_action: ButtonAction::UpdateGlobalColor(Color::Red),
                     },
                     ButtonMapping {
-                        note: Note::new(24),
+                        coordinate: ButtonCoordinate::new(0, 3),
                         on_action: ButtonAction::UpdateGlobalColor(Color::Violet),
                     },
                     ButtonMapping {
-                        note: Note::new(16),
+                        coordinate: ButtonCoordinate::new(0, 2),
                         on_action: ButtonAction::UpdateGlobalColor(Color::DarkBlue),
                     },
                     ButtonMapping {
-                        note: Note::new(8),
+                        coordinate: ButtonCoordinate::new(0, 1),
                         on_action: ButtonAction::UpdateGlobalColor(Color::Teal),
                     },
                     ButtonMapping {
-                        note: Note::new(0),
+                        coordinate: ButtonCoordinate::new(0, 0),
                         on_action: ButtonAction::UpdateGlobalColor(Color::Green),
                     },
                 ],
@@ -98,63 +98,63 @@ pub fn default_midi_mapping() -> MidiMapping {
                 ButtonType::Toggle,
                 vec![
                     ButtonMapping {
-                        note: Note::new(57),
+                        coordinate: ButtonCoordinate::new(1, 7),
                         on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::White),
                     },
                     ButtonMapping {
-                        note: Note::new(49),
+                        coordinate: ButtonCoordinate::new(1, 6),
                         on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Yellow),
                     },
                     ButtonMapping {
-                        note: Note::new(41),
+                        coordinate: ButtonCoordinate::new(1, 5),
                         on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::DeepOrange),
                     },
                     ButtonMapping {
-                        note: Note::new(33),
+                        coordinate: ButtonCoordinate::new(1, 4),
                         on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Red),
                     },
                     ButtonMapping {
-                        note: Note::new(25),
+                        coordinate: ButtonCoordinate::new(1, 3),
                         on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Violet),
                     },
                     ButtonMapping {
-                        note: Note::new(17),
+                        coordinate: ButtonCoordinate::new(1, 2),
                         on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::DarkBlue),
                     },
                     ButtonMapping {
-                        note: Note::new(9),
+                        coordinate: ButtonCoordinate::new(1, 1),
                         on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Teal),
                     },
                     ButtonMapping {
-                        note: Note::new(1),
+                        coordinate: ButtonCoordinate::new(1, 0),
                         on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Green),
                     },
                 ],
             ),
             // Dimmer Effects
             ButtonMapping {
-                note: Note::new(63),
+                coordinate: ButtonCoordinate::new(7, 7),
                 on_action: ButtonAction::ActivateDimmerEffect(
                     DimmerModulator::new(Waveform::SineDown, Beats::new(1.0), 1.0).into(),
                 ),
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
-                note: Note::new(55),
+                coordinate: ButtonCoordinate::new(7, 6),
                 on_action: ButtonAction::ActivateDimmerEffect(
                     DimmerModulator::new(Waveform::HalfSineUp, Beats::new(1.0), 1.0).into(),
                 ),
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
-                note: Note::new(47),
+                coordinate: ButtonCoordinate::new(7, 5),
                 on_action: ButtonAction::ActivateDimmerEffect(
                     DimmerModulator::new(Waveform::HalfSineDown, Beats::new(1.0), 1.0).into(),
                 ),
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
-                note: Note::new(39),
+                coordinate: ButtonCoordinate::new(7, 4),
                 on_action: ButtonAction::ActivateDimmerEffect(
                     DimmerModulator::new(Waveform::ShortSquarePulse, Beats::new(1.0), 1.0).into(),
                 ),
@@ -162,7 +162,7 @@ pub fn default_midi_mapping() -> MidiMapping {
             .into_group(ButtonType::Toggle),
             // Dimmer sequences
             ButtonMapping {
-                note: Note::new(62),
+                coordinate: ButtonCoordinate::new(6, 7),
                 on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                     vec![
                         DimmerModulator::new(Waveform::ShortSquarePulse, Beats::new(1.0), 1.0),
@@ -179,7 +179,7 @@ pub fn default_midi_mapping() -> MidiMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
-                note: Note::new(54),
+                coordinate: ButtonCoordinate::new(6, 6),
                 on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                     vec![
                         DimmerModulator::new(Waveform::ShortSquarePulse, Beats::new(1.0), 1.0),
@@ -193,7 +193,7 @@ pub fn default_midi_mapping() -> MidiMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
-                note: Note::new(46),
+                coordinate: ButtonCoordinate::new(6, 5),
                 on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                     vec![
                         DimmerModulator::new(Waveform::HalfSineDown, Beats::new(1.0), 1.0),
@@ -206,7 +206,7 @@ pub fn default_midi_mapping() -> MidiMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
-                note: Note::new(38),
+                coordinate: ButtonCoordinate::new(6, 4),
                 on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                     vec![DimmerModulator::new(
                         Waveform::SawDown,
@@ -221,7 +221,7 @@ pub fn default_midi_mapping() -> MidiMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
-                note: Note::new(30),
+                coordinate: ButtonCoordinate::new(6, 3),
                 on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                     vec![DimmerModulator::new(Waveform::SineUp, Beats::new(4.0), 1.0)],
                     Some(ClockOffset::new(
@@ -232,7 +232,7 @@ pub fn default_midi_mapping() -> MidiMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
-                note: Note::new(22),
+                coordinate: ButtonCoordinate::new(6, 2),
                 on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                     vec![
                         DimmerModulator::new(Waveform::SawDown, Beats::new(2.0), 1.0),
@@ -252,7 +252,7 @@ pub fn default_midi_mapping() -> MidiMapping {
             .into_group(ButtonType::Toggle),
             // Color effects
             ButtonMapping {
-                note: Note::new(58),
+                coordinate: ButtonCoordinate::new(2, 7),
                 on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
                     vec![ColorModulator::new(
                         ColorModulation::HueShift(120.0.into()),
@@ -264,7 +264,7 @@ pub fn default_midi_mapping() -> MidiMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
-                note: Note::new(50),
+                coordinate: ButtonCoordinate::new(2, 6),
                 on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
                     vec![ColorModulator::new(
                         ColorModulation::HueShift((-90.0).into()),
@@ -277,7 +277,7 @@ pub fn default_midi_mapping() -> MidiMapping {
             .into_group(ButtonType::Toggle),
             // Color sequences
             ButtonMapping {
-                note: Note::new(34),
+                coordinate: ButtonCoordinate::new(2, 4),
                 on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
                     vec![
                         (ColorModulation::NoOp, Beats::new(1.0)).into(),
@@ -292,7 +292,7 @@ pub fn default_midi_mapping() -> MidiMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
-                note: Note::new(26),
+                coordinate: ButtonCoordinate::new(2, 3),
                 on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
                     vec![
                         ColorModulator::new(
@@ -307,7 +307,7 @@ pub fn default_midi_mapping() -> MidiMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
-                note: Note::new(18),
+                coordinate: ButtonCoordinate::new(2, 2),
                 on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
                     vec![
                         ColorModulator::new(
@@ -336,7 +336,7 @@ pub fn default_midi_mapping() -> MidiMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
-                note: Note::new(10),
+                coordinate: ButtonCoordinate::new(2, 1),
                 on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
                     vec![ColorModulator::new(
                         ColorModulation::ToSecondaryColor,
@@ -352,7 +352,7 @@ pub fn default_midi_mapping() -> MidiMapping {
                 ButtonType::Toggle,
                 vec![
                     ButtonMapping {
-                        note: Note::new(60),
+                        coordinate: ButtonCoordinate::new(4, 7),
                         on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
                             vec![
                                 PixelModulator::new(
@@ -380,7 +380,7 @@ pub fn default_midi_mapping() -> MidiMapping {
                         )),
                     },
                     ButtonMapping {
-                        note: Note::new(52),
+                        coordinate: ButtonCoordinate::new(4, 6),
                         on_action: ButtonAction::ActivatePixelEffect(
                             PixelModulator::new(
                                 Waveform::SineDown,
@@ -391,7 +391,7 @@ pub fn default_midi_mapping() -> MidiMapping {
                         ),
                     },
                     ButtonMapping {
-                        note: Note::new(44),
+                        coordinate: ButtonCoordinate::new(4, 5),
                         on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
                             vec![PixelModulator::new(
                                 Waveform::SigmoidWaveDown,
@@ -405,7 +405,7 @@ pub fn default_midi_mapping() -> MidiMapping {
                         )),
                     },
                     ButtonMapping {
-                        note: Note::new(36),
+                        coordinate: ButtonCoordinate::new(4, 4),
                         on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
                             vec![
                                 PixelModulator::new(
@@ -426,7 +426,7 @@ pub fn default_midi_mapping() -> MidiMapping {
                         )),
                     },
                     ButtonMapping {
-                        note: Note::new(28),
+                        coordinate: ButtonCoordinate::new(4, 3),
                         on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
                             vec![
                                 PixelModulator::new(
@@ -457,7 +457,7 @@ pub fn default_midi_mapping() -> MidiMapping {
                         )),
                     },
                     ButtonMapping {
-                        note: Note::new(20),
+                        coordinate: ButtonCoordinate::new(4, 2),
                         on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
                             vec![
                                 PixelModulator::new(
@@ -514,23 +514,23 @@ pub fn default_midi_mapping() -> MidiMapping {
                 ButtonType::Switch,
                 vec![
                     ButtonMapping {
-                        note: Note::new(59),
+                        coordinate: ButtonCoordinate::new(3, 7),
                         on_action: ButtonAction::UpdateBasePosition((0.0, 0.0).into()),
                     },
                     ButtonMapping {
-                        note: Note::new(51),
+                        coordinate: ButtonCoordinate::new(3, 6),
                         on_action: ButtonAction::UpdateBasePosition(
                             ((-15.0, -30.0), BasePositionMode::MirrorPan).into(),
                         ),
                     },
                     ButtonMapping {
-                        note: Note::new(43),
+                        coordinate: ButtonCoordinate::new(3, 5),
                         on_action: ButtonAction::UpdateBasePosition(
                             ((30.0, -30.0), BasePositionMode::MirrorPan).into(),
                         ),
                     },
                     ButtonMapping {
-                        note: Note::new(35),
+                        coordinate: ButtonCoordinate::new(3, 4),
                         on_action: ButtonAction::UpdateBasePosition(
                             ((50.0, -75.0), BasePositionMode::MirrorPan).into(),
                         ),
@@ -541,7 +541,7 @@ pub fn default_midi_mapping() -> MidiMapping {
                 ButtonType::Toggle,
                 vec![
                     ButtonMapping {
-                        note: Note::new(3),
+                        coordinate: ButtonCoordinate::new(3, 0),
                         on_action: ButtonAction::ActivatePositionEffect(PositionEffect::new(
                             Some(PositionModulator::new(
                                 Waveform::TriangleDown,
@@ -560,7 +560,7 @@ pub fn default_midi_mapping() -> MidiMapping {
                         )),
                     },
                     ButtonMapping {
-                        note: Note::new(11),
+                        coordinate: ButtonCoordinate::new(3, 1),
                         on_action: ButtonAction::ActivatePositionEffect(PositionEffect::new(
                             Some(PositionModulator::new(
                                 Waveform::TriangleDown,
@@ -579,7 +579,7 @@ pub fn default_midi_mapping() -> MidiMapping {
                         )),
                     },
                     ButtonMapping {
-                        note: Note::new(19),
+                        coordinate: ButtonCoordinate::new(3, 2),
                         on_action: ButtonAction::ActivatePositionEffect(PositionEffect::new(
                             Some(PositionModulator::new(
                                 Waveform::TriangleDown,
@@ -601,73 +601,88 @@ pub fn default_midi_mapping() -> MidiMapping {
             ),
         ],
         vec![
+            // Pretending shift doesnt exist for now
+            // MetaButtonMapping {
+            //     location: ButtonGridLocation::MetaRight,
+            //     coordinate: ButtonCoordinate::new(0, 0),
+            //     on_action: MetaButtonAction::EnableShiftMode,
+            //     off_action: Some(MetaButtonAction::DisableShiftMode),
+            // },
             MetaButtonMapping {
-                note: Note::new(98),
-                on_action: MetaButtonAction::EnableShiftMode,
-                off_action: Some(MetaButtonAction::DisableShiftMode),
-            },
-            MetaButtonMapping {
-                note: Note::new(89),
+                location: ButtonGridLocation::MetaRight,
+                coordinate: ButtonCoordinate::new(0, 0),
                 on_action: MetaButtonAction::TapTempo,
                 off_action: None,
             },
             MetaButtonMapping {
-                note: Note::new(64),
+                location: ButtonGridLocation::MetaBottom,
+                coordinate: ButtonCoordinate::new(0, 0),
                 on_action: MetaButtonAction::SelectFixtureGroupControl(FixtureGroupId::new(1)),
                 off_action: None,
             },
             MetaButtonMapping {
-                note: Note::new(65),
+                location: ButtonGridLocation::MetaBottom,
+                coordinate: ButtonCoordinate::new(1, 0),
                 on_action: MetaButtonAction::SelectFixtureGroupControl(FixtureGroupId::new(2)),
                 off_action: None,
             },
             MetaButtonMapping {
-                note: Note::new(66),
+                location: ButtonGridLocation::MetaBottom,
+                coordinate: ButtonCoordinate::new(2, 0),
                 on_action: MetaButtonAction::SelectFixtureGroupControl(FixtureGroupId::new(3)),
                 off_action: None,
             },
             MetaButtonMapping {
-                note: Note::new(68),
+                location: ButtonGridLocation::MetaBottom,
+                coordinate: ButtonCoordinate::new(4, 0),
                 on_action: MetaButtonAction::SelectScene(SceneId::new(1)),
                 off_action: None,
             },
             MetaButtonMapping {
-                note: Note::new(69),
+                location: ButtonGridLocation::MetaBottom,
+                coordinate: ButtonCoordinate::new(5, 0),
                 on_action: MetaButtonAction::SelectScene(SceneId::new(2)),
                 off_action: None,
             },
             MetaButtonMapping {
-                note: Note::new(70),
+                location: ButtonGridLocation::MetaBottom,
+                coordinate: ButtonCoordinate::new(6, 0),
                 on_action: MetaButtonAction::SelectScene(SceneId::new(3)),
                 off_action: None,
             },
             MetaButtonMapping {
-                note: Note::new(71),
+                location: ButtonGridLocation::MetaBottom,
+                coordinate: ButtonCoordinate::new(7, 0),
                 on_action: MetaButtonAction::SelectScene(SceneId::new(4)),
                 off_action: None,
             },
             MetaButtonMapping {
-                note: Note::new(82),
+                location: ButtonGridLocation::MetaRight,
+                coordinate: ButtonCoordinate::new(0, 7),
                 on_action: MetaButtonAction::UpdateClockRate(Rate::new(1.0 / 3.0)),
                 off_action: None,
             },
             MetaButtonMapping {
-                note: Note::new(83),
+                location: ButtonGridLocation::MetaRight,
+                coordinate: ButtonCoordinate::new(0, 6),
                 on_action: MetaButtonAction::UpdateClockRate(Rate::new(1.0 / 2.0)),
                 off_action: None,
             },
             MetaButtonMapping {
-                note: Note::new(84),
+                location: ButtonGridLocation::MetaRight,
+                coordinate: ButtonCoordinate::new(0, 5),
                 on_action: MetaButtonAction::UpdateClockRate(Rate::new(1.0)),
                 off_action: None,
             },
             MetaButtonMapping {
-                note: Note::new(85),
+                location: ButtonGridLocation::MetaRight,
+                coordinate: ButtonCoordinate::new(0, 4),
                 on_action: MetaButtonAction::UpdateClockRate(Rate::new(2.0)),
                 off_action: None,
             },
             MetaButtonMapping {
-                note: Note::new(86),
+                location: ButtonGridLocation::MetaRight,
+                coordinate: ButtonCoordinate::new(0, 3),
                 on_action: MetaButtonAction::UpdateClockRate(Rate::new(3.0)),
                 off_action: None,
             },

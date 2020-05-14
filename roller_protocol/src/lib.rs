@@ -3,6 +3,13 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum InputEvent {
+    ButtonPressed(ButtonGridLocation, ButtonCoordinate),
+    ButtonReleased(ButtonGridLocation, ButtonCoordinate),
+    FaderUpdated(FaderId, f64),
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Message {
     Client(ClientMessage),
     Server(ServerMessage),
@@ -10,9 +17,7 @@ pub enum Message {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum ClientMessage {
-    ButtonPressed(ButtonGridLocation, ButtonCoordinate),
-    ButtonReleased(ButtonGridLocation, ButtonCoordinate),
-    FaderUpdated(FaderId, f64),
+    Input(InputEvent),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -24,6 +29,14 @@ pub enum ServerMessage {
 pub struct ButtonCoordinate {
     pub row_idx: usize,
     pub column_idx: usize,
+}
+impl ButtonCoordinate {
+    pub fn new(column_idx: usize, row_idx: usize) -> ButtonCoordinate {
+        ButtonCoordinate {
+            column_idx,
+            row_idx,
+        }
+    }
 }
 impl fmt::Display for ButtonCoordinate {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -70,7 +83,9 @@ impl Default for ButtonState {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, From, Into, PartialOrd, Ord)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, From, Into, PartialOrd, Ord,
+)]
 pub struct FaderId(usize);
 impl FaderId {
     pub fn new(x: usize) -> FaderId {

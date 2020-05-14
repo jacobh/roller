@@ -2,12 +2,15 @@ use derive_more::Constructor;
 use rustc_hash::FxHashMap;
 use std::time::Instant;
 
+use roller_protocol::InputEvent;
+
 use crate::{
     clock::{offsetted_for_fixture, Clock, ClockEvent, Rate},
     color::Color,
     control::{
         button::{ButtonGroup, ButtonMapping, MetaButtonAction, PadEvent},
-        midi::{MidiMapping, NoteState},
+        control_mapping::ControlMapping,
+        NoteState,
     },
     effect::{self, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet, PositionEffect},
     fixture::Fixture,
@@ -95,7 +98,7 @@ pub enum ControlMode {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum ControlEvent {
+pub enum ControlEvent<'a> {
     UpdateMasterDimmer(f64),
     UpdateGroupDimmer(FixtureGroupId, f64),
     UpdateDimmerEffectIntensity(f64),
@@ -103,13 +106,13 @@ pub enum ControlEvent {
     UpdateClockRate(Rate),
     SelectScene(SceneId),
     SelectFixtureGroupControl(FixtureGroupId),
-    UpdateButton(ButtonGroup, ButtonMapping, NoteState, Instant),
+    UpdateButton(&'a ButtonGroup, &'a ButtonMapping, NoteState, Instant),
     TapTempo(Instant),
     UpdateControlMode(ControlMode),
 }
 
 pub struct EngineState<'a> {
-    pub midi_mapping: &'a MidiMapping,
+    pub control_mapping: &'a ControlMapping,
     pub clock: Clock,
     pub master_dimmer: f64,
     pub control_mode: ControlMode,
@@ -118,9 +121,9 @@ pub struct EngineState<'a> {
     pub scene_fixture_group_button_states: FxHashMap<SceneId, SceneState>,
 }
 impl<'a> EngineState<'a> {
-    pub fn new(midi_mapping: &'a MidiMapping) -> EngineState<'a> {
+    pub fn new(control_mapping: &'a ControlMapping) -> EngineState<'a> {
         EngineState {
-            midi_mapping,
+            control_mapping,
             clock: Clock::new(128.0),
             master_dimmer: 1.0,
             control_mode: ControlMode::Normal,
@@ -150,7 +153,30 @@ impl<'a> EngineState<'a> {
         self.active_scene_state_mut()
             .fixture_group_state_mut(active_fixture_group_control)
     }
-    pub fn apply_event(&mut self, event: ControlEvent) {
+    pub fn apply_input_event(&mut self, event: InputEvent) {
+        let now = Instant::now();
+
+        let control_event = match event {
+            InputEvent::FaderUpdated(fader_id, value) => self
+                .control_mapping
+                .faders
+                .get(&fader_id)
+                .map(|fader| fader.control_event(value)),
+            InputEvent::ButtonPressed(location, coordinate) => self
+                .control_mapping
+                .find_button(location, coordinate)
+                .and_then(|button_ref| button_ref.into_control_event(NoteState::On, now)),
+            InputEvent::ButtonReleased(location, coordinate) => self
+                .control_mapping
+                .find_button(location, coordinate)
+                .and_then(|button_ref| button_ref.into_control_event(NoteState::Off, now)),
+        };
+
+        if let Some(control_event) = control_event {
+            self.apply_event(control_event);
+        }
+    }
+    fn apply_event(&mut self, event: ControlEvent) {
         // dbg!(&event);
         match (&self.control_mode, event) {
             (_, ControlEvent::UpdateControlMode(mode)) => {
@@ -166,13 +192,13 @@ impl<'a> EngineState<'a> {
                 self.active_scene_state_mut().color_effect_intensity = intensity;
             }
             (_, ControlEvent::UpdateClockRate(rate)) => {
-                let pressed_notes = self
+                let pressed_coords = self
                     .control_fixture_group_state()
                     .button_states
-                    .pressed_notes();
+                    .pressed_coords();
 
                 // If there are any buttons currently pressed, update the rate of those buttons, note the global rate
-                if !pressed_notes.is_empty() {
+                if !pressed_coords.is_empty() {
                     self.control_fixture_group_state_mut()
                         .button_states
                         .update_pressed_button_rates(rate);
@@ -208,7 +234,7 @@ impl<'a> EngineState<'a> {
             (_, ControlEvent::UpdateButton(group, mapping, note_state, now)) => {
                 self.control_fixture_group_state_mut()
                     .button_states
-                    .update_button_state(&group, mapping, note_state, now);
+                    .update_button_state(&group, mapping.clone(), note_state, now);
             }
             (_, ControlEvent::TapTempo(now)) => {
                 self.clock.apply_event(ClockEvent::Tap(now));
@@ -350,7 +376,7 @@ impl<'a> EngineState<'a> {
     }
     fn meta_pad_events(&self) -> impl Iterator<Item = PadEvent<'_>> {
         let active_scene_button = self
-            .midi_mapping
+            .control_mapping
             .meta_buttons
             .values()
             .find(|button| button.on_action == MetaButtonAction::SelectScene(self.active_scene_id))
@@ -359,7 +385,7 @@ impl<'a> EngineState<'a> {
         let active_fixture_group_toggle_button =
             self.active_fixture_group_control
                 .map(|control_fixture_group_id| {
-                    self.midi_mapping
+                    self.control_mapping
                         .meta_buttons
                         .values()
                         .find(|button| {
@@ -381,7 +407,7 @@ impl<'a> EngineState<'a> {
 
         let clock_rate = self.control_fixture_group_state().clock_rate;
         let active_clock_rate_button = self
-            .midi_mapping
+            .control_mapping
             .meta_buttons
             .values()
             .find(|button| {

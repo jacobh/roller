@@ -1,145 +1,206 @@
-use async_std::{prelude::*, sync::Arc};
-use midi::{ControlChannel, MidiEvent, MidiInput, MidiOutput, Note};
-use rustc_hash::FxHashMap;
+use async_std::prelude::*;
+use midi::{MidiEvent, MidiInput, MidiOutput, Note};
+use roller_protocol::FaderId;
 use std::time::{Duration, Instant};
 
-use crate::{
-    control::{
-        button::{AkaiPadState, ButtonGroup, ButtonMapping, MetaButtonMapping, PadMapping},
-        fader::MidiFaderMapping,
-    },
-    lighting_engine::ControlEvent,
-};
+use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum NoteState {
-    On,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum AkaiPadState {
     Off,
+    Green,
+    GreenBlink,
+    Red,
+    RedBlink,
+    Yellow,
+    YellowBlink,
 }
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct MidiMapping {
-    faders: FxHashMap<ControlChannel, MidiFaderMapping>,
-    pub button_groups: Vec<ButtonGroup>,
-    pub meta_buttons: FxHashMap<Note, MetaButtonMapping>,
-}
-impl MidiMapping {
-    pub fn new(
-        faders: Vec<MidiFaderMapping>,
-        button_groups: Vec<ButtonGroup>,
-        meta_buttons: Vec<MetaButtonMapping>,
-    ) -> MidiMapping {
-        MidiMapping {
-            faders: faders
-                .into_iter()
-                .map(|mapping| (mapping.control_channel, mapping))
-                .collect(),
-            button_groups,
-            meta_buttons: meta_buttons
-                .into_iter()
-                .map(|mapping| (mapping.note, mapping))
-                .collect(),
+impl AkaiPadState {
+    fn as_byte(self) -> u8 {
+        match self {
+            AkaiPadState::Off => 0,
+            AkaiPadState::Green => 1,
+            AkaiPadState::GreenBlink => 2,
+            AkaiPadState::Red => 3,
+            AkaiPadState::RedBlink => 4,
+            AkaiPadState::Yellow => 5,
+            AkaiPadState::YellowBlink => 6,
         }
     }
-    fn group_buttons(&self) -> impl Iterator<Item = (&'_ ButtonGroup, &'_ ButtonMapping)> {
-        self.button_groups
-            .iter()
-            .flat_map(|group| group.buttons().map(move |button| (group, button)))
-    }
-    pub fn midi_to_control_event(&self, midi_event: &MidiEvent) -> Option<ControlEvent> {
-        let now = Instant::now();
+}
 
-        match dbg!(midi_event) {
-            MidiEvent::ControlChange { control, value } => self
-                .faders
-                .get(control)
-                .map(|fader| fader.control_event(1.0 / 127.0 * (*value as f64))),
-            MidiEvent::NoteOn { note, .. } => self
-                .group_buttons()
-                .find(|(_, button)| button.note == *note)
-                .map(|(group, button)| {
-                    button
-                        .clone()
-                        .into_control_event(group.clone(), NoteState::On, now)
-                })
-                .or_else(|| {
-                    self.meta_buttons
-                        .get(note)
-                        .map(|meta_button| meta_button.on_action.control_event(now))
-                }),
-            MidiEvent::NoteOff { note, .. } => self
-                .group_buttons()
-                .find(|(_, button)| button.note == *note)
-                .map(|(group, button)| {
-                    button
-                        .clone()
-                        .into_control_event(group.clone(), NoteState::Off, now)
-                })
-                .or_else(|| {
-                    self.meta_buttons
-                        .get(note)
-                        .and_then(|meta_button| meta_button.off_action.as_ref())
-                        .map(|off_action| off_action.control_event(now))
-                }),
-            _ => None,
-        }
+// Specific for akai apc mini. really the internal button location should be specific with coords
+fn coordinate_to_note(loc: &ButtonGridLocation, coord: &ButtonCoordinate) -> Note {
+    match loc {
+        ButtonGridLocation::Main => Note::new((8 * coord.row_idx + coord.column_idx) as u8),
+        ButtonGridLocation::MetaRight => Note::new((89 - coord.row_idx) as u8),
+        ButtonGridLocation::MetaBottom => Note::new((64 + coord.column_idx) as u8),
     }
-    pub fn pad_mappings(&self) -> impl Iterator<Item = PadMapping<'_>> {
-        self.group_buttons()
-            .map(PadMapping::from)
-            .chain(self.meta_buttons.values().map(PadMapping::from))
+}
+
+fn note_to_coordinate(note: Note) -> Option<(ButtonGridLocation, ButtonCoordinate)> {
+    let note = u8::from(note) as usize;
+    if note < 64 {
+        Some((
+            ButtonGridLocation::Main,
+            ButtonCoordinate {
+                row_idx: note / 8,
+                column_idx: note % 8,
+            },
+        ))
+    } else if note < 72 {
+        Some((
+            ButtonGridLocation::MetaBottom,
+            ButtonCoordinate {
+                row_idx: 0,
+                column_idx: note - 64,
+            },
+        ))
+    } else if note < 90 {
+        Some((
+            ButtonGridLocation::MetaRight,
+            ButtonCoordinate {
+                row_idx: 89 - note,
+                column_idx: 0,
+            },
+        ))
+    } else {
+        None
     }
 }
 
 pub struct MidiController {
-    midi_mapping: Arc<MidiMapping>,
     midi_input: MidiInput,
     midi_output: MidiOutput,
+    started_at: Instant,
 }
 impl MidiController {
-    pub fn new_for_device_name(
-        name: &str,
-        midi_mapping: Arc<MidiMapping>,
-    ) -> Result<MidiController, ()> {
+    pub fn new_for_device_name(name: &str) -> Result<MidiController, ()> {
         let midi_input = MidiInput::new(name).map_err(|_| ())?;
         let midi_output = MidiOutput::new(name).map_err(|_| ())?;
 
         Ok(MidiController {
-            midi_mapping,
             midi_input,
             midi_output,
+            started_at: Instant::now(),
         })
     }
-    pub fn control_events(&self) -> impl Stream<Item = ControlEvent> {
-        let mapping = self.midi_mapping.clone();
+    pub fn input_events(&self) -> impl Stream<Item = InputEvent> {
+        // TODO this should be moved to a "control device mapping"
+        fn midi_to_input_event(midi_event: &MidiEvent) -> Option<InputEvent> {
+            match dbg!(midi_event) {
+                MidiEvent::ControlChange { control, value } => {
+                    let fader_id = FaderId::new((u8::from(*control) - 48) as usize);
+                    let value = 1.0 / 127.0 * (*value as f64);
+                    Some(InputEvent::FaderUpdated(fader_id, value))
+                }
+                MidiEvent::NoteOn { note, .. } => {
+                    let (loc, coord) = note_to_coordinate(*note)?;
+                    Some(InputEvent::ButtonPressed(loc, coord))
+                }
+                MidiEvent::NoteOff { note, .. } => {
+                    let (loc, coord) = note_to_coordinate(*note)?;
+                    Some(InputEvent::ButtonReleased(loc, coord))
+                }
+                _ => None,
+            }
+        }
 
         self.midi_input
             .clone()
-            .map(move |midi_event| mapping.midi_to_control_event(&midi_event))
+            .map(move |midi_event| midi_to_input_event(&midi_event))
             .filter(|control_event| control_event.is_some())
             .map(|control_event| control_event.unwrap())
     }
-    pub async fn set_pad_color(&self, note: Note, pad_color: AkaiPadState) {
+    pub async fn set_button_state(
+        &self,
+        location: ButtonGridLocation,
+        coordinate: ButtonCoordinate,
+        state: ButtonState,
+    ) {
+        let note = coordinate_to_note(&location, &coordinate);
+        let (pad_color, illumination) = button_state_to_akai_pad_color(location, state);
+
+        // TODO this is only updated when the button state changes, so strobing buttons aren't working properly
+        let pad_color = match illumination {
+            Illumination::Solid => pad_color,
+            Illumination::Strobe => {
+                if self.started_at.elapsed().as_millis() % 250 < 100 {
+                    pad_color
+                } else {
+                    AkaiPadState::Off
+                }
+            }
+        };
+
         self.midi_output
             .send_packet(vec![0x90, u8::from(note), pad_color.as_byte()])
             .await
     }
-    pub async fn set_pad_colors(&self, pad_colors: impl IntoIterator<Item = (Note, AkaiPadState)>) {
-        for (note, pad_color) in pad_colors {
-            self.set_pad_color(note, pad_color).await
+    pub async fn set_button_states(
+        &self,
+        states: impl IntoIterator<Item = (ButtonGridLocation, ButtonCoordinate, ButtonState)>,
+    ) {
+        for (location, coordinate, state) in states {
+            self.set_button_state(location, coordinate, state).await
         }
     }
     pub async fn reset_pads(&self) {
-        for i in 0..64 {
-            self.set_pad_color(Note::new(i), AkaiPadState::Off).await;
+        for row_idx in 0..8 {
+            for column_idx in 0..8 {
+                self.set_button_state(
+                    ButtonGridLocation::Main,
+                    ButtonCoordinate {
+                        row_idx,
+                        column_idx,
+                    },
+                    ButtonState::Unused,
+                )
+                .await;
+            }
         }
     }
     pub async fn run_pad_startup(&self) {
-        for i in 0..64 {
-            self.set_pad_color(Note::new(i), AkaiPadState::Green).await;
-            async_std::task::sleep(Duration::from_millis(10)).await;
+        for row_idx in 0..8 {
+            for column_idx in 0..8 {
+                self.set_button_state(
+                    ButtonGridLocation::Main,
+                    ButtonCoordinate {
+                        row_idx,
+                        column_idx,
+                    },
+                    ButtonState::Active,
+                )
+                .await;
+                async_std::task::sleep(Duration::from_millis(10)).await;
+            }
         }
         async_std::task::sleep(Duration::from_millis(150)).await;
         self.reset_pads().await;
+    }
+}
+
+enum Illumination {
+    Solid,
+    Strobe,
+}
+
+fn button_state_to_akai_pad_color(
+    location: ButtonGridLocation,
+    state: ButtonState,
+) -> (AkaiPadState, Illumination) {
+    match location {
+        ButtonGridLocation::Main => match state {
+            ButtonState::Active => (AkaiPadState::Green, Illumination::Solid),
+            ButtonState::Inactive => (AkaiPadState::Yellow, Illumination::Solid),
+            ButtonState::Deactivated => (AkaiPadState::Red, Illumination::Solid),
+            ButtonState::Unused => (AkaiPadState::Off, Illumination::Solid),
+        },
+        ButtonGridLocation::MetaBottom | ButtonGridLocation::MetaRight => match state {
+            ButtonState::Active => (AkaiPadState::Green, Illumination::Strobe),
+            ButtonState::Inactive => (AkaiPadState::Yellow, Illumination::Solid),
+            ButtonState::Deactivated => (AkaiPadState::Red, Illumination::Solid),
+            ButtonState::Unused => (AkaiPadState::Off, Illumination::Solid),
+        },
     }
 }
