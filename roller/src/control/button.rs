@@ -1,9 +1,9 @@
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
-use roller_protocol::{ButtonCoordinate, ButtonGridLocation};
+use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState};
 
 use crate::{
     clock::Rate,
@@ -176,7 +176,7 @@ impl AkaiPadState {
 pub struct Pad<'a> {
     mapping: PadMapping<'a>,
     group_toggle_state: GroupToggleState,
-    state: AkaiPadState,
+    state: ButtonState,
     active_group_coords: Vec<ButtonCoordinate>,
 }
 impl<'a> Pad<'a> {
@@ -185,7 +185,7 @@ impl<'a> Pad<'a> {
             mapping,
             group_toggle_state,
             active_group_coords: Vec::with_capacity(8),
-            state: AkaiPadState::Yellow,
+            state: ButtonState::Inactive,
         }
     }
     fn apply_event(&mut self, event: &PadEvent<'a>) {
@@ -200,34 +200,34 @@ impl<'a> Pad<'a> {
             ButtonType::Flash => {
                 if event.mapping == self.mapping {
                     self.state = match event.note_state {
-                        NoteState::On => self.mapping.active_color(),
-                        NoteState::Off => self.mapping.inactive_color(),
+                        NoteState::On => ButtonState::Active,
+                        NoteState::Off => ButtonState::Inactive,
                     }
                 }
             }
             ButtonType::Toggle => match self.group_toggle_state {
                 GroupToggleState::On(coord) => {
                     if &coord == self.mapping.coordinate() {
-                        self.state = self.mapping.active_color();
+                        self.state = ButtonState::Active;
                     } else {
-                        self.state = self.mapping.inactive_color();
+                        self.state = ButtonState::Inactive;
                     }
                 }
                 GroupToggleState::Off => {
-                    self.state = self.mapping.inactive_color();
+                    self.state = ButtonState::Inactive;
                 }
             },
             ButtonType::Switch => match event.note_state {
                 NoteState::On => {
                     if event.mapping == self.mapping {
-                        self.state = self.mapping.active_color();
+                        self.state = ButtonState::Active;
                     }
 
                     if group_id_match.is_match() {
                         self.active_group_coords.push(*event.mapping.coordinate());
 
                         if !self.active_group_coords.contains(self.mapping.coordinate()) {
-                            self.state = self.mapping.deactivated_color();
+                            self.state = ButtonState::Deactivated;
                         }
                     }
                 }
@@ -239,10 +239,10 @@ impl<'a> Pad<'a> {
                             if self.active_group_coords.is_empty() {
                                 // leave as green
                             } else {
-                                self.state = self.mapping.deactivated_color();
+                                self.state = ButtonState::Deactivated;
                             }
                         } else if self.active_group_coords.is_empty() {
-                            self.state = self.mapping.inactive_color();
+                            self.state = ButtonState::Inactive;
                         }
                     }
                 }
@@ -315,15 +315,6 @@ impl<'a> PadMapping<'a> {
             PadMapping::Meta(_) => ButtonType::Switch,
         }
     }
-    fn active_color(&self) -> AkaiPadState {
-        AkaiPadState::Green
-    }
-    fn inactive_color(&self) -> AkaiPadState {
-        AkaiPadState::Yellow
-    }
-    fn deactivated_color(&self) -> AkaiPadState {
-        AkaiPadState::Red
-    }
 }
 
 impl<'a> From<(&'a ButtonGroup, &'a ButtonMapping)> for PadMapping<'a> {
@@ -377,7 +368,7 @@ pub fn pad_states<'a>(
     all_pads: Vec<PadMapping<'a>>,
     group_toggle_states: &FxHashMap<ButtonGroupId, GroupToggleState>,
     pad_events: impl IntoIterator<Item = PadEvent<'a>>,
-) -> FxHashMap<(ButtonGridLocation, ButtonCoordinate), AkaiPadState> {
+) -> FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState> {
     let mut state: Vec<_> = all_pads
         .into_iter()
         .map(|mapping| {

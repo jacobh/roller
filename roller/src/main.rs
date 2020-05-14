@@ -1,8 +1,7 @@
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
-use rustc_hash::FxHashMap;
 use std::path::PathBuf;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use structopt::StructOpt;
 
 use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent};
@@ -38,9 +37,9 @@ async fn run_tick<'a>(
     fixtures: &mut Vec<fixture::Fixture>,
     dmx_sender: &async_std::sync::Sender<(i32, [u8; 512])>,
     midi_controller: Option<&control::midi::MidiController>,
-    current_pad_states: &mut rustc_hash::FxHashMap<
+    current_button_states: &mut rustc_hash::FxHashMap<
         (ButtonGridLocation, ButtonCoordinate),
-        AkaiPadState,
+        ButtonState,
     >,
     web_pad_state_update_send: &async_std::sync::Sender<
         Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>,
@@ -61,24 +60,17 @@ async fn run_tick<'a>(
         state.pad_events(),
     );
 
-    // find the pads that have updated since the last tick
-    let changed_pad_states: Vec<(ButtonGridLocation, ButtonCoordinate, AkaiPadState)> =
-        new_pad_states
-            .iter()
-            .filter(|(location_coord, state)| {
-                current_pad_states
-                    .get(location_coord)
-                    .map(|prev_state| state != &prev_state)
-                    .unwrap_or(true)
-            })
-            .map(|((loc, coord), state)| (*loc, *coord, *state))
-            .collect();
-
-    // temporary shim
-    let changed_button_states = changed_pad_states
-        .into_iter()
-        .map(|(loc, coord, state)| (loc, coord, akai_pad_state_to_button_state(&state)))
-        .collect::<Vec<_>>();
+    // find the buttons that have updated since the last tick
+    let changed_button_states: Vec<_> = new_pad_states
+        .iter()
+        .filter(|(location_coord, state)| {
+            current_button_states
+                .get(location_coord)
+                .map(|prev_state| state != &prev_state)
+                .unwrap_or(true)
+        })
+        .map(|((loc, coord), state)| (*loc, *coord, *state))
+        .collect();
 
     if let Some(midi_controller) = midi_controller {
         midi_controller
@@ -88,7 +80,7 @@ async fn run_tick<'a>(
 
     web_pad_state_update_send.send(changed_button_states).await;
 
-    *current_pad_states = new_pad_states;
+    *current_button_states = new_pad_states;
 }
 
 #[async_std::main]
@@ -128,7 +120,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         Clock(clock::ClockEvent),
     }
 
-    let mut current_pad_states = pad_states(
+    let mut current_button_states = pad_states(
         control_mapping.pad_mappings().collect(),
         &state
             .control_fixture_group_state()
@@ -138,18 +130,11 @@ async fn main() -> Result<(), async_std::io::Error> {
         state.pad_events(),
     );
 
-    // temporary shim
-    let initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState> =
-        current_pad_states
-            .iter()
-            .map(|(loc_coord, state)| (*loc_coord, akai_pad_state_to_button_state(state)))
-            .collect();
-
     if let Some(midi_controller) = &midi_controller {
         midi_controller.run_pad_startup().await;
         midi_controller
             .set_button_states(
-                initial_button_states
+                current_button_states
                     .iter()
                     .map(|((loc, coord), val)| (*loc, *coord, *val)),
             )
@@ -187,7 +172,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     pin_mut!(events);
 
     web::serve_frontend(
-        &initial_button_states,
+        &current_button_states,
         web_pad_state_update_recv,
         web_input_events_send,
     );
@@ -200,7 +185,7 @@ async fn main() -> Result<(), async_std::io::Error> {
                     &mut fixtures,
                     &dmx_sender,
                     midi_controller.as_ref(),
-                    &mut current_pad_states,
+                    &mut current_button_states,
                     &web_pad_state_update_send,
                 )
                 .await;
@@ -212,17 +197,4 @@ async fn main() -> Result<(), async_std::io::Error> {
         }
     }
     unreachable!()
-}
-
-// temporary shim
-fn akai_pad_state_to_button_state(state: &AkaiPadState) -> ButtonState {
-    match state {
-        AkaiPadState::Off => ButtonState::Unused,
-        AkaiPadState::Green => ButtonState::Active,
-        AkaiPadState::GreenBlink => ButtonState::Active,
-        AkaiPadState::Red => ButtonState::Deactivated,
-        AkaiPadState::RedBlink => ButtonState::Deactivated,
-        AkaiPadState::Yellow => ButtonState::Inactive,
-        AkaiPadState::YellowBlink => ButtonState::Inactive,
-    }
 }
