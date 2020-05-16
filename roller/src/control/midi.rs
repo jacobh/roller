@@ -71,18 +71,44 @@ fn note_to_coordinate(note: Note) -> Option<(ButtonGridLocation, ButtonCoordinat
 
 pub struct MidiController {
     midi_input: MidiInput,
-    midi_output: MidiOutput,
-    started_at: Instant,
+    button_update_send: async_std::sync::Sender<Vec<(Note, AkaiPadState, Illumination)>>,
 }
 impl MidiController {
-    pub fn new_for_device_name(name: &str) -> Result<MidiController, ()> {
-        let midi_input = MidiInput::new(name).map_err(|_| ())?;
-        let midi_output = MidiOutput::new(name).map_err(|_| ())?;
+    pub fn new_for_device_name<'a>(name: impl Into<String>) -> Result<MidiController, ()> {
+        let name = name.into();
+        let midi_input = MidiInput::new(&name).map_err(|_| ())?;
+
+        let (button_update_send, button_update_recv) =
+            async_std::sync::channel::<Vec<(Note, AkaiPadState, Illumination)>>(8);
+
+        async_std::task::spawn(async move {
+            let started_at = Instant::now();
+            let midi_output = MidiOutput::new(&name).map_err(|_| ()).unwrap();
+
+            while let Some(updates) = button_update_recv.recv().await {
+                for (note, state, illumination) in updates.into_iter() {
+                    // TODO this is only updated when the button state changes, so strobing buttons aren't working properly
+                    let state = match illumination {
+                        Illumination::Solid => state,
+                        Illumination::Strobe => {
+                            if started_at.elapsed().as_millis() % 250 < 100 {
+                                state
+                            } else {
+                                AkaiPadState::Off
+                            }
+                        }
+                    };
+
+                    midi_output
+                        .send_packet(vec![0x90, u8::from(note), state.as_byte()])
+                        .await
+                }
+            }
+        });
 
         Ok(MidiController {
             midi_input,
-            midi_output,
-            started_at: Instant::now(),
+            button_update_send,
         })
     }
     pub fn input_events(&self) -> impl Stream<Item = InputEvent> {
@@ -121,21 +147,9 @@ impl MidiController {
         let note = coordinate_to_note(&location, &coordinate);
         let (pad_color, illumination) = button_state_to_akai_pad_color(location, state);
 
-        // TODO this is only updated when the button state changes, so strobing buttons aren't working properly
-        let pad_color = match illumination {
-            Illumination::Solid => pad_color,
-            Illumination::Strobe => {
-                if self.started_at.elapsed().as_millis() % 250 < 100 {
-                    pad_color
-                } else {
-                    AkaiPadState::Off
-                }
-            }
-        };
-
-        self.midi_output
-            .send_packet(vec![0x90, u8::from(note), pad_color.as_byte()])
-            .await
+        self.button_update_send
+            .send(vec![(note, pad_color, illumination)])
+            .await;
     }
     pub async fn set_button_states(
         &self,

@@ -87,6 +87,8 @@ impl Stream for MidiInput {
     }
 }
 
+unsafe impl Send for MidiOutput {}
+unsafe impl Sync for MidiOutput {}
 #[derive(Debug)]
 pub struct MidiOutput {
     _client: coremidi::Client,
