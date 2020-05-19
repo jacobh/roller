@@ -1,6 +1,9 @@
 use async_std::prelude::*;
+use futures::pin_mut;
+use futures::stream::{self, StreamExt};
 use midi::{MidiEvent, MidiInput, MidiOutput, Note};
 use roller_protocol::FaderId;
+use rustc_hash::FxHashMap;
 use std::time::{Duration, Instant};
 
 use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent};
@@ -84,24 +87,49 @@ impl MidiController {
         async_std::task::spawn(async move {
             let started_at = Instant::now();
             let midi_output = MidiOutput::new(&name).map_err(|_| ()).unwrap();
+            let mut current_button_strobes: FxHashMap<Note, AkaiPadState> = FxHashMap::default();
 
-            while let Some(updates) = button_update_recv.recv().await {
-                for (note, state, illumination) in updates.into_iter() {
-                    // TODO this is only updated when the button state changes, so strobing buttons aren't working properly
-                    let state = match illumination {
-                        Illumination::Solid => state,
-                        Illumination::Strobe => {
-                            if started_at.elapsed().as_millis() % 250 < 100 {
-                                state
-                            } else {
-                                AkaiPadState::Off
+            enum Event {
+                ButtonUpdates(Vec<(Note, AkaiPadState, Illumination)>),
+                Tick,
+            }
+
+            let ticks = crate::utils::tick_stream(Duration::from_millis(40)).map(|_| Event::Tick);
+            let button_updates = button_update_recv.map(Event::ButtonUpdates);
+            let events = stream::select(ticks, button_updates);
+
+            pin_mut!(events);
+
+            while let Some(event) = events.next().await {
+                match event {
+                    Event::ButtonUpdates(updates) => {
+                        for (note, state, illumination) in updates.into_iter() {
+                            match illumination {
+                                Illumination::Solid => {
+                                    current_button_strobes.remove(&note);
+                                    midi_output
+                                        .send_packet(vec![0x90, u8::from(note), state.as_byte()])
+                                        .await;
+                                }
+                                Illumination::Strobe => {
+                                    current_button_strobes.insert(note, state);
+                                }
                             }
                         }
-                    };
+                    }
+                    Event::Tick => {
+                        for (note, state) in current_button_strobes.iter() {
+                            let state = if started_at.elapsed().as_millis() % 250 < 100 {
+                                *state
+                            } else {
+                                AkaiPadState::Off
+                            };
 
-                    midi_output
-                        .send_packet(vec![0x90, u8::from(note), state.as_byte()])
-                        .await
+                            midi_output
+                                .send_packet(vec![0x90, u8::from(*note), state.as_byte()])
+                                .await;
+                        }
+                    }
                 }
             }
         });
@@ -134,9 +162,7 @@ impl MidiController {
 
         self.midi_input
             .clone()
-            .map(move |midi_event| midi_to_input_event(&midi_event))
-            .filter(|control_event| control_event.is_some())
-            .map(|control_event| control_event.unwrap())
+            .filter_map(move |midi_event| futures::future::ready(midi_to_input_event(&midi_event)))
     }
     pub async fn set_button_state(
         &self,
