@@ -1,5 +1,4 @@
 use rustc_hash::FxHashMap;
-use std::collections::BTreeMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
@@ -128,24 +127,27 @@ pub struct MetaButtonMapping {
 pub struct ButtonGroup {
     pub id: ButtonGroupId,
     pub button_type: ButtonType,
-    buttons: BTreeMap<ButtonCoordinate, ButtonMapping>,
+    pub buttons: Vec<ButtonMapping>,
 }
 impl ButtonGroup {
-    pub fn buttons(&self) -> impl Iterator<Item = &'_ ButtonMapping> {
-        self.buttons.values()
-    }
     pub fn new(
         button_type: ButtonType,
         buttons: impl IntoIterator<Item = ButtonMapping>,
     ) -> ButtonGroup {
         ButtonGroup {
             id: ButtonGroupId::new(),
-            buttons: buttons
-                .into_iter()
-                .map(|button| (button.coordinate, button))
-                .collect(),
+            buttons: buttons.into_iter().collect(),
             button_type,
         }
+    }
+    pub fn iter(&self) -> impl Iterator<Item = (&'_ ButtonGroup, &'_ ButtonMapping)> {
+        self.buttons.iter().map(move |button| (self, button))
+    }
+    pub fn find_button(&self, coordinate: ButtonCoordinate) -> Option<ButtonRef<'_>> {
+        self.buttons
+            .iter()
+            .find(|button| button.coordinate == coordinate)
+            .map(|button| ButtonRef::Standard(self, button))
     }
 }
 

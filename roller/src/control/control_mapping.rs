@@ -33,9 +33,7 @@ impl ControlMapping {
         }
     }
     fn group_buttons(&self) -> impl Iterator<Item = (&'_ ButtonGroup, &'_ ButtonMapping)> {
-        self.button_groups
-            .iter()
-            .flat_map(|group| group.buttons().map(move |button| (group, button)))
+        self.button_groups.iter().flat_map(|group| group.iter())
     }
     pub fn find_button(
         &self,
