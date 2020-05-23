@@ -4,7 +4,7 @@ use rustc_hash::FxHashMap;
 use roller_protocol::{ButtonCoordinate, ButtonGridLocation};
 
 use crate::control::{
-    button::{ButtonGroup, ButtonMapping, ButtonRef, MetaButtonMapping, PadMapping},
+    button::{ButtonGroup, ButtonMapping, ButtonRef, MetaButtonMapping},
     fader::FaderControlMapping,
 };
 
@@ -52,9 +52,9 @@ impl ControlMapping {
                 .map(|meta_button| ButtonRef::Meta(meta_button))
         }
     }
-    pub fn pad_mappings(&self) -> impl Iterator<Item = PadMapping<'_>> {
+    pub fn button_refs(&self) -> impl Iterator<Item = ButtonRef<'_>> {
         self.group_buttons()
-            .map(PadMapping::from)
-            .chain(self.meta_buttons.values().map(PadMapping::from))
+            .map(ButtonRef::from)
+            .chain(self.meta_buttons.values().map(ButtonRef::from))
     }
 }

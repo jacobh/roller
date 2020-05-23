@@ -149,11 +149,43 @@ impl ButtonGroup {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ButtonRef<'a> {
     Standard(&'a ButtonGroup, &'a ButtonMapping),
     Meta(&'a MetaButtonMapping),
 }
 impl<'a> ButtonRef<'a> {
+    fn location(&self) -> ButtonGridLocation {
+        match self {
+            ButtonRef::Standard(_, _) => ButtonGridLocation::Main,
+            ButtonRef::Meta(mapping) => mapping.location,
+        }
+    }
+    fn coordinate(&self) -> &ButtonCoordinate {
+        match self {
+            ButtonRef::Standard(_, mapping) => &mapping.coordinate,
+            ButtonRef::Meta(mapping) => &mapping.coordinate,
+        }
+    }
+    fn group_id(&self) -> Option<ButtonGroupId> {
+        match self {
+            ButtonRef::Standard(group, _) => Some(group.id),
+            ButtonRef::Meta(mapping) => match mapping.on_action {
+                MetaButtonAction::UpdateClockRate(_) => Some(*CLOCK_RATE_GROUP_ID),
+                MetaButtonAction::SelectScene(_) => Some(*SCENE_GROUP_ID),
+                MetaButtonAction::SelectFixtureGroupControl(_) => Some(*TOGGLE_FIXTURE_GROUP_ID),
+                MetaButtonAction::TapTempo
+                | MetaButtonAction::EnableShiftMode
+                | MetaButtonAction::DisableShiftMode => None,
+            },
+        }
+    }
+    fn button_type(&self) -> ButtonType {
+        match self {
+            ButtonRef::Standard(group, _) => group.button_type,
+            ButtonRef::Meta(_) => ButtonType::Switch,
+        }
+    }
     pub fn into_control_event(
         self,
         note_state: NoteState,
@@ -175,13 +207,13 @@ impl<'a> ButtonRef<'a> {
 }
 
 pub struct Pad<'a> {
-    mapping: PadMapping<'a>,
+    mapping: ButtonRef<'a>,
     group_toggle_state: GroupToggleState,
     state: ButtonState,
     active_group_coords: Vec<ButtonCoordinate>,
 }
 impl<'a> Pad<'a> {
-    fn new(mapping: PadMapping<'a>, group_toggle_state: GroupToggleState) -> Pad<'a> {
+    fn new(mapping: ButtonRef<'a>, group_toggle_state: GroupToggleState) -> Pad<'a> {
         Pad {
             mapping,
             group_toggle_state,
@@ -279,64 +311,25 @@ impl ButtonGroupIdMatch {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum PadMapping<'a> {
-    Standard(&'a ButtonMapping, ButtonGroupId, ButtonType),
-    Meta(&'a MetaButtonMapping),
-}
-impl<'a> PadMapping<'a> {
-    fn location(&self) -> ButtonGridLocation {
-        match self {
-            PadMapping::Standard(_, _, _) => ButtonGridLocation::Main,
-            PadMapping::Meta(mapping) => mapping.location,
-        }
-    }
-    fn coordinate(&self) -> &ButtonCoordinate {
-        match self {
-            PadMapping::Standard(mapping, _, _) => &mapping.coordinate,
-            PadMapping::Meta(mapping) => &mapping.coordinate,
-        }
-    }
-    fn group_id(&self) -> Option<ButtonGroupId> {
-        match self {
-            PadMapping::Standard(_, group_id, _) => Some(*group_id),
-            PadMapping::Meta(mapping) => match mapping.on_action {
-                MetaButtonAction::UpdateClockRate(_) => Some(*CLOCK_RATE_GROUP_ID),
-                MetaButtonAction::SelectScene(_) => Some(*SCENE_GROUP_ID),
-                MetaButtonAction::SelectFixtureGroupControl(_) => Some(*TOGGLE_FIXTURE_GROUP_ID),
-                MetaButtonAction::TapTempo
-                | MetaButtonAction::EnableShiftMode
-                | MetaButtonAction::DisableShiftMode => None,
-            },
-        }
-    }
-    fn button_type(&self) -> ButtonType {
-        match self {
-            PadMapping::Standard(_, _, button_type) => *button_type,
-            PadMapping::Meta(_) => ButtonType::Switch,
-        }
+impl<'a> From<(&'a ButtonGroup, &'a ButtonMapping)> for ButtonRef<'a> {
+    fn from((group, mapping): (&'a ButtonGroup, &'a ButtonMapping)) -> ButtonRef<'a> {
+        ButtonRef::Standard(group, mapping)
     }
 }
-
-impl<'a> From<(&'a ButtonGroup, &'a ButtonMapping)> for PadMapping<'a> {
-    fn from((group, mapping): (&'a ButtonGroup, &'a ButtonMapping)) -> PadMapping<'a> {
-        PadMapping::Standard(mapping, group.id, group.button_type)
-    }
-}
-impl<'a> From<&'a MetaButtonMapping> for PadMapping<'a> {
-    fn from(mapping: &'a MetaButtonMapping) -> PadMapping<'a> {
-        PadMapping::Meta(mapping)
+impl<'a> From<&'a MetaButtonMapping> for ButtonRef<'a> {
+    fn from(mapping: &'a MetaButtonMapping) -> ButtonRef<'a> {
+        ButtonRef::Meta(mapping)
     }
 }
 
 pub struct PadEvent<'a> {
-    mapping: PadMapping<'a>,
+    mapping: ButtonRef<'a>,
     note_state: NoteState,
 }
 impl<'a> PadEvent<'a> {
     pub fn new<T>(mapping: &'a T, note_state: NoteState) -> PadEvent<'a>
     where
-        &'a T: Into<PadMapping<'a>>,
+        &'a T: Into<ButtonRef<'a>>,
     {
         PadEvent {
             mapping: mapping.into(),
@@ -345,7 +338,7 @@ impl<'a> PadEvent<'a> {
     }
     pub fn new_on<T>(mapping: &'a T) -> PadEvent<'a>
     where
-        &'a T: Into<PadMapping<'a>>,
+        &'a T: Into<ButtonRef<'a>>,
     {
         PadEvent::new(mapping, NoteState::On)
     }
@@ -353,24 +346,20 @@ impl<'a> PadEvent<'a> {
 
 // convert from an item in the `ButtonStateMap` hashmap
 impl<'a> From<(ButtonGroupInfo<'a>, ButtonInfo<'a>)> for PadEvent<'a> {
-    fn from((group_info, button_info): (ButtonGroupInfo, ButtonInfo<'a>)) -> PadEvent<'a> {
+    fn from((group_info, button_info): (ButtonGroupInfo<'a>, ButtonInfo<'a>)) -> PadEvent<'a> {
         PadEvent {
-            mapping: PadMapping::Standard(
-                button_info.button,
-                group_info.group.id,
-                group_info.group.button_type,
-            ),
+            mapping: ButtonRef::Standard(group_info.group, button_info.button),
             note_state: button_info.note_state,
         }
     }
 }
 
 pub fn pad_states<'a>(
-    all_pads: Vec<PadMapping<'a>>,
+    all_buttons: Vec<ButtonRef<'a>>,
     group_toggle_states: &FxHashMap<ButtonGroupId, GroupToggleState>,
     pad_events: impl IntoIterator<Item = PadEvent<'a>>,
 ) -> FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState> {
-    let mut state: Vec<_> = all_pads
+    let mut state: Vec<_> = all_buttons
         .into_iter()
         .map(|mapping| {
             let toggle_state = mapping
