@@ -352,13 +352,13 @@ impl<'a> PadEvent<'a> {
 }
 
 // convert from an item in the `ButtonStateMap` hashmap
-impl<'a> From<(ButtonGroupInfo, ButtonInfo<'a>)> for PadEvent<'a> {
+impl<'a> From<(ButtonGroupInfo<'a>, ButtonInfo<'a>)> for PadEvent<'a> {
     fn from((group_info, button_info): (ButtonGroupInfo, ButtonInfo<'a>)) -> PadEvent<'a> {
         PadEvent {
             mapping: PadMapping::Standard(
                 button_info.button,
-                group_info.id,
-                group_info.button_type,
+                group_info.group.id,
+                group_info.group.button_type,
             ),
             note_state: button_info.note_state,
         }
