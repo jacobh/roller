@@ -288,9 +288,8 @@ impl<'a> PadGroup<'a> {
             group,
             toggle_state,
             pads: group
-                .buttons
-                .iter()
-                .map(|button| Pad::new(ButtonRef::Standard(group, button)))
+                .button_refs()
+                .map(Pad::new)
                 .collect(),
             active_group_coords: Vec::with_capacity(8),
         }
