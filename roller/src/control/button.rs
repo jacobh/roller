@@ -148,6 +148,31 @@ impl ButtonGroup {
     }
 }
 
+pub enum ButtonRef<'a> {
+    Standard(&'a ButtonGroup, &'a ButtonMapping),
+    Meta(&'a MetaButtonMapping),
+}
+impl<'a> ButtonRef<'a> {
+    pub fn into_control_event(
+        self,
+        note_state: NoteState,
+        now: Instant,
+    ) -> Option<ControlEvent<'a>> {
+        match (self, note_state) {
+            (ButtonRef::Standard(group, button), _) => {
+                Some(ControlEvent::UpdateButton(group, button, note_state, now))
+            }
+            (ButtonRef::Meta(meta_button), NoteState::On) => {
+                Some(meta_button.on_action.control_event(now))
+            }
+            (ButtonRef::Meta(meta_button), NoteState::Off) => meta_button
+                .off_action
+                .as_ref()
+                .map(|action| action.control_event(now)),
+        }
+    }
+}
+
 pub struct Pad<'a> {
     mapping: PadMapping<'a>,
     group_toggle_state: GroupToggleState,
