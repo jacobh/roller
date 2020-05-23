@@ -297,6 +297,32 @@ impl<'a> Pad<'a> {
     }
 }
 
+struct PadGroup<'a> {
+    group: &'a ButtonGroup,
+    active_group_coords: Vec<ButtonCoordinate>,
+    toggle_state: GroupToggleState,
+    pads: Vec<Pad<'a>>,
+}
+impl<'a> PadGroup<'a> {
+    fn new(group: &'a ButtonGroup, toggle_state: GroupToggleState) -> PadGroup<'a> {
+        PadGroup {
+            group,
+            toggle_state,
+            pads: group
+                .buttons
+                .iter()
+                .map(|button| Pad::new(ButtonRef::Standard(group, button), toggle_state))
+                .collect(),
+            active_group_coords: Vec::with_capacity(8),
+        }
+    }
+    fn apply_event(&mut self, event: &PadEvent<'a>) {
+        for pad in self.pads.iter_mut() {
+            pad.apply_event(event);
+        }
+    }
+}
+
 enum ButtonGroupIdMatch {
     MatchingGroupId(ButtonGroupId),
     NoGroupId,
@@ -361,26 +387,38 @@ pub fn pad_states<'a>(
     group_toggle_states: &FxHashMap<ButtonGroupId, GroupToggleState>,
     pad_events: impl IntoIterator<Item = PadEvent<'a>>,
 ) -> FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState> {
-    let mut state: Vec<_> = control_mapping
-        .button_refs()
-        .map(|mapping| {
-            let toggle_state = mapping
-                .group_id()
-                .and_then(|id| group_toggle_states.get(&id).copied())
-                .unwrap_or_else(|| GroupToggleState::Off);
+    let mut state: Vec<PadGroup<'_>> = control_mapping
+        .button_groups
+        .iter()
+        .map(|button_group| {
+            let toggle_state = group_toggle_states
+                .get(&button_group.id)
+                .copied()
+                .unwrap_or(GroupToggleState::Off);
 
-            Pad::new(mapping, toggle_state)
+            PadGroup::new(button_group, toggle_state)
         })
         .collect();
 
+    let mut meta_pads: Vec<Pad<'_>> = control_mapping
+        .meta_buttons
+        .values()
+        .map(ButtonRef::from)
+        .map(|button_ref| Pad::new(button_ref, GroupToggleState::Off))
+        .collect();
+
     for event in pad_events {
-        for pad in state.iter_mut() {
+        for pad_group in state.iter_mut() {
+            pad_group.apply_event(&event);
+        }
+        for pad in meta_pads.iter_mut() {
             pad.apply_event(&event);
         }
     }
 
     state
         .into_iter()
+        .flat_map(|group| group.pads.into_iter())
         .map(|pad| {
             (
                 (pad.mapping.location(), *pad.mapping.coordinate()),
