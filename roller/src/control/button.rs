@@ -220,20 +220,21 @@ impl<'a> From<&'a MetaButtonMapping> for ButtonRef<'a> {
 
 pub struct Pad<'a> {
     mapping: ButtonRef<'a>,
-    group_toggle_state: GroupToggleState,
     state: ButtonState,
-    active_group_coords: Vec<ButtonCoordinate>,
 }
 impl<'a> Pad<'a> {
-    fn new(mapping: ButtonRef<'a>, group_toggle_state: GroupToggleState) -> Pad<'a> {
+    fn new(mapping: ButtonRef<'a>) -> Pad<'a> {
         Pad {
             mapping,
-            group_toggle_state,
-            active_group_coords: Vec::with_capacity(8),
             state: ButtonState::Inactive,
         }
     }
-    fn apply_event(&mut self, event: &PadEvent<'a>) {
+    fn apply_event(
+        &mut self,
+        event: &PadEvent<'a>,
+        group_toggle_state: &GroupToggleState,
+        active_group_coords: &[ButtonCoordinate],
+    ) {
         let group_id_match =
             ButtonGroupIdMatch::match_(event.mapping.group_id(), self.mapping.group_id());
         // If this event isn't for the current mapping or a mapping in this group, short circuit
@@ -250,9 +251,9 @@ impl<'a> Pad<'a> {
                     }
                 }
             }
-            ButtonType::Toggle => match self.group_toggle_state {
+            ButtonType::Toggle => match group_toggle_state {
                 GroupToggleState::On(coord) => {
-                    if &coord == self.mapping.coordinate() {
+                    if coord == self.mapping.coordinate() {
                         self.state = ButtonState::Active;
                     } else {
                         self.state = ButtonState::Inactive;
@@ -269,24 +270,20 @@ impl<'a> Pad<'a> {
                     }
 
                     if group_id_match.is_match() {
-                        self.active_group_coords.push(*event.mapping.coordinate());
-
-                        if !self.active_group_coords.contains(self.mapping.coordinate()) {
+                        if !active_group_coords.contains(self.mapping.coordinate()) {
                             self.state = ButtonState::Deactivated;
                         }
                     }
                 }
                 NoteState::Off => {
                     if group_id_match.is_match() {
-                        shift_remove_vec(&mut self.active_group_coords, event.mapping.coordinate());
-
                         if event.mapping == self.mapping {
-                            if self.active_group_coords.is_empty() {
+                            if active_group_coords.is_empty() {
                                 // leave as green
                             } else {
                                 self.state = ButtonState::Deactivated;
                             }
-                        } else if self.active_group_coords.is_empty() {
+                        } else if active_group_coords.is_empty() {
                             self.state = ButtonState::Inactive;
                         }
                     }
@@ -310,19 +307,29 @@ impl<'a> PadGroup<'a> {
             pads: group
                 .buttons
                 .iter()
-                .map(|button| Pad::new(ButtonRef::Standard(group, button), toggle_state))
+                .map(|button| Pad::new(ButtonRef::Standard(group, button)))
                 .collect(),
             active_group_coords: Vec::with_capacity(8),
         }
     }
     fn apply_event(&mut self, event: &PadEvent<'a>) {
-        if self
+        if let Some(button) = self
             .group
             .button_refs()
-            .any(|button_ref| button_ref == event.mapping)
+            .find(|button_ref| *button_ref == event.mapping)
         {
+            match event.note_state {
+                NoteState::On => {
+                    self.toggle_state.toggle_mut(*button.coordinate());
+                    self.active_group_coords.push(*button.coordinate());
+                }
+                NoteState::Off => {
+                    shift_remove_vec(&mut self.active_group_coords, button.coordinate());
+                }
+            }
+
             for pad in self.pads.iter_mut() {
-                pad.apply_event(event);
+                pad.apply_event(event, &self.toggle_state, &self.active_group_coords);
             }
         }
     }
@@ -409,7 +416,7 @@ pub fn pad_states<'a>(
         .meta_buttons
         .values()
         .map(ButtonRef::from)
-        .map(|button_ref| Pad::new(button_ref, GroupToggleState::Off))
+        .map(|button_ref| Pad::new(button_ref))
         .collect();
 
     for event in pad_events {
@@ -417,13 +424,14 @@ pub fn pad_states<'a>(
             pad_group.apply_event(&event);
         }
         for pad in meta_pads.iter_mut() {
-            pad.apply_event(&event);
+            pad.apply_event(&event, &GroupToggleState::Off, &[]);
         }
     }
 
     state
         .into_iter()
         .flat_map(|group| group.pads.into_iter())
+        .chain(meta_pads.into_iter())
         .map(|pad| {
             (
                 (pad.mapping.location(), *pad.mapping.coordinate()),
