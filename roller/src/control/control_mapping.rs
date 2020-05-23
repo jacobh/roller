@@ -3,11 +3,9 @@ use rustc_hash::FxHashMap;
 
 use roller_protocol::{ButtonCoordinate, ButtonGridLocation};
 
-use crate::{
-    control::{
-        button::{ButtonGroup, ButtonMapping, MetaButtonMapping, PadMapping, ButtonRef},
-        fader::FaderControlMapping,
-    },
+use crate::control::{
+    button::{ButtonGroup, ButtonMapping, ButtonRef, MetaButtonMapping, PadMapping},
+    fader::FaderControlMapping,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
