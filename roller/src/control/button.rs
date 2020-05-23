@@ -143,11 +143,10 @@ impl ButtonGroup {
     pub fn iter(&self) -> impl Iterator<Item = (&'_ ButtonGroup, &'_ ButtonMapping)> {
         self.buttons.iter().map(move |button| (self, button))
     }
-    pub fn find_button(&self, coordinate: ButtonCoordinate) -> Option<ButtonRef<'_>> {
+    pub fn button_refs(&self) -> impl Iterator<Item = ButtonRef<'_>> {
         self.buttons
             .iter()
-            .find(|button| button.coordinate == coordinate)
-            .map(|button| ButtonRef::Standard(self, button))
+            .map(move |button| ButtonRef::Standard(self, button))
     }
 }
 
@@ -317,8 +316,14 @@ impl<'a> PadGroup<'a> {
         }
     }
     fn apply_event(&mut self, event: &PadEvent<'a>) {
-        for pad in self.pads.iter_mut() {
-            pad.apply_event(event);
+        if self
+            .group
+            .button_refs()
+            .any(|button_ref| button_ref == event.mapping)
+        {
+            for pad in self.pads.iter_mut() {
+                pad.apply_event(event);
+            }
         }
     }
 }
