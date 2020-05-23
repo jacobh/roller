@@ -206,6 +206,17 @@ impl<'a> ButtonRef<'a> {
     }
 }
 
+impl<'a> From<(&'a ButtonGroup, &'a ButtonMapping)> for ButtonRef<'a> {
+    fn from((group, mapping): (&'a ButtonGroup, &'a ButtonMapping)) -> ButtonRef<'a> {
+        ButtonRef::Standard(group, mapping)
+    }
+}
+impl<'a> From<&'a MetaButtonMapping> for ButtonRef<'a> {
+    fn from(mapping: &'a MetaButtonMapping) -> ButtonRef<'a> {
+        ButtonRef::Meta(mapping)
+    }
+}
+
 pub struct Pad<'a> {
     mapping: ButtonRef<'a>,
     group_toggle_state: GroupToggleState,
@@ -308,17 +319,6 @@ impl ButtonGroupIdMatch {
             ButtonGroupIdMatch::MatchingGroupId(_) => true,
             _ => false,
         }
-    }
-}
-
-impl<'a> From<(&'a ButtonGroup, &'a ButtonMapping)> for ButtonRef<'a> {
-    fn from((group, mapping): (&'a ButtonGroup, &'a ButtonMapping)) -> ButtonRef<'a> {
-        ButtonRef::Standard(group, mapping)
-    }
-}
-impl<'a> From<&'a MetaButtonMapping> for ButtonRef<'a> {
-    fn from(mapping: &'a MetaButtonMapping) -> ButtonRef<'a> {
-        ButtonRef::Meta(mapping)
     }
 }
 
