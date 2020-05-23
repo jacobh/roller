@@ -168,19 +168,6 @@ impl<'a> ButtonRef<'a> {
             ButtonRef::Meta(mapping) => &mapping.coordinate,
         }
     }
-    fn group_id(&self) -> Option<ButtonGroupId> {
-        match self {
-            ButtonRef::Standard(group, _) => Some(group.id),
-            ButtonRef::Meta(mapping) => match mapping.on_action {
-                MetaButtonAction::UpdateClockRate(_) => Some(*CLOCK_RATE_GROUP_ID),
-                MetaButtonAction::SelectScene(_) => Some(*SCENE_GROUP_ID),
-                MetaButtonAction::SelectFixtureGroupControl(_) => Some(*TOGGLE_FIXTURE_GROUP_ID),
-                MetaButtonAction::TapTempo
-                | MetaButtonAction::EnableShiftMode
-                | MetaButtonAction::DisableShiftMode => None,
-            },
-        }
-    }
     fn button_type(&self) -> ButtonType {
         match self {
             ButtonRef::Standard(group, _) => group.button_type,
@@ -218,6 +205,13 @@ impl<'a> From<&'a MetaButtonMapping> for ButtonRef<'a> {
     }
 }
 
+enum PadAction {
+    Pressed,
+    Released,
+    SiblingPressed,
+    SiblingReleased,
+}
+
 pub struct Pad<'a> {
     mapping: ButtonRef<'a>,
     state: ButtonState,
@@ -231,25 +225,16 @@ impl<'a> Pad<'a> {
     }
     fn apply_event(
         &mut self,
-        event: &PadEvent<'a>,
+        action: PadAction,
         group_toggle_state: &GroupToggleState,
         active_group_coords: &[ButtonCoordinate],
     ) {
-        let group_id_match =
-            ButtonGroupIdMatch::match_(event.mapping.group_id(), self.mapping.group_id());
-        // If this event isn't for the current mapping or a mapping in this group, short circuit
-        if event.mapping != self.mapping && !group_id_match.is_match() {
-            return;
-        }
-
-        match event.mapping.button_type() {
+        match self.mapping.button_type() {
             ButtonType::Flash => {
-                if event.mapping == self.mapping {
-                    self.state = match event.note_state {
-                        NoteState::On => ButtonState::Active,
-                        NoteState::Off => ButtonState::Inactive,
-                    }
-                }
+                self.state = match action {
+                    PadAction::Pressed => ButtonState::Active,
+                    _ => ButtonState::Inactive,
+                };
             }
             ButtonType::Toggle => match group_toggle_state {
                 GroupToggleState::On(coord) => {
@@ -263,29 +248,27 @@ impl<'a> Pad<'a> {
                     self.state = ButtonState::Inactive;
                 }
             },
-            ButtonType::Switch => match event.note_state {
-                NoteState::On => {
-                    if event.mapping == self.mapping {
-                        self.state = ButtonState::Active;
-                    }
-
-                    if group_id_match.is_match() {
-                        if !active_group_coords.contains(self.mapping.coordinate()) {
-                            self.state = ButtonState::Deactivated;
-                        }
+            ButtonType::Switch => match action {
+                PadAction::Pressed => {
+                    self.state = ButtonState::Active;
+                }
+                PadAction::SiblingPressed => {
+                    if !active_group_coords.contains(self.mapping.coordinate()) {
+                        self.state = ButtonState::Deactivated;
                     }
                 }
-                NoteState::Off => {
-                    if group_id_match.is_match() {
-                        if event.mapping == self.mapping {
-                            if active_group_coords.is_empty() {
-                                // leave as green
-                            } else {
-                                self.state = ButtonState::Deactivated;
-                            }
-                        } else if active_group_coords.is_empty() {
-                            self.state = ButtonState::Inactive;
-                        }
+                PadAction::Released => {
+                    if active_group_coords.is_empty() {
+                        // leave as green
+                    } else {
+                        self.state = ButtonState::Deactivated;
+                    }
+                }
+                PadAction::SiblingReleased => {
+                    if active_group_coords.is_empty() {
+                        self.state = ButtonState::Inactive;
+                    } else {
+                        self.state = ButtonState::Deactivated;
                     }
                 }
             },
@@ -329,35 +312,19 @@ impl<'a> PadGroup<'a> {
             }
 
             for pad in self.pads.iter_mut() {
-                pad.apply_event(event, &self.toggle_state, &self.active_group_coords);
-            }
-        }
-    }
-}
-
-enum ButtonGroupIdMatch {
-    MatchingGroupId(ButtonGroupId),
-    NoGroupId,
-    ConflictingGroupIds,
-}
-impl ButtonGroupIdMatch {
-    fn match_(a: Option<ButtonGroupId>, b: Option<ButtonGroupId>) -> ButtonGroupIdMatch {
-        match (a, b) {
-            (Some(a), Some(b)) => {
-                if a == b {
-                    ButtonGroupIdMatch::MatchingGroupId(a)
+                let pad_action = if button == event.mapping {
+                    match event.note_state {
+                        NoteState::On => PadAction::Pressed,
+                        NoteState::Off => PadAction::Released,
+                    }
                 } else {
-                    ButtonGroupIdMatch::ConflictingGroupIds
-                }
+                    match event.note_state {
+                        NoteState::On => PadAction::SiblingPressed,
+                        NoteState::Off => PadAction::SiblingReleased,
+                    }
+                };
+                pad.apply_event(pad_action, &self.toggle_state, &self.active_group_coords);
             }
-            (Some(_), None) | (None, Some(_)) => ButtonGroupIdMatch::ConflictingGroupIds,
-            (None, None) => ButtonGroupIdMatch::NoGroupId,
-        }
-    }
-    fn is_match(&self) -> bool {
-        match self {
-            ButtonGroupIdMatch::MatchingGroupId(_) => true,
-            _ => false,
         }
     }
 }
@@ -424,7 +391,13 @@ pub fn pad_states<'a>(
             pad_group.apply_event(&event);
         }
         for pad in meta_pads.iter_mut() {
-            pad.apply_event(&event, &GroupToggleState::Off, &[]);
+            if pad.mapping == event.mapping {
+                let pad_action = match event.note_state {
+                    NoteState::On => PadAction::Pressed,
+                    NoteState::Off => PadAction::Released,
+                };
+                pad.apply_event(pad_action, &GroupToggleState::Off, &[]);
+            }
         }
     }
 
