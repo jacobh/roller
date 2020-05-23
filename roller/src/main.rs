@@ -51,7 +51,7 @@ async fn run_tick<'a>(
     }
 
     let new_button_states = pad_states(
-        state.control_mapping.button_refs().collect(),
+        &state.control_mapping,
         &state
             .control_fixture_group_state()
             .button_states
@@ -121,7 +121,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     }
 
     let mut current_button_states = pad_states(
-        control_mapping.button_refs().collect(),
+        &control_mapping,
         &state
             .control_fixture_group_state()
             .button_states

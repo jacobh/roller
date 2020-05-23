@@ -8,7 +8,7 @@ use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState};
 use crate::{
     clock::Rate,
     color::Color,
-    control::NoteState,
+    control::{control_mapping::ControlMapping, NoteState},
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
     lighting_engine::{ButtonGroupInfo, ButtonInfo, ControlEvent, ControlMode, SceneId},
     position::BasePosition,
@@ -355,12 +355,12 @@ impl<'a> From<(ButtonGroupInfo<'a>, ButtonInfo<'a>)> for PadEvent<'a> {
 }
 
 pub fn pad_states<'a>(
-    all_buttons: Vec<ButtonRef<'a>>,
+    control_mapping: &ControlMapping,
     group_toggle_states: &FxHashMap<ButtonGroupId, GroupToggleState>,
     pad_events: impl IntoIterator<Item = PadEvent<'a>>,
 ) -> FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState> {
-    let mut state: Vec<_> = all_buttons
-        .into_iter()
+    let mut state: Vec<_> = control_mapping
+        .button_refs()
         .map(|mapping| {
             let toggle_state = mapping
                 .group_id()
