@@ -165,7 +165,7 @@ impl ButtonStates {
         &self,
     ) -> impl Iterator<Item = (ButtonGroupId, GroupToggleState)> + '_ {
         self.iter_groups()
-            .map(|(group, toggle_state, _)| (group.id, toggle_state))
+            .map(|(group, toggle_state, _)| (group.id(), toggle_state))
     }
     fn find_active_effects<'a, T, F>(&'a self, extract_effect_fn: F) -> FxIndexMap<&'a T, Rate>
     where

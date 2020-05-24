@@ -1,4 +1,5 @@
 use rustc_hash::FxHashMap;
+use std::hash::{Hash, Hasher};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
@@ -123,9 +124,9 @@ pub struct MetaButtonMapping {
     pub off_action: Option<MetaButtonAction>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone)]
 pub struct ButtonGroup {
-    pub id: ButtonGroupId,
+    id: ButtonGroupId,
     pub button_type: ButtonType,
     pub buttons: Vec<ButtonMapping>,
 }
@@ -139,6 +140,9 @@ impl ButtonGroup {
             buttons: buttons.into_iter().collect(),
             button_type,
         }
+    }
+    pub fn id(&self) -> ButtonGroupId {
+        self.id
     }
     pub fn iter(&self) -> impl Iterator<Item = (&'_ ButtonGroup, &'_ ButtonMapping)> {
         self.buttons.iter().map(move |button| (self, button))
@@ -166,6 +170,17 @@ impl ButtonGroup {
     ) -> Option<ButtonRef<'_>> {
         self.find_button(location, coordinate)
             .map(move |button| ButtonRef::Standard(self, button))
+    }
+}
+impl PartialEq for ButtonGroup {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+impl Eq for ButtonGroup {}
+impl Hash for ButtonGroup {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
     }
 }
 
