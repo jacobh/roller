@@ -1,8 +1,8 @@
+use clap::Clap;
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
 use std::path::PathBuf;
 use std::time::Duration;
-use clap::Clap;
 
 use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent};
 

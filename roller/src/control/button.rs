@@ -144,9 +144,7 @@ impl ButtonGroup {
         self.buttons.iter().map(move |button| (self, button))
     }
     pub fn button_refs(&self) -> impl Iterator<Item = ButtonRef<'_>> {
-        self.buttons
-            .iter()
-            .map(move |button| ButtonRef::Standard(self, button))
+        self.iter().map(ButtonRef::from)
     }
 }
 
@@ -287,10 +285,7 @@ impl<'a> PadGroup<'a> {
         PadGroup {
             group,
             toggle_state,
-            pads: group
-                .button_refs()
-                .map(Pad::new)
-                .collect(),
+            pads: group.button_refs().map(Pad::new).collect(),
             active_buttons: Vec::with_capacity(group.buttons.len()),
         }
     }
