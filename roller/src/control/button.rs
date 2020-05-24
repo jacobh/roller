@@ -150,7 +150,7 @@ impl ButtonGroup {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ButtonRef<'a> {
     Standard(&'a ButtonGroup, &'a ButtonMapping),
     Meta(&'a MetaButtonMapping),
@@ -303,7 +303,7 @@ impl<'a> PadGroup<'a> {
             match event.note_state {
                 NoteState::On => {
                     self.toggle_state.toggle_mut(*button_ref.coordinate());
-                    self.active_buttons.push(button_ref.clone());
+                    self.active_buttons.push(button_ref);
                 }
                 NoteState::Off => {
                     shift_remove_vec(&mut self.active_buttons, &button_ref);
