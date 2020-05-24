@@ -57,7 +57,7 @@ async fn run_tick<'a>(
             .button_states
             .iter_group_toggle_states()
             .collect(),
-        state.pad_events(),
+        state.input_events(),
     );
 
     // find the buttons that have updated since the last tick
@@ -127,7 +127,7 @@ async fn main() -> Result<(), async_std::io::Error> {
             .button_states
             .iter_group_toggle_states()
             .collect(),
-        state.pad_events(),
+        state.input_events(),
     );
 
     if let Some(midi_controller) = &midi_controller {

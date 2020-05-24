@@ -8,7 +8,7 @@ use crate::{
     clock::{offsetted_for_fixture, Clock, ClockEvent, Rate},
     color::Color,
     control::{
-        button::{ButtonGroup, ButtonMapping, MetaButtonAction, PadEvent},
+        button::{ButtonGroup, ButtonMapping, ButtonRef, MetaButtonAction},
         control_mapping::ControlMapping,
         NoteState,
     },
@@ -374,7 +374,7 @@ impl<'a> EngineState<'a> {
             }
         }
     }
-    fn meta_pad_events(&self) -> impl Iterator<Item = PadEvent<'_>> {
+    fn meta_input_events(&self) -> impl Iterator<Item = InputEvent> + '_ {
         let active_scene_button = self
             .control_mapping
             .meta_buttons
@@ -423,13 +423,27 @@ impl<'a> EngineState<'a> {
         ]
         .into_iter()
         .flatten()
-        .map(PadEvent::new_on)
+        .map(ButtonRef::from)
+        .map(|button_ref| {
+            InputEvent::ButtonPressed(button_ref.location(), *button_ref.coordinate())
+        })
     }
-    pub fn pad_events(&self) -> impl Iterator<Item = PadEvent<'_>> {
+    pub fn input_events(&self) -> impl Iterator<Item = InputEvent> + '_ {
         self.control_fixture_group_state()
             .button_states
             .iter_info()
-            .map(PadEvent::from)
-            .chain(self.meta_pad_events())
+            .map(|(group_info, button_info)| {
+                let button_ref = ButtonRef::Standard(group_info.group, button_info.button);
+
+                match button_info.note_state {
+                    NoteState::On => {
+                        InputEvent::ButtonPressed(button_ref.location(), *button_ref.coordinate())
+                    }
+                    NoteState::Off => {
+                        InputEvent::ButtonReleased(button_ref.location(), *button_ref.coordinate())
+                    }
+                }
+            })
+            .chain(self.meta_input_events())
     }
 }
