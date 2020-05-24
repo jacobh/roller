@@ -302,7 +302,6 @@ impl<'a> PadGroup<'a> {
         {
             match event.note_state {
                 NoteState::On => {
-                    self.toggle_state.toggle_mut(*button_ref.coordinate());
                     self.active_buttons.push(button_ref);
                 }
                 NoteState::Off => {
