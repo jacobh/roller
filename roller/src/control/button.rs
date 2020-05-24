@@ -227,7 +227,7 @@ impl<'a> Pad<'a> {
         &mut self,
         action: PadAction,
         group_toggle_state: &GroupToggleState,
-        active_group_coords: &[ButtonCoordinate],
+        active_group_buttons: &[ButtonRef<'_>],
     ) {
         match self.mapping.button_type() {
             ButtonType::Flash => {
@@ -253,19 +253,19 @@ impl<'a> Pad<'a> {
                     self.state = ButtonState::Active;
                 }
                 PadAction::SiblingPressed => {
-                    if !active_group_coords.contains(self.mapping.coordinate()) {
+                    if !active_group_buttons.contains(&self.mapping) {
                         self.state = ButtonState::Deactivated;
                     }
                 }
                 PadAction::Released => {
-                    if active_group_coords.is_empty() {
+                    if active_group_buttons.is_empty() {
                         // leave as green
                     } else {
                         self.state = ButtonState::Deactivated;
                     }
                 }
                 PadAction::SiblingReleased => {
-                    if active_group_coords.is_empty() {
+                    if active_group_buttons.is_empty() {
                         self.state = ButtonState::Inactive;
                     } else {
                         self.state = ButtonState::Deactivated;
@@ -278,7 +278,7 @@ impl<'a> Pad<'a> {
 
 struct PadGroup<'a> {
     group: &'a ButtonGroup,
-    active_group_coords: Vec<ButtonCoordinate>,
+    active_buttons: Vec<ButtonRef<'a>>,
     toggle_state: GroupToggleState,
     pads: Vec<Pad<'a>>,
 }
@@ -291,27 +291,27 @@ impl<'a> PadGroup<'a> {
                 .button_refs()
                 .map(Pad::new)
                 .collect(),
-            active_group_coords: Vec::with_capacity(8),
+            active_buttons: Vec::with_capacity(group.buttons.len()),
         }
     }
     fn apply_event(&mut self, event: &PadEvent<'a>) {
-        if let Some(button) = self
+        if let Some(button_ref) = self
             .group
             .button_refs()
             .find(|button_ref| *button_ref == event.mapping)
         {
             match event.note_state {
                 NoteState::On => {
-                    self.toggle_state.toggle_mut(*button.coordinate());
-                    self.active_group_coords.push(*button.coordinate());
+                    self.toggle_state.toggle_mut(*button_ref.coordinate());
+                    self.active_buttons.push(button_ref.clone());
                 }
                 NoteState::Off => {
-                    shift_remove_vec(&mut self.active_group_coords, button.coordinate());
+                    shift_remove_vec(&mut self.active_buttons, &button_ref);
                 }
             }
 
             for pad in self.pads.iter_mut() {
-                let pad_action = if button == event.mapping {
+                let pad_action = if button_ref == pad.mapping {
                     match event.note_state {
                         NoteState::On => PadAction::Pressed,
                         NoteState::Off => PadAction::Released,
@@ -322,7 +322,7 @@ impl<'a> PadGroup<'a> {
                         NoteState::Off => PadAction::SiblingReleased,
                     }
                 };
-                pad.apply_event(pad_action, &self.toggle_state, &self.active_group_coords);
+                pad.apply_event(pad_action, &self.toggle_state, &self.active_buttons);
             }
         }
     }
