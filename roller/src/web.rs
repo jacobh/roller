@@ -78,11 +78,11 @@ async fn browser_session(
 }
 
 pub fn serve_frontend(
-    initial_button_states: &FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState>,
+    initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState>,
     mut pad_state_update_recv: Receiver<Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>>,
     event_sender: Sender<InputEvent>,
 ) {
-    let initial_button_states = Arc::new(Mutex::new(initial_button_states.clone()));
+    let initial_button_states = Arc::new(Mutex::new(initial_button_states));
     let server_message_channel: BroadcastChannel<ServerMessage> = BroadcastChannel::new();
 
     // Update initial button states with incoming messages

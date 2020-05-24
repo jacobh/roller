@@ -346,10 +346,10 @@ impl<'a> PadGroup<'a> {
 }
 
 pub fn pad_states<'a>(
-    control_mapping: &ControlMapping,
+    control_mapping: &'a ControlMapping,
     group_toggle_states: &FxHashMap<ButtonGroupId, GroupToggleState>,
     input_events: impl IntoIterator<Item = InputEvent>,
-) -> FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState> {
+) -> FxHashMap<ButtonRef<'a>, ButtonState> {
     let mut state: Vec<PadGroup<'_>> = control_mapping
         .button_groups
         .iter()
@@ -397,11 +397,7 @@ pub fn pad_states<'a>(
         .into_iter()
         .flat_map(|group| group.pads.into_iter())
         .chain(meta_pads.into_iter())
-        .map(|pad| {
-            (
-                (pad.mapping.location(), *pad.mapping.coordinate()),
-                pad.state,
-            )
-        })
+        .map(|pad| (pad.mapping, pad.state))
         .collect()
 }
+ 
