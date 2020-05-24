@@ -1,8 +1,8 @@
+use clap::Clap;
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
 use std::path::PathBuf;
 use std::time::Duration;
-use clap::Clap;
 
 use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent};
 
@@ -17,7 +17,7 @@ mod project;
 mod utils;
 mod web;
 
-use crate::control::button::pad_states;
+use crate::control::button::{pad_states, ButtonRef};
 use crate::lighting_engine::EngineState;
 
 #[global_allocator]
@@ -37,10 +37,7 @@ async fn run_tick<'a>(
     fixtures: &mut Vec<fixture::Fixture>,
     dmx_sender: &async_std::sync::Sender<(i32, [u8; 512])>,
     midi_controller: Option<&control::midi::MidiController>,
-    current_button_states: &mut rustc_hash::FxHashMap<
-        (ButtonGridLocation, ButtonCoordinate),
-        ButtonState,
-    >,
+    current_button_states: &mut rustc_hash::FxHashMap<ButtonRef<'a>, ButtonState>,
     web_pad_state_update_send: &async_std::sync::Sender<
         Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>,
     >,
@@ -51,25 +48,25 @@ async fn run_tick<'a>(
     }
 
     let new_button_states = pad_states(
-        state.control_mapping.pad_mappings().collect(),
+        &state.control_mapping,
         &state
             .control_fixture_group_state()
             .button_states
             .iter_group_toggle_states()
             .collect(),
-        state.pad_events(),
+        state.input_events(),
     );
 
     // find the buttons that have updated since the last tick
     let changed_button_states: Vec<_> = new_button_states
         .iter()
-        .filter(|(location_coord, state)| {
+        .filter(|(button_ref, state)| {
             current_button_states
-                .get(location_coord)
+                .get(button_ref)
                 .map(|prev_state| state != &prev_state)
                 .unwrap_or(true)
         })
-        .map(|((loc, coord), state)| (*loc, *coord, *state))
+        .map(|(button_ref, state)| (button_ref.location(), *button_ref.coordinate(), *state))
         .collect();
 
     if let Some(midi_controller) = midi_controller {
@@ -121,22 +118,22 @@ async fn main() -> Result<(), async_std::io::Error> {
     }
 
     let mut current_button_states = pad_states(
-        control_mapping.pad_mappings().collect(),
+        &control_mapping,
         &state
             .control_fixture_group_state()
             .button_states
             .iter_group_toggle_states()
             .collect(),
-        state.pad_events(),
+        state.input_events(),
     );
 
     if let Some(midi_controller) = &midi_controller {
         midi_controller.run_pad_startup().await;
         midi_controller
             .set_button_states(
-                current_button_states
-                    .iter()
-                    .map(|((loc, coord), val)| (*loc, *coord, *val)),
+                current_button_states.iter().map(|(button_ref, val)| {
+                    (button_ref.location(), *button_ref.coordinate(), *val)
+                }),
             )
             .await;
     }
@@ -172,7 +169,10 @@ async fn main() -> Result<(), async_std::io::Error> {
     pin_mut!(events);
 
     web::serve_frontend(
-        &current_button_states,
+        current_button_states
+            .iter()
+            .map(|(button_ref, value)| ((button_ref.location(), *button_ref.coordinate()), *value))
+            .collect(),
         web_pad_state_update_recv,
         web_input_events_send,
     );

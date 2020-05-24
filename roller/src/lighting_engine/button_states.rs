@@ -126,32 +126,29 @@ impl Default for FixtureGroupState {
     }
 }
 
-type GroupStatesValue = (ButtonType, GroupToggleState, ButtonStateMap);
+type GroupStatesValue = (GroupToggleState, ButtonStateMap);
 #[derive(Debug, Default)]
 pub struct ButtonStates {
-    group_states: FxHashMap<ButtonGroupId, GroupStatesValue>,
+    group_states: FxHashMap<ButtonGroup, GroupStatesValue>,
 }
 impl ButtonStates {
     fn iter_groups(
         &self,
-    ) -> impl Iterator<Item = (ButtonGroupId, ButtonType, GroupToggleState, &ButtonStateMap)> {
+    ) -> impl Iterator<Item = (&ButtonGroup, GroupToggleState, &ButtonStateMap)> {
         self.group_states
             .iter()
-            .map(|(group_id, (button_type, toggle_state, states))| {
-                (*group_id, *button_type, *toggle_state, states)
-            })
+            .map(|(group, (toggle_state, states))| (group, *toggle_state, states))
     }
     // Takes a button group and returns an iterator of `Info` summaries
     pub fn iter_info(&self) -> impl Iterator<Item = (ButtonGroupInfo, ButtonInfo<'_>)> {
         self.iter_groups()
-            .flat_map(|(group_id, button_type, toggle_state, states)| {
+            .flat_map(|(group, toggle_state, states)| {
                 states
                     .iter()
                     .map(move |((button, note_state), (triggered_at, effect_rate))| {
                         (
                             ButtonGroupInfo {
-                                id: group_id,
-                                button_type: button_type,
+                                group,
                                 toggle_state: toggle_state,
                             },
                             ButtonInfo {
@@ -168,7 +165,7 @@ impl ButtonStates {
         &self,
     ) -> impl Iterator<Item = (ButtonGroupId, GroupToggleState)> + '_ {
         self.iter_groups()
-            .map(|(group_id, _, toggle_state, _)| (group_id, toggle_state))
+            .map(|(group, toggle_state, _)| (group.id(), toggle_state))
     }
     fn find_active_effects<'a, T, F>(&'a self, extract_effect_fn: F) -> FxIndexMap<&'a T, Rate>
     where
@@ -179,7 +176,7 @@ impl ButtonStates {
 
         for (group_info, button_info) in self.iter_info() {
             if let Some(effect) = extract_effect_fn(&button_info.button.on_action) {
-                match group_info.button_type {
+                match group_info.group.button_type {
                     ButtonType::Flash => {
                         match button_info.note_state {
                             NoteState::On => effects.insert(effect, button_info.effect_rate),
@@ -237,7 +234,7 @@ impl ButtonStates {
         let color_buttons =
             self.iter_info().flat_map(|(group_info, button_info)| {
                 match button_info.button.on_action {
-                    ButtonAction::UpdateGlobalColor(color) => match group_info.button_type {
+                    ButtonAction::UpdateGlobalColor(color) => match group_info.group.button_type {
                         ButtonType::Switch => {
                             Some((button_info.button.coordinate, button_info.note_state, color))
                         }
@@ -268,15 +265,16 @@ impl ButtonStates {
         self.iter_info()
             .filter_map(
                 |(group_info, button_info)| match button_info.button.on_action {
-                    ButtonAction::UpdateGlobalSecondaryColor(color) => match group_info.button_type
-                    {
-                        ButtonType::Toggle => Some((
-                            button_info.button.coordinate,
-                            group_info.toggle_state,
-                            color,
-                        )),
-                        _ => panic!("only toggle button type implemented for secondary colors"),
-                    },
+                    ButtonAction::UpdateGlobalSecondaryColor(color) => {
+                        match group_info.group.button_type {
+                            ButtonType::Toggle => Some((
+                                button_info.button.coordinate,
+                                group_info.toggle_state,
+                                color,
+                            )),
+                            _ => panic!("only toggle button type implemented for secondary colors"),
+                        }
+                    }
                     _ => None,
                 },
             )
@@ -323,36 +321,26 @@ impl ButtonStates {
         })
     }
     pub fn iter_states_mut(&mut self) -> impl Iterator<Item = &mut ButtonStateMap> {
-        self.group_states.values_mut().map(|(_, _, states)| states)
+        self.group_states.values_mut().map(|(_, states)| states)
     }
-    pub fn button_group_state_mut(
-        &mut self,
-        group_id: ButtonGroupId,
-        button_type: ButtonType,
-    ) -> &mut ButtonStateMap {
-        let (_, _, button_states) = self
-            .group_states
-            .entry(group_id)
-            .or_insert_with(|| (button_type, GroupToggleState::Off, FxIndexMap::default()));
+    fn button_group_value_mut(&mut self, group: &ButtonGroup) -> &mut GroupStatesValue {
+        // If this button group already exists, just use a reference, otherwise clone the button group and insert it
 
+        if self.group_states.contains_key(group) {
+            self.group_states.get_mut(group).unwrap()
+        } else {
+            self.group_states
+                .entry(group.clone())
+                .or_insert_with(|| (GroupToggleState::Off, FxIndexMap::default()))
+        }
+    }
+    pub fn button_group_state_mut(&mut self, group: &ButtonGroup) -> &mut ButtonStateMap {
+        let (_, button_states) = self.button_group_value_mut(group);
         button_states
     }
-    pub fn toggle_button_group(
-        &mut self,
-        id: ButtonGroupId,
-        button_type: ButtonType,
-        coordinate: ButtonCoordinate,
-    ) {
-        self.group_states
-            .entry(id)
-            .and_modify(|(_, toggle_state, _)| {
-                toggle_state.toggle_mut(coordinate);
-            })
-            .or_insert((
-                button_type,
-                GroupToggleState::On(coordinate),
-                FxIndexMap::default(),
-            ));
+    pub fn toggle_button_group(&mut self, group: &ButtonGroup, coordinate: ButtonCoordinate) {
+        let (toggle_state, _) = self.button_group_value_mut(group);
+        toggle_state.toggle_mut(coordinate);
     }
     pub fn update_button_state(
         &mut self,
@@ -362,10 +350,10 @@ impl ButtonStates {
         now: Instant,
     ) {
         if note_state == NoteState::On {
-            self.toggle_button_group(group.id, group.button_type, button.coordinate);
+            self.toggle_button_group(group, button.coordinate);
         }
 
-        let button_states = self.button_group_state_mut(group.id, group.button_type);
+        let button_states = self.button_group_state_mut(group);
         let key = (button, note_state);
 
         let previous_state = button_states.shift_remove(&key);
@@ -389,9 +377,8 @@ impl ButtonStates {
     }
 }
 
-pub struct ButtonGroupInfo {
-    pub id: ButtonGroupId,
-    pub button_type: ButtonType,
+pub struct ButtonGroupInfo<'a> {
+    pub group: &'a ButtonGroup,
     pub toggle_state: GroupToggleState,
 }
 
