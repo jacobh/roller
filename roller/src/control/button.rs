@@ -302,7 +302,7 @@ impl<'a> Pad<'a> {
                     if active_group_buttons.is_empty() {
                         self.state = ButtonState::Inactive;
                     } else {
-                        self.state = ButtonState::Deactivated;
+                        // do nothing
                     }
                 }
             },
