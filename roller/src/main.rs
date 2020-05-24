@@ -2,7 +2,7 @@ use futures::pin_mut;
 use futures::stream::{self, StreamExt};
 use std::path::PathBuf;
 use std::time::Duration;
-use structopt::StructOpt;
+use clap::Clap;
 
 use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent};
 
@@ -23,12 +23,12 @@ use crate::lighting_engine::EngineState;
 #[global_allocator]
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
-#[derive(StructOpt, Debug)]
-#[structopt(name = "roller")]
+#[derive(Clap, Debug)]
+#[clap(name = "roller")]
 struct CliArgs {
-    #[structopt(short, long, default_value = "roller_project.toml", parse(from_os_str))]
+    #[clap(short, long, default_value = "roller_project.toml", parse(from_os_str))]
     config: PathBuf,
-    #[structopt(long, default_value = "localhost:9010")]
+    #[clap(long, default_value = "localhost:9010")]
     ola_host: String,
 }
 
@@ -85,7 +85,7 @@ async fn run_tick<'a>(
 
 #[async_std::main]
 async fn main() -> Result<(), async_std::io::Error> {
-    let args = CliArgs::from_args();
+    let args = CliArgs::parse();
 
     let project = project::Project::load(args.config).await?;
     let mut fixtures = project.fixtures().await?;
