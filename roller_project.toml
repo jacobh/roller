@@ -61,3 +61,15 @@ universe_id = 10
     fixture_profile = "ave_ledbar_24_29ch"
     group_id = 3
     location = { x = 20, y = 10 }
+
+    [[universes.fixtures]]
+    start_channel = 119
+    fixture_profile = "ave_ledbar_24_29ch"
+    group_id = 3
+    location = { x = 27, y = 10 }
+
+    [[universes.fixtures]]
+    start_channel = 148
+    fixture_profile = "ave_ledbar_24_29ch"
+    group_id = 3
+    location = { x = 23, y = 10 }
