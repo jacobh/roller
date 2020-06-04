@@ -399,7 +399,7 @@ pub fn default_control_mapping() -> ControlMapping {
                                 EffectDirection::BottomToTop,
                             )],
                             Some(ClockOffset::new(
-                                ClockOffsetMode::FixtureIndex,
+                                ClockOffsetMode::Location(EffectDirection::LeftToRight),
                                 Beats::new(1.0),
                             )),
                         )),
@@ -420,8 +420,8 @@ pub fn default_control_mapping() -> ControlMapping {
                                 ),
                             ],
                             Some(ClockOffset::new(
-                                ClockOffsetMode::FixtureIndex,
-                                Beats::new(1.0),
+                                ClockOffsetMode::Location(EffectDirection::LeftToRight),
+                                Beats::new(0.25),
                             )),
                         )),
                     },
@@ -451,7 +451,7 @@ pub fn default_control_mapping() -> ControlMapping {
                                 ),
                             ],
                             Some(ClockOffset::new(
-                                ClockOffsetMode::FixtureIndex,
+                                ClockOffsetMode::Location(EffectDirection::LeftToRight),
                                 Beats::new(2.0),
                             )),
                         )),
@@ -502,7 +502,7 @@ pub fn default_control_mapping() -> ControlMapping {
                                 ),
                             ],
                             Some(ClockOffset::new(
-                                ClockOffsetMode::FixtureIndex,
+                                ClockOffsetMode::Location(EffectDirection::LeftToRight),
                                 Beats::new(0.25),
                             )),
                         )),
