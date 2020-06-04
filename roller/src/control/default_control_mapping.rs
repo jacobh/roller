@@ -376,19 +376,25 @@ pub fn default_control_mapping() -> ControlMapping {
                                     EffectDirection::ToCenter,
                                 ),
                             ],
-                            None,
+                            Some(ClockOffset::new(
+                                ClockOffsetMode::Location(EffectDirection::FromCenter),
+                                Beats::new(0.1),
+                            )),
                         )),
                     },
                     ButtonMapping {
                         coordinate: ButtonCoordinate::new(4, 6),
-                        on_action: ButtonAction::ActivatePixelEffect(
-                            PixelModulator::new(
+                        on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
+                            vec![PixelModulator::new(
                                 Waveform::SineDown,
                                 Beats::new(2.0),
                                 EffectDirection::FromCenter,
-                            )
-                            .into(),
-                        ),
+                            )],
+                            Some(ClockOffset::new(
+                                ClockOffsetMode::Location(EffectDirection::FromCenter),
+                                Beats::new(1.0),
+                            )),
+                        )),
                     },
                     ButtonMapping {
                         coordinate: ButtonCoordinate::new(4, 5),
@@ -451,7 +457,7 @@ pub fn default_control_mapping() -> ControlMapping {
                                 ),
                             ],
                             Some(ClockOffset::new(
-                                ClockOffsetMode::Location(EffectDirection::LeftToRight),
+                                ClockOffsetMode::Location(EffectDirection::FromCenter),
                                 Beats::new(2.0),
                             )),
                         )),
