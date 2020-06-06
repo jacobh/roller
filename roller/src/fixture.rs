@@ -167,6 +167,10 @@ impl FixtureProfile {
                         assert!(beam.blue_channel.is_none());
                         beam.blue_channel = Some(channel.clone());
                     }
+                    FixtureParameter::CoolWhite => {
+                        assert!(beam.cool_white_channel.is_none());
+                        beam.cool_white_channel = Some(channel.clone());
+                    }
                     _ => {}
                 }
 
@@ -255,6 +259,12 @@ impl FixtureBeam {
             profile,
             dimmer: 1.0,
             color: None,
+        }
+    }
+    fn is_white(&self) -> bool {
+        match self.color {
+            Some(color) => color.into_components() == (1.0, 1.0, 1.0),
+            None => false,
         }
     }
 }
@@ -403,6 +413,13 @@ impl Fixture {
             {
                 let (mut red, mut green, mut blue) = color.into_components();
 
+                // Custom calibrated warmer white
+                if beam.is_white() {
+                    red = 1.0;
+                    green = 0.906;
+                    blue = 0.49;
+                }
+
                 // If light doesn't have dimmer control, scale the color values instead
                 if !beam.profile.is_dimmable() {
                     red *= beam_dimmer;
@@ -413,6 +430,18 @@ impl Fixture {
                 dmx[red_channel.channel_index()] = red_channel.encode_value(red);
                 dmx[green_channel.channel_index()] = green_channel.encode_value(green);
                 dmx[blue_channel.channel_index()] = blue_channel.encode_value(blue);
+            }
+
+            if let Some(white_channel) = beam.profile.cool_white_channel.as_ref() {
+                if beam.is_white() {
+                    let white_value = if beam.profile.is_dimmable() {
+                        1.0
+                    } else {
+                        beam_dimmer
+                    };
+
+                    dmx[white_channel.channel_index()] = white_channel.encode_value(white_value);
+                }
             }
         }
 
