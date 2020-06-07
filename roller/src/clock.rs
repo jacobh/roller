@@ -147,10 +147,10 @@ impl Clock {
             ClockEvent::BpmChanged(bpm) => {
                 // Periodically reset the start time to avoid glitchiness when tempo slightly drifts
                 let snapshot = self.snapshot();
-                let eight_beats_secs = snapshot.secs_per_meter(Beats::new(8.0));
+                let beat_secs = snapshot.secs_per_meter(Beats::new(1.0));
 
-                if snapshot.secs_elapsed() - (eight_beats_secs * 2.0) >= 0.0 {
-                    self.started_at += Duration::from_secs_f64(eight_beats_secs);
+                if snapshot.secs_elapsed() - (beat_secs * 48.0) >= 0.0 {
+                    self.started_at += Duration::from_secs_f64(beat_secs * 48.0);
                 }
 
                 self.state = ClockState::Automatic;
