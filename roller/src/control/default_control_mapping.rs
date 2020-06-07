@@ -467,6 +467,29 @@ pub fn default_control_mapping() -> ControlMapping {
                         on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
                             vec![
                                 PixelModulator::new(
+                                    Waveform::OnePointFiveRootDown,
+                                    Beats::new(1.0),
+                                    EffectDirection::BottomToTop,
+                                ),
+                                PixelModulator::new(
+                                    Waveform::OnePointFiveRootDown,
+                                    Beats::new(1.0),
+                                    EffectDirection::BottomToTop,
+                                ),
+                                PixelModulator::new(
+                                    Waveform::OnePointFiveRootUp,
+                                    Beats::new(1.0),
+                                    EffectDirection::BottomToTop,
+                                ),
+                            ],
+                            None,
+                        )),
+                    },
+                    ButtonMapping {
+                        coordinate: ButtonCoordinate::new(4, 0),
+                        on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
+                            vec![
+                                PixelModulator::new(
                                     Waveform::OnePointFiveRootUp,
                                     Beats::new(0.5),
                                     EffectDirection::BottomToTop,
