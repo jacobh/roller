@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use wasm_bindgen::JsCast;
 use yew::prelude::*;
 
@@ -52,96 +53,26 @@ impl Component for Fader {
         let _label = self.props.label.as_deref().unwrap_or("");
         let fill_style = format!("height: {}%", 100.0 - (self.props.value * 100.0));
 
-        // mouse callback
-        let onmousedown_callback = self.link.callback(|evt: MouseEvent| {
-            let value = target_touch_height_percent(evt.target().unwrap(), &evt);
-
-            Msg::ValueUpdated(value)
-        });
-
-        // touch callbacks
-        let ontouchstart_callback = self.link.callback(|evt: TouchEvent| {
-            let touch = evt.target_touches().get(0).unwrap();
-            let value = target_touch_height_percent(evt.target().unwrap(), &touch);
-
-            Msg::ValueUpdated(value)
-        });
-        let ontouchend_callback = self.link.callback(move |evt: TouchEvent| {
-            let touch = evt.changed_touches().get(0);
-            match touch {
-                Some(touch) => {
-                    let value = target_touch_height_percent(evt.target().unwrap(), &touch);
-                    Msg::ValueUpdated(value)
-                }
-                None => Msg::NoOp,
-            }
-        });
-        let ontouchmove_callback = self.link.callback(move |evt: TouchEvent| {
-            let touch = evt.changed_touches().get(0);
-            match touch {
-                Some(touch) => {
-                    let value = target_touch_height_percent(evt.target().unwrap(), &touch);
-                    Msg::ValueUpdated(value)
-                }
-                None => Msg::NoOp,
-            }
+        let oninput_callback = self.link.callback(move |evt: InputData| {
+            // value 0 - 1000
+            let value = f64::from_str(&evt.value).unwrap();
+            Msg::ValueUpdated(value / 1000.0)
         });
 
         html! {
             <div
                 class="fader"
-                onmousedown={onmousedown_callback}
-                ontouchstart={ontouchstart_callback}
-                ontouchend={ontouchend_callback}
-                ontouchmove={ontouchmove_callback}
             >
+                <input
+                    class="fader__range-input"
+                    orient="vertical"
+                    type="range"
+                    min="0"
+                    max="1000"
+                    oninput={oninput_callback}
+                />
                 <div class="fader__fill" style={fill_style}></div>
             </div>
         }
     }
-}
-
-fn clamp(x: f64) -> f64 {
-    if x > 1.0 {
-        1.0
-    } else if x < 0.0 {
-        0.0
-    } else {
-        x
-    }
-}
-
-fn event_target_bounds(target: web_sys::EventTarget) -> web_sys::DomRect {
-    let element: web_sys::Element = target.dyn_into().unwrap();
-    element.get_bounding_client_rect()
-}
-
-struct PageCoords {
-    x: f64,
-    y: f64,
-}
-impl From<&web_sys::Touch> for PageCoords {
-    fn from(touch: &web_sys::Touch) -> PageCoords {
-        PageCoords {
-            x: touch.page_x() as f64,
-            y: touch.page_y() as f64,
-        }
-    }
-}
-impl From<&MouseEvent> for PageCoords {
-    fn from(evt: &MouseEvent) -> PageCoords {
-        PageCoords {
-            x: evt.page_x() as f64,
-            y: evt.page_y() as f64,
-        }
-    }
-}
-
-// percent in range 0.0 - 1.0, bottom to top, of how far up the touch event is
-fn target_touch_height_percent(target: web_sys::EventTarget, coords: impl Into<PageCoords>) -> f64 {
-    let coords = coords.into();
-    let bounds = event_target_bounds(target);
-    let fader_height = bounds.height() as f64;
-    let offset_y = coords.y - bounds.top() as f64;
-    clamp(1.0 / fader_height * (fader_height - offset_y))
 }
