@@ -60,34 +60,42 @@ pub fn default_control_mapping() -> ControlMapping {
                 ButtonType::Switch,
                 vec![
                     ButtonMapping {
+                        label: "White".to_owned(),
                         coordinate: ButtonCoordinate::new(0, 7),
                         on_action: ButtonAction::UpdateGlobalColor(Color::White),
                     },
                     ButtonMapping {
+                        label: "Yellow".to_owned(),
                         coordinate: ButtonCoordinate::new(0, 6),
                         on_action: ButtonAction::UpdateGlobalColor(Color::Yellow),
                     },
                     ButtonMapping {
+                        label: "Deep Orange".to_owned(),
                         coordinate: ButtonCoordinate::new(0, 5),
                         on_action: ButtonAction::UpdateGlobalColor(Color::DeepOrange),
                     },
                     ButtonMapping {
+                        label: "Red".to_owned(),
                         coordinate: ButtonCoordinate::new(0, 4),
                         on_action: ButtonAction::UpdateGlobalColor(Color::Red),
                     },
                     ButtonMapping {
+                        label: "Violet".to_owned(),
                         coordinate: ButtonCoordinate::new(0, 3),
                         on_action: ButtonAction::UpdateGlobalColor(Color::Violet),
                     },
                     ButtonMapping {
+                        label: "Dark Blue".to_owned(),
                         coordinate: ButtonCoordinate::new(0, 2),
                         on_action: ButtonAction::UpdateGlobalColor(Color::DarkBlue),
                     },
                     ButtonMapping {
+                        label: "Teal".to_owned(),
                         coordinate: ButtonCoordinate::new(0, 1),
                         on_action: ButtonAction::UpdateGlobalColor(Color::Teal),
                     },
                     ButtonMapping {
+                        label: "Green".to_owned(),
                         coordinate: ButtonCoordinate::new(0, 0),
                         on_action: ButtonAction::UpdateGlobalColor(Color::Green),
                     },
@@ -98,34 +106,42 @@ pub fn default_control_mapping() -> ControlMapping {
                 ButtonType::Toggle,
                 vec![
                     ButtonMapping {
+                        label: "White (Secondary)".to_owned(),
                         coordinate: ButtonCoordinate::new(1, 7),
                         on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::White),
                     },
                     ButtonMapping {
+                        label: "Yellow (Secondary)".to_owned(),
                         coordinate: ButtonCoordinate::new(1, 6),
                         on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Yellow),
                     },
                     ButtonMapping {
+                        label: "Deep Orange (Secondary)".to_owned(),
                         coordinate: ButtonCoordinate::new(1, 5),
                         on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::DeepOrange),
                     },
                     ButtonMapping {
+                        label: "Red (Secondary)".to_owned(),
                         coordinate: ButtonCoordinate::new(1, 4),
                         on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Red),
                     },
                     ButtonMapping {
+                        label: "Violet (Secondary)".to_owned(),
                         coordinate: ButtonCoordinate::new(1, 3),
                         on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Violet),
                     },
                     ButtonMapping {
+                        label: "Dark Blue (Secondary)".to_owned(),
                         coordinate: ButtonCoordinate::new(1, 2),
                         on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::DarkBlue),
                     },
                     ButtonMapping {
+                        label: "Teal (Secondary)".to_owned(),
                         coordinate: ButtonCoordinate::new(1, 1),
                         on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Teal),
                     },
                     ButtonMapping {
+                        label: "Green (Secondary)".to_owned(),
                         coordinate: ButtonCoordinate::new(1, 0),
                         on_action: ButtonAction::UpdateGlobalSecondaryColor(Color::Green),
                     },
@@ -133,6 +149,7 @@ pub fn default_control_mapping() -> ControlMapping {
             ),
             // Dimmer Effects
             ButtonMapping {
+                label: "1/4 Sine Down".to_owned(),
                 coordinate: ButtonCoordinate::new(7, 7),
                 on_action: ButtonAction::ActivateDimmerEffect(
                     DimmerModulator::new(Waveform::SineDown, Beats::new(1.0), 1.0).into(),
@@ -140,6 +157,7 @@ pub fn default_control_mapping() -> ControlMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
+                label: "1/4 Half Sine Up".to_owned(),
                 coordinate: ButtonCoordinate::new(7, 6),
                 on_action: ButtonAction::ActivateDimmerEffect(
                     DimmerModulator::new(Waveform::HalfSineUp, Beats::new(1.0), 1.0).into(),
@@ -147,6 +165,7 @@ pub fn default_control_mapping() -> ControlMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
+                label: "1/4 Half Sine Down".to_owned(),
                 coordinate: ButtonCoordinate::new(7, 5),
                 on_action: ButtonAction::ActivateDimmerEffect(
                     DimmerModulator::new(Waveform::HalfSineDown, Beats::new(1.0), 1.0).into(),
@@ -154,6 +173,7 @@ pub fn default_control_mapping() -> ControlMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
+                label: "1/4 Short Square Pulse".to_owned(),
                 coordinate: ButtonCoordinate::new(7, 4),
                 on_action: ButtonAction::ActivateDimmerEffect(
                     DimmerModulator::new(Waveform::ShortSquarePulse, Beats::new(1.0), 1.0).into(),
@@ -162,6 +182,7 @@ pub fn default_control_mapping() -> ControlMapping {
             .into_group(ButtonType::Toggle),
             // Dimmer sequences
             ButtonMapping {
+                label: "1/4 Offset Pulse".to_owned(),
                 coordinate: ButtonCoordinate::new(6, 7),
                 on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                     vec![
@@ -179,6 +200,7 @@ pub fn default_control_mapping() -> ControlMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
+                label: "1/2 Alternating Pulse".to_owned(),
                 coordinate: ButtonCoordinate::new(6, 6),
                 on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                     vec![
@@ -193,6 +215,7 @@ pub fn default_control_mapping() -> ControlMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
+                label: "1/4 Three Up One Down".to_owned(),
                 coordinate: ButtonCoordinate::new(6, 5),
                 on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                     vec![
@@ -206,6 +229,7 @@ pub fn default_control_mapping() -> ControlMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
+                label: "1/1 Offset Saw Down".to_owned(),
                 coordinate: ButtonCoordinate::new(6, 4),
                 on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                     vec![DimmerModulator::new(
@@ -221,6 +245,7 @@ pub fn default_control_mapping() -> ControlMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
+                label: "1/1 Offset Sine Up".to_owned(),
                 coordinate: ButtonCoordinate::new(6, 3),
                 on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                     vec![DimmerModulator::new(Waveform::SineUp, Beats::new(4.0), 1.0)],
@@ -232,6 +257,7 @@ pub fn default_control_mapping() -> ControlMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
+                label: "1/4 5/4 Offset Step".to_owned(),
                 coordinate: ButtonCoordinate::new(6, 2),
                 on_action: ButtonAction::ActivateDimmerEffect(DimmerEffect::new(
                     vec![
@@ -252,6 +278,7 @@ pub fn default_control_mapping() -> ControlMapping {
             .into_group(ButtonType::Toggle),
             // Color effects
             ButtonMapping {
+                label: "1/2 120deg Shift Up".to_owned(),
                 coordinate: ButtonCoordinate::new(2, 7),
                 on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
                     vec![ColorModulator::new(
@@ -264,6 +291,7 @@ pub fn default_control_mapping() -> ControlMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
+                label: "1/4 -90deg Shift Down".to_owned(),
                 coordinate: ButtonCoordinate::new(2, 6),
                 on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
                     vec![ColorModulator::new(
@@ -277,6 +305,7 @@ pub fn default_control_mapping() -> ControlMapping {
             .into_group(ButtonType::Toggle),
             // Color sequences
             ButtonMapping {
+                label: "1/4 6 Step Hue".to_owned(),
                 coordinate: ButtonCoordinate::new(2, 4),
                 on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
                     vec![
@@ -292,6 +321,7 @@ pub fn default_control_mapping() -> ControlMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
+                label: "1/4 Offset Random White Flash".to_owned(),
                 coordinate: ButtonCoordinate::new(2, 3),
                 on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
                     vec![
@@ -307,6 +337,7 @@ pub fn default_control_mapping() -> ControlMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
+                label: "1/4 Fast 180deg Hue Shifts".to_owned(),
                 coordinate: ButtonCoordinate::new(2, 2),
                 on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
                     vec![
@@ -336,6 +367,7 @@ pub fn default_control_mapping() -> ControlMapping {
             }
             .into_group(ButtonType::Toggle),
             ButtonMapping {
+                label: "1/2 Hue to Secondary".to_owned(),
                 coordinate: ButtonCoordinate::new(2, 1),
                 on_action: ButtonAction::ActivateColorEffect(ColorEffect::new(
                     vec![ColorModulator::new(
@@ -352,6 +384,7 @@ pub fn default_control_mapping() -> ControlMapping {
                 ButtonType::Toggle,
                 vec![
                     ButtonMapping {
+                        label: "1/4 From Center".to_owned(),
                         coordinate: ButtonCoordinate::new(4, 7),
                         on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
                             vec![
@@ -383,6 +416,7 @@ pub fn default_control_mapping() -> ControlMapping {
                         )),
                     },
                     ButtonMapping {
+                        label: "1/2 Offset From Center".to_owned(),
                         coordinate: ButtonCoordinate::new(4, 6),
                         on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
                             vec![PixelModulator::new(
@@ -397,6 +431,7 @@ pub fn default_control_mapping() -> ControlMapping {
                         )),
                     },
                     ButtonMapping {
+                        label: "1/4 Sigmoid Wave".to_owned(),
                         coordinate: ButtonCoordinate::new(4, 5),
                         on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
                             vec![PixelModulator::new(
@@ -411,6 +446,7 @@ pub fn default_control_mapping() -> ControlMapping {
                         )),
                     },
                     ButtonMapping {
+                        label: "1/4 1.5 Root Wave".to_owned(),
                         coordinate: ButtonCoordinate::new(4, 4),
                         on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
                             vec![
@@ -432,6 +468,7 @@ pub fn default_control_mapping() -> ControlMapping {
                         )),
                     },
                     ButtonMapping {
+                        label: "1/4 Offset 3 Up 1 Down".to_owned(),
                         coordinate: ButtonCoordinate::new(4, 3),
                         on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
                             vec![
@@ -463,6 +500,7 @@ pub fn default_control_mapping() -> ControlMapping {
                         )),
                     },
                     ButtonMapping {
+                        label: "1/4 2 Down 1 Up".to_owned(),
                         coordinate: ButtonCoordinate::new(4, 2),
                         on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
                             vec![
@@ -486,6 +524,7 @@ pub fn default_control_mapping() -> ControlMapping {
                         )),
                     },
                     ButtonMapping {
+                        label: "1/8 Offset 4 Up 4 Down".to_owned(),
                         coordinate: ButtonCoordinate::new(4, 0),
                         on_action: ButtonAction::ActivatePixelEffect(PixelEffect::new(
                             vec![
@@ -543,22 +582,26 @@ pub fn default_control_mapping() -> ControlMapping {
                 ButtonType::Switch,
                 vec![
                     ButtonMapping {
+                        label: "0/0".to_owned(),
                         coordinate: ButtonCoordinate::new(3, 7),
                         on_action: ButtonAction::UpdateBasePosition((0.0, 0.0).into()),
                     },
                     ButtonMapping {
+                        label: "-15/-30 Mirrored".to_owned(),
                         coordinate: ButtonCoordinate::new(3, 6),
                         on_action: ButtonAction::UpdateBasePosition(
                             ((-15.0, -30.0), BasePositionMode::MirrorPan).into(),
                         ),
                     },
                     ButtonMapping {
+                        label: "30/-30 Mirrored".to_owned(),
                         coordinate: ButtonCoordinate::new(3, 5),
                         on_action: ButtonAction::UpdateBasePosition(
                             ((30.0, -30.0), BasePositionMode::MirrorPan).into(),
                         ),
                     },
                     ButtonMapping {
+                        label: "50/-75 Mirrored".to_owned(),
                         coordinate: ButtonCoordinate::new(3, 4),
                         on_action: ButtonAction::UpdateBasePosition(
                             ((50.0, -75.0), BasePositionMode::MirrorPan).into(),
@@ -570,6 +613,7 @@ pub fn default_control_mapping() -> ControlMapping {
                 ButtonType::Toggle,
                 vec![
                     ButtonMapping {
+                        label: "Movement Effect #1".to_owned(),
                         coordinate: ButtonCoordinate::new(3, 0),
                         on_action: ButtonAction::ActivatePositionEffect(PositionEffect::new(
                             Some(PositionModulator::new(
@@ -589,6 +633,7 @@ pub fn default_control_mapping() -> ControlMapping {
                         )),
                     },
                     ButtonMapping {
+                        label: "Movement Effect #2".to_owned(),
                         coordinate: ButtonCoordinate::new(3, 1),
                         on_action: ButtonAction::ActivatePositionEffect(PositionEffect::new(
                             Some(PositionModulator::new(
@@ -608,6 +653,7 @@ pub fn default_control_mapping() -> ControlMapping {
                         )),
                     },
                     ButtonMapping {
+                        label: "Movement Effect #3".to_owned(),
                         coordinate: ButtonCoordinate::new(3, 2),
                         on_action: ButtonAction::ActivatePositionEffect(PositionEffect::new(
                             Some(PositionModulator::new(

@@ -78,6 +78,7 @@ pub enum ButtonType {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ButtonMapping {
+    pub label: String,
     pub coordinate: ButtonCoordinate,
     pub on_action: ButtonAction,
 }
