@@ -4,7 +4,8 @@ members = [
     "midi",
     "roller",
     "ola_client",
-    "roller_protocol"
+    "roller_protocol",
+    "roller_web",
 ]
 
 exclude = ["web_ui"]

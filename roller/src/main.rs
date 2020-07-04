@@ -15,7 +15,6 @@ mod lighting_engine;
 mod position;
 mod project;
 mod utils;
-mod web;
 
 use crate::control::button::{pad_states, ButtonRef};
 use crate::lighting_engine::EngineState;
@@ -168,7 +167,7 @@ async fn main() -> Result<(), async_std::io::Error> {
 
     pin_mut!(events);
 
-    web::serve_frontend(
+    roller_web::serve_frontend(
         current_button_states
             .iter()
             .map(|(button_ref, value)| ((button_ref.location(), *button_ref.coordinate()), *value))

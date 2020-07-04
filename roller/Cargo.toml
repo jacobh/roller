@@ -8,6 +8,7 @@ edition = "2018"
 midi = {path = "../midi"}
 ola_client = {path = "../ola_client"}
 roller_protocol = {path = "../roller_protocol"}
+roller_web = {path = "../roller_web"}
 async-std = { version = "*", features = ["attributes", "unstable"] }
 serde = { version = "*", features = ["derive"] }
 toml = "*"
@@ -23,8 +24,4 @@ rand = "*"
 lazy_static = "*"
 jemallocator = "*"
 itertools = "*"
-warp = "*"
-tokio = { version = "0.2" }
-bincode = "*"
-broadcaster = "*"
 clap = "3.0.0-beta.1"
