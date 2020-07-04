@@ -191,6 +191,12 @@ pub enum ButtonRef<'a> {
     Meta(&'a MetaButtonMapping),
 }
 impl<'a> ButtonRef<'a> {
+    pub fn label(&self) -> &'a str {
+        match self {
+            ButtonRef::Standard(_, button) => &button.label,
+            ButtonRef::Meta(_) => "",
+        }
+    }
     pub fn location(&self) -> ButtonGridLocation {
         match self {
             ButtonRef::Standard(_, _) => ButtonGridLocation::Main,

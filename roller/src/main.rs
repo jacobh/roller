@@ -170,7 +170,12 @@ async fn main() -> Result<(), async_std::io::Error> {
     roller_web::serve_frontend(
         current_button_states
             .iter()
-            .map(|(button_ref, value)| ((button_ref.location(), *button_ref.coordinate()), *value))
+            .map(|(button_ref, value)| {
+                (
+                    (button_ref.location(), *button_ref.coordinate()),
+                    (button_ref.label().to_owned(), *value),
+                )
+            })
             .collect(),
         web_pad_state_update_recv,
         web_input_events_send,

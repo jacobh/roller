@@ -14,22 +14,32 @@ use roller_protocol::{
 
 async fn browser_session(
     websocket: WebSocket,
-    initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState>,
+    initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), (String, ButtonState)>,
     server_message_recv: impl Stream<Item = ServerMessage> + Unpin,
     event_sender: Sender<InputEvent>,
 ) {
     let (mut tx, rx) = websocket.split();
 
-    // Send through initial button states
-    let initial_states_message = ServerMessage::ButtonStatesUpdated(
-        initial_button_states
-            .into_iter()
-            .map(|((loc, coord), state)| (loc, coord, state))
-            .collect(),
-    );
+    // Send through initial button states and labels
+    let initial_messages = &[
+        ServerMessage::ButtonStatesUpdated(
+            initial_button_states
+                .iter()
+                .map(|((loc, coord), (_, state))| (*loc, *coord, *state))
+                .collect(),
+        ),
+        ServerMessage::ButtonLabelsUpdated(
+            initial_button_states
+                .iter()
+                .map(|((loc, coord), (label, _))| (*loc, *coord, label.clone()))
+                .collect(),
+        ),
+    ];
 
-    let msg = bincode::serialize::<ServerMessage>(&initial_states_message).unwrap();
-    tx.send(ws::Message::binary(msg)).await.unwrap();
+    for message in initial_messages {
+        let msg = bincode::serialize::<ServerMessage>(&message).unwrap();
+        tx.send(ws::Message::binary(msg)).await.unwrap();
+    }
 
     enum Event {
         ServerMessage(ServerMessage),
@@ -78,7 +88,7 @@ async fn browser_session(
 }
 
 pub fn serve_frontend(
-    initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), ButtonState>,
+    initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), (String, ButtonState)>,
     mut pad_state_update_recv: Receiver<Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>>,
     event_sender: Sender<InputEvent>,
 ) {
@@ -92,7 +102,10 @@ pub fn serve_frontend(
         while let Some(coord_states) = pad_state_update_recv.next().await {
             let mut states = initial_button_states2.lock().await;
             for (loc, coord, state) in coord_states.iter() {
-                states.insert((loc.clone(), coord.clone()), state.clone());
+                states
+                    .entry((loc.clone(), coord.clone()))
+                    .and_modify(|(_label, prev_state)| *prev_state = *state)
+                    .or_insert_with(|| (String::new(), *state));
             }
 
             let message = ServerMessage::ButtonStatesUpdated(coord_states);
