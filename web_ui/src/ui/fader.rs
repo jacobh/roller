@@ -34,9 +34,7 @@ impl Component for Fader {
                 self.props.on_update.emit(value);
                 true
             }
-            Msg::NoOp => {
-                false
-            }
+            Msg::NoOp => false,
         }
     }
 

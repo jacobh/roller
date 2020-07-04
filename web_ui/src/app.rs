@@ -28,7 +28,7 @@ type FaderValue = f64;
 pub struct App {
     link: ComponentLink<Self>,
     websocket: WebSocketTask,
-    button_states: HashMap<ButtonGridLocation, Vector<Vector<ButtonState>>>,
+    button_states: HashMap<ButtonGridLocation, Vector<Vector<(Option<String>, ButtonState)>>>,
     fader_states: OrdMap<FaderId, FaderValue>,
     fader_overlay_open: bool,
 }
@@ -85,19 +85,19 @@ impl Component for App {
         button_states.insert(
             ButtonGridLocation::Main,
             (0..8)
-                .map(|_column_idx| (0..8).map(|_row_idx| ButtonState::Unused).collect())
+                .map(|_column_idx| (0..8).map(|_row_idx| (None, ButtonState::Unused)).collect())
                 .collect(),
         );
 
         button_states.insert(
             ButtonGridLocation::MetaRight,
-            vector![(0..8).map(|_row_idx| ButtonState::Unused).collect()],
+            vector![(0..8).map(|_row_idx| (None, ButtonState::Unused)).collect()],
         );
 
         button_states.insert(
             ButtonGridLocation::MetaBottom,
             (0..8)
-                .map(|_col_idx| vector![ButtonState::Unused])
+                .map(|_col_idx| vector![(None, ButtonState::Unused)])
                 .collect(),
         );
 
@@ -138,7 +138,13 @@ impl Component for App {
             AppMsg::ServerMessage(ServerMessage::ButtonStatesUpdated(updates)) => {
                 for (location, coords, state) in updates {
                     let grid = self.button_states.get_mut(&location).unwrap();
-                    grid[coords.column_idx][coords.row_idx] = state;
+                    grid[coords.column_idx][coords.row_idx].1 = state;
+                }
+            }
+            AppMsg::ServerMessage(ServerMessage::ButtonLabelsUpdated(updates)) => {
+                for (location, coords, label) in updates {
+                    let grid = self.button_states.get_mut(&location).unwrap();
+                    grid[coords.column_idx][coords.row_idx].0 = Some(label);
                 }
             }
             AppMsg::FaderOverlayToggled => {
