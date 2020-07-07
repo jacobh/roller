@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 pub mod fixture;
+pub mod position;
 mod utils;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

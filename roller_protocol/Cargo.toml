@@ -11,3 +11,4 @@ derive_more = "*"
 indexmap = "*"
 rustc-hash = "*"
 palette = "*"
+ordered-float = { version = "*", features = ["serde"] }
