@@ -1,9 +1,10 @@
 use ordered_float::OrderedFloat;
+use serde::{Deserialize, Serialize};
 use std::ops::Add;
 
 use crate::{fixture::Fixture, utils::clamp};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Position {
     pan: OrderedFloat<f64>,
     tilt: OrderedFloat<f64>,

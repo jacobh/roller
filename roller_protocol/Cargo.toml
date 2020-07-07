@@ -8,7 +8,7 @@ edition = "2018"
 thiserror = "1.0"
 serde = "1.0"
 derive_more = "*"
-indexmap = "*"
+indexmap = { version = "*", features = ["serde-1"] }
 rustc-hash = "*"
 palette = "*"
 ordered-float = { version = "*", features = ["serde"] }

@@ -23,18 +23,30 @@ use crate::{
 )]
 pub struct FixtureGroupId(usize);
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Serialize, Deserialize)]
 pub struct FixtureLocation {
     pub x: isize,
     pub y: isize,
 }
 
 #[derive(
-    Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Constructor, Deserialize, From, Into,
+    Debug,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
+    Ord,
+    Constructor,
+    Serialize,
+    Deserialize,
+    From,
+    Into,
 )]
 pub struct BeamId(usize);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
 #[serde(rename_all = "snake_case")]
 pub enum FixtureEffectType {
     Color,
@@ -55,7 +67,7 @@ impl FixtureEffectType {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
 #[serde(rename_all = "snake_case")]
 pub enum FixtureParameter {
     Dimmer,
@@ -68,7 +80,7 @@ pub enum FixtureParameter {
     Unused,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FixtureProfileChannel {
     pub parameter: FixtureParameter,
     pub channel: usize,
@@ -96,7 +108,7 @@ impl FixtureProfileChannel {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct FixtureBeamProfile {
     pub dimmer_channel: Option<FixtureProfileChannel>,
     pub red_channel: Option<FixtureProfileChannel>,
@@ -133,7 +145,7 @@ impl FixtureBeamProfile {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FixtureProfile {
     pub slug: String,
     pub label: String,
@@ -162,11 +174,11 @@ impl FixtureProfile {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FixtureBeam {
     pub profile: FixtureBeamProfile,
     pub dimmer: f64,
-    pub color: Option<palette::LinSrgb<f64>>,
+    pub color: Option<(f64, f64, f64)>,
 }
 impl FixtureBeam {
     pub fn new(profile: FixtureBeamProfile) -> FixtureBeam {
@@ -178,13 +190,16 @@ impl FixtureBeam {
     }
     pub fn is_white(&self) -> bool {
         match self.color {
-            Some(color) => color.into_components() == (1.0, 1.0, 1.0),
+            Some(color) => color == (1.0, 1.0, 1.0),
             None => false,
         }
     }
+    pub fn color(&self) -> Option<palette::LinSrgb<f64>> {
+        self.color.map(palette::LinSrgb::from_components)
+    }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Fixture {
     pub profile: FixtureProfile,
     pub universe: usize,
@@ -287,7 +302,7 @@ impl Fixture {
         if self.profile.is_colorable() {
             for beam in self.beams.values_mut() {
                 if beam.profile.is_colorable() {
-                    beam.color = Some(color);
+                    beam.color = Some(color.into_components());
                 }
             }
             Ok(())
@@ -325,7 +340,7 @@ impl Fixture {
             if let (Some(color), Some((red_channel, green_channel, blue_channel))) =
                 (beam.color, beam.profile.color_channels())
             {
-                let (mut red, mut green, mut blue) = color.into_components();
+                let (mut red, mut green, mut blue) = color;
 
                 // Custom calibrated warmer white
                 if beam.is_white() {
