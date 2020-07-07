@@ -339,11 +339,7 @@ impl<'a> EngineState<'a> {
                                 ))
                             })
                             .fold(
-                                base_position_for_fixture(
-                                    &values.base_position(),
-                                    &fixture,
-                                    &fixtures,
-                                ),
+                                values.base_position().for_fixture(&fixture, &fixtures),
                                 |position1, position2| position1 + position2,
                             ),
                     )
@@ -450,34 +446,5 @@ impl<'a> EngineState<'a> {
                 }
             })
             .chain(self.meta_input_events())
-    }
-}
-
-// temporary shim
-pub fn base_position_for_fixture(
-    base_position: &BasePosition,
-    fixture: &Fixture,
-    fixtures: &[Fixture],
-) -> Position {
-    // Hackily find the index of this moving fixture and use that for mirroring.
-    // Ultimately we need a `location` attribute on a fixture
-    let moving_fixtures = fixtures
-        .iter()
-        .filter(|fixture| fixture.profile.is_positionable());
-    let fixture_i = moving_fixtures
-        .enumerate()
-        .find(|(_, f)| f == &fixture)
-        .map(|(i, _)| i)
-        .unwrap_or(0);
-
-    match base_position.mode {
-        BasePositionMode::Default => base_position.position,
-        BasePositionMode::MirrorPan => {
-            if fixture_i % 2 == 0 {
-                base_position.position
-            } else {
-                base_position.position.inverted_pan()
-            }
-        }
     }
 }
