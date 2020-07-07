@@ -164,19 +164,19 @@ impl FixtureProfile {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FixtureBeam {
-    profile: FixtureBeamProfile,
-    dimmer: f64,
-    color: Option<palette::LinSrgb<f64>>,
+    pub profile: FixtureBeamProfile,
+    pub dimmer: f64,
+    pub color: Option<palette::LinSrgb<f64>>,
 }
 impl FixtureBeam {
-    fn new(profile: FixtureBeamProfile) -> FixtureBeam {
+    pub fn new(profile: FixtureBeamProfile) -> FixtureBeam {
         FixtureBeam {
             profile,
             dimmer: 1.0,
             color: None,
         }
     }
-    fn is_white(&self) -> bool {
+    pub fn is_white(&self) -> bool {
         match self.color {
             Some(color) => color.into_components() == (1.0, 1.0, 1.0),
             None => false,
@@ -187,15 +187,15 @@ impl FixtureBeam {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Fixture {
     pub profile: FixtureProfile,
-    universe: usize,
-    start_channel: usize,
+    pub universe: usize,
+    pub start_channel: usize,
     pub group_id: Option<FixtureGroupId>,
     pub location: Option<FixtureLocation>,
-    enabled_effects: FxHashSet<FixtureEffectType>,
+    pub enabled_effects: FxHashSet<FixtureEffectType>,
 
-    beams: FxIndexMap<BeamId, FixtureBeam>,
-    dimmer: f64,
-    position: Option<Position>, // degrees from home position
+    pub beams: FxIndexMap<BeamId, FixtureBeam>,
+    pub dimmer: f64,
+    pub position: Option<Position>, // degrees from home position
 }
 impl Fixture {
     pub fn new(
