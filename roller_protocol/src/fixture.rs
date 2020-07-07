@@ -23,17 +23,6 @@ use crate::{
 )]
 pub struct FixtureGroupId(usize);
 
-#[derive(Debug, Clone, Deserialize)]
-struct ProjectFixture {
-    start_channel: usize,
-    group_id: Option<FixtureGroupId>,
-    location: Option<FixtureLocation>,
-    #[serde(rename = "fixture_profile")]
-    fixture_profile_slug: String,
-    #[serde(default = "FixtureEffectType::all")]
-    enabled_effects: FxHashSet<FixtureEffectType>,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize)]
 pub struct FixtureLocation {
     pub x: isize,
@@ -107,15 +96,6 @@ impl FixtureProfileChannel {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-struct FixtureProfileData {
-    slug: String,
-    label: String,
-    channel_count: usize,
-    channels: Vec<FixtureProfileChannel>,
-    supported_effects: FxHashSet<FixtureEffectType>,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct FixtureBeamProfile {
     dimmer_channel: Option<FixtureProfileChannel>,
@@ -155,7 +135,10 @@ impl FixtureBeamProfile {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FixtureProfile {
-    data: FixtureProfileData,
+    slug: String,
+    label: String,
+    channel_count: usize,
+    supported_effects: FxHashSet<FixtureEffectType>,
 
     beams: FxIndexMap<BeamId, FixtureBeamProfile>,
     dimmer_channel: Option<FixtureProfileChannel>,
@@ -244,7 +227,6 @@ impl Fixture {
     }
     fn enabled_effects(&self) -> impl Iterator<Item = &FixtureEffectType> {
         self.profile
-            .data
             .supported_effects
             .intersection(&self.enabled_effects)
     }
@@ -322,7 +304,7 @@ impl Fixture {
         }
     }
     pub fn relative_dmx(&self) -> Vec<u8> {
-        let mut dmx: Vec<u8> = vec![0; self.profile.data.channel_count];
+        let mut dmx: Vec<u8> = vec![0; self.profile.channel_count];
 
         if let Some(dimmer_channel) = &self.profile.dimmer_channel {
             dmx[dimmer_channel.channel_index()] = dimmer_channel.encode_value(self.dimmer)
