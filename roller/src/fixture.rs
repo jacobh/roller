@@ -3,8 +3,9 @@ use derive_more::{Constructor, From, Into};
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
+use roller_protocol::position::{degrees_to_percent, Position};
+
 use crate::{
-    position::{degrees_to_percent, Position},
     project::{FixtureGroupId, FixtureLocation},
     utils::FxIndexMap,
 };

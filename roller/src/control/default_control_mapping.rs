@@ -1,4 +1,4 @@
-use roller_protocol::{ButtonCoordinate, ButtonGridLocation, FaderId};
+use roller_protocol::{ButtonCoordinate, ButtonGridLocation, FaderId, position::BasePositionMode};
 
 use crate::{
     clock::{Beats, ClockOffset, ClockOffsetMode, Rate},
@@ -16,7 +16,6 @@ use crate::{
         EffectDirection, PixelEffect, PixelModulator, PositionEffect, PositionModulator, Waveform,
     },
     lighting_engine::SceneId,
-    position::BasePositionMode,
     project::FixtureGroupId,
 };
 

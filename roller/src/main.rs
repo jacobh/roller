@@ -12,7 +12,6 @@ mod control;
 mod effect;
 mod fixture;
 mod lighting_engine;
-mod position;
 mod project;
 mod utils;
 

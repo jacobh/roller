@@ -59,8 +59,8 @@ impl Default for BasePositionMode {
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct BasePosition {
-    position: Position,
-    mode: BasePositionMode,
+    pub position: Position,
+    pub mode: BasePositionMode,
 }
 impl BasePosition {
     pub fn new(position: Position, mode: BasePositionMode) -> BasePosition {
