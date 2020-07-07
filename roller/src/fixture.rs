@@ -2,41 +2,11 @@ use async_std::prelude::*;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
-use roller_protocol::{position::{degrees_to_percent, Position}};
+use roller_protocol::position::{degrees_to_percent, Position};
 
-use crate::{
-    utils::FxIndexMap,
-};
+use crate::utils::FxIndexMap;
 
 pub use roller_protocol::fixture::*;
-
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-struct FixtureProfileChannel {
-    parameter: FixtureParameter,
-    channel: usize,
-    beam: Option<BeamId>,
-    #[serde(default = "FixtureProfileChannel::default_min_value")]
-    min_value: u8,
-    #[serde(default = "FixtureProfileChannel::default_max_value")]
-    max_value: u8,
-}
-impl FixtureProfileChannel {
-    const fn default_min_value() -> u8 {
-        0
-    }
-    const fn default_max_value() -> u8 {
-        255
-    }
-    fn channel_index(&self) -> usize {
-        self.channel - 1
-    }
-    // value in range 0.0 - 1.0
-    fn encode_value(&self, value: f64) -> u8 {
-        let range = self.max_value - self.min_value;
-
-        self.min_value + (range as f64 * value) as u8
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 struct FixtureProfileData {
@@ -47,151 +17,93 @@ struct FixtureProfileData {
     supported_effects: FxHashSet<FixtureEffectType>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub struct FixtureBeamProfile {
-    dimmer_channel: Option<FixtureProfileChannel>,
-    red_channel: Option<FixtureProfileChannel>,
-    green_channel: Option<FixtureProfileChannel>,
-    blue_channel: Option<FixtureProfileChannel>,
-    cool_white_channel: Option<FixtureProfileChannel>,
-}
-impl FixtureBeamProfile {
-    pub fn is_dimmable(&self) -> bool {
-        self.dimmer_channel.is_some()
-    }
-    pub fn is_colorable(&self) -> bool {
-        [&self.red_channel, &self.green_channel, &self.blue_channel]
-            .iter()
-            .all(|channel| channel.is_some())
-    }
-    fn color_channels(
-        &self,
-    ) -> Option<(
-        &FixtureProfileChannel,
-        &FixtureProfileChannel,
-        &FixtureProfileChannel,
-    )> {
-        match (
-            self.red_channel.as_ref(),
-            self.green_channel.as_ref(),
-            self.blue_channel.as_ref(),
-        ) {
-            (Some(red_channel), Some(blue_channel), Some(green_channel)) => {
-                Some((red_channel, blue_channel, green_channel))
-            }
-            _ => None,
-        }
-    }
-}
+pub async fn load_fixture_profile(
+    path: impl AsRef<async_std::path::Path>,
+) -> Result<FixtureProfile, async_std::io::Error> {
+    let fixture_profile_contents = async_std::fs::read(path).await?;
+    let profile_data: FixtureProfileData = toml::from_slice(&fixture_profile_contents)?;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct FixtureProfile {
-    data: FixtureProfileData,
+    let parameters: FxHashMap<_, _> = profile_data
+        .channels
+        .iter()
+        .map(|channel| (channel.parameter, channel.clone()))
+        .collect();
 
-    beams: FxIndexMap<BeamId, FixtureBeamProfile>,
-    dimmer_channel: Option<FixtureProfileChannel>,
-    pan_channel: Option<FixtureProfileChannel>,
-    tilt_channel: Option<FixtureProfileChannel>,
-}
-impl FixtureProfile {
-    pub async fn load(
-        path: impl AsRef<async_std::path::Path>,
-    ) -> Result<FixtureProfile, async_std::io::Error> {
-        let fixture_profile_contents = async_std::fs::read(path).await?;
-        let profile_data: FixtureProfileData = toml::from_slice(&fixture_profile_contents)?;
+    let mut beams: FxIndexMap<Option<BeamId>, FixtureBeamProfile> = profile_data
+        .channels
+        .iter()
+        .fold(FxIndexMap::default(), |mut beams, channel| {
+            let mut beam = beams.entry(channel.beam).or_default();
 
-        let parameters: FxHashMap<_, _> = profile_data
-            .channels
-            .iter()
-            .map(|channel| (channel.parameter, channel.clone()))
-            .collect();
-
-        let mut beams: FxIndexMap<Option<BeamId>, FixtureBeamProfile> = profile_data
-            .channels
-            .iter()
-            .fold(FxIndexMap::default(), |mut beams, channel| {
-                let mut beam = beams.entry(channel.beam).or_default();
-
-                match channel.parameter {
-                    FixtureParameter::Dimmer => {
-                        assert!(beam.dimmer_channel.is_none());
-                        beam.dimmer_channel = Some(channel.clone());
-                    }
-                    FixtureParameter::Red => {
-                        assert!(beam.red_channel.is_none());
-                        beam.red_channel = Some(channel.clone());
-                    }
-                    FixtureParameter::Green => {
-                        assert!(beam.green_channel.is_none());
-                        beam.green_channel = Some(channel.clone());
-                    }
-                    FixtureParameter::Blue => {
-                        assert!(beam.blue_channel.is_none());
-                        beam.blue_channel = Some(channel.clone());
-                    }
-                    FixtureParameter::CoolWhite => {
-                        assert!(beam.cool_white_channel.is_none());
-                        beam.cool_white_channel = Some(channel.clone());
-                    }
-                    _ => {}
+            match channel.parameter {
+                FixtureParameter::Dimmer => {
+                    assert!(beam.dimmer_channel.is_none());
+                    beam.dimmer_channel = Some(channel.clone());
                 }
+                FixtureParameter::Red => {
+                    assert!(beam.red_channel.is_none());
+                    beam.red_channel = Some(channel.clone());
+                }
+                FixtureParameter::Green => {
+                    assert!(beam.green_channel.is_none());
+                    beam.green_channel = Some(channel.clone());
+                }
+                FixtureParameter::Blue => {
+                    assert!(beam.blue_channel.is_none());
+                    beam.blue_channel = Some(channel.clone());
+                }
+                FixtureParameter::CoolWhite => {
+                    assert!(beam.cool_white_channel.is_none());
+                    beam.cool_white_channel = Some(channel.clone());
+                }
+                _ => {}
+            }
 
-                beams
-            });
-        beams.sort_keys();
-
-        // Pluck out the default dimmer channel
-        let dimmer_channel = beams
-            .get(&None)
-            .and_then(|beam| beam.dimmer_channel.clone());
-        beams
-            .entry(None)
-            .and_modify(|beam| beam.dimmer_channel = None);
-
-        // If beams have been configured, use those, otherwise, give the default beam an ID
-        let (default_beam, beams): (Vec<_>, Vec<_>) =
-            beams.into_iter().partition(|(id, _)| id.is_none());
-
-        let beams: FxIndexMap<_, _> = if beams.len() > 0 {
             beams
-                .into_iter()
-                .map(|(id, beam)| (id.unwrap(), beam))
-                .collect()
-        } else {
-            default_beam
-                .into_iter()
-                .map(|(_, beam)| (BeamId::new(0), beam))
-                .collect()
-        };
+        });
+    beams.sort_keys();
 
-        // Ensure channel count is correct
-        assert_eq!(profile_data.channel_count, profile_data.channels.len());
+    // Pluck out the default dimmer channel
+    let dimmer_channel = beams
+        .get(&None)
+        .and_then(|beam| beam.dimmer_channel.clone());
+    beams
+        .entry(None)
+        .and_modify(|beam| beam.dimmer_channel = None);
 
-        // assert have at least 1 beam
-        assert!(beams.len() > 0);
+    // If beams have been configured, use those, otherwise, give the default beam an ID
+    let (default_beam, beams): (Vec<_>, Vec<_>) =
+        beams.into_iter().partition(|(id, _)| id.is_none());
 
-        Ok(FixtureProfile {
-            beams,
-            dimmer_channel,
-            pan_channel: parameters.get(&FixtureParameter::Pan).cloned(),
-            tilt_channel: parameters.get(&FixtureParameter::Tilt).cloned(),
-            data: profile_data,
-        })
-    }
-    pub fn beam_count(&self) -> usize {
-        self.beams.len()
-    }
-    pub fn is_dimmable(&self) -> bool {
-        self.beams.values().any(FixtureBeamProfile::is_dimmable)
-    }
-    pub fn is_colorable(&self) -> bool {
-        self.beams.values().any(FixtureBeamProfile::is_colorable)
-    }
-    pub fn is_positionable(&self) -> bool {
-        [&self.pan_channel, &self.tilt_channel]
-            .iter()
-            .all(|channel| channel.is_some())
-    }
+    let beams: FxIndexMap<_, _> = if beams.len() > 0 {
+        beams
+            .into_iter()
+            .map(|(id, beam)| (id.unwrap(), beam))
+            .collect()
+    } else {
+        default_beam
+            .into_iter()
+            .map(|(_, beam)| (BeamId::new(0), beam))
+            .collect()
+    };
+
+    // Ensure channel count is correct
+    assert_eq!(profile_data.channel_count, profile_data.channels.len());
+
+    // assert have at least 1 beam
+    assert!(beams.len() > 0);
+
+    Ok(FixtureProfile {
+        slug: profile_data.slug,
+        label: profile_data.label,
+        channel_count: profile_data.channel_count,
+        supported_effects: profile_data.supported_effects,
+
+        beams,
+        dimmer_channel,
+        pan_channel: parameters.get(&FixtureParameter::Pan).cloned(),
+        tilt_channel: parameters.get(&FixtureParameter::Tilt).cloned(),
+    })
 }
 
 pub async fn load_fixture_profiles(
@@ -202,8 +114,8 @@ pub async fn load_fixture_profiles(
     while let Some(entry) = profile_paths.next().await {
         let path = entry?.path();
 
-        let fixture_profile = FixtureProfile::load(path).await?;
-        fixture_profiles.insert(fixture_profile.data.slug.clone(), fixture_profile);
+        let fixture_profile = load_fixture_profile(path).await?;
+        fixture_profiles.insert(fixture_profile.slug.clone(), fixture_profile);
     }
 
     Ok(fixture_profiles)
@@ -274,7 +186,6 @@ impl Fixture {
     }
     fn enabled_effects(&self) -> impl Iterator<Item = &FixtureEffectType> {
         self.profile
-            .data
             .supported_effects
             .intersection(&self.enabled_effects)
     }
@@ -352,7 +263,7 @@ impl Fixture {
         }
     }
     pub fn relative_dmx(&self) -> Vec<u8> {
-        let mut dmx: Vec<u8> = vec![0; self.profile.data.channel_count];
+        let mut dmx: Vec<u8> = vec![0; self.profile.channel_count];
 
         if let Some(dimmer_channel) = &self.profile.dimmer_channel {
             dmx[dimmer_channel.channel_index()] = dimmer_channel.encode_value(self.dimmer)

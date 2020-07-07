@@ -1,6 +1,6 @@
 use ordered_float::OrderedFloat;
 
-use roller_protocol::position::{Position};
+use roller_protocol::position::Position;
 
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},

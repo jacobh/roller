@@ -1,7 +1,7 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 
-use roller_protocol::{position::BasePosition, ButtonCoordinate, fixture::FixtureGroupId};
+use roller_protocol::{fixture::FixtureGroupId, position::BasePosition, ButtonCoordinate};
 
 use crate::{
     clock::Rate,

@@ -2,7 +2,11 @@ use derive_more::Constructor;
 use rustc_hash::FxHashMap;
 use std::time::Instant;
 
-use roller_protocol::{position::{BasePositionMode, BasePosition, Position}, InputEvent, fixture::FixtureGroupId};
+use roller_protocol::{
+    fixture::FixtureGroupId,
+    position::{BasePosition, BasePositionMode, Position},
+    InputEvent,
+};
 
 use crate::{
     clock::{offsetted_for_fixture, Clock, ClockEvent, Rate},
@@ -336,7 +340,11 @@ impl<'a> EngineState<'a> {
                                 ))
                             })
                             .fold(
-                                base_position_for_fixture(&values.base_position(), &fixture, &fixtures),
+                                base_position_for_fixture(
+                                    &values.base_position(),
+                                    &fixture,
+                                    &fixtures,
+                                ),
                                 |position1, position2| position1 + position2,
                             ),
                     )
@@ -447,26 +455,30 @@ impl<'a> EngineState<'a> {
 }
 
 // temporary shim
-pub fn base_position_for_fixture(base_position: &BasePosition, fixture: &Fixture, fixtures: &[Fixture]) -> Position {
-        // Hackily find the index of this moving fixture and use that for mirroring.
-        // Ultimately we need a `location` attribute on a fixture
-        let moving_fixtures = fixtures
-            .iter()
-            .filter(|fixture| fixture.profile.is_positionable());
-        let fixture_i = moving_fixtures
-            .enumerate()
-            .find(|(_, f)| f == &fixture)
-            .map(|(i, _)| i)
-            .unwrap_or(0);
+pub fn base_position_for_fixture(
+    base_position: &BasePosition,
+    fixture: &Fixture,
+    fixtures: &[Fixture],
+) -> Position {
+    // Hackily find the index of this moving fixture and use that for mirroring.
+    // Ultimately we need a `location` attribute on a fixture
+    let moving_fixtures = fixtures
+        .iter()
+        .filter(|fixture| fixture.profile.is_positionable());
+    let fixture_i = moving_fixtures
+        .enumerate()
+        .find(|(_, f)| f == &fixture)
+        .map(|(i, _)| i)
+        .unwrap_or(0);
 
-        match base_position.mode {
-            BasePositionMode::Default => base_position.position,
-            BasePositionMode::MirrorPan => {
-                if fixture_i % 2 == 0 {
-                    base_position.position
-                } else {
-                    base_position.position.inverted_pan()
-                }
+    match base_position.mode {
+        BasePositionMode::Default => base_position.position,
+        BasePositionMode::MirrorPan => {
+            if fixture_i % 2 == 0 {
+                base_position.position
+            } else {
+                base_position.position.inverted_pan()
             }
         }
     }
+}

@@ -1,8 +1,8 @@
 use async_std::prelude::*;
 use rustc_hash::FxHashSet;
-use serde::{Deserialize};
+use serde::Deserialize;
 
-use roller_protocol::fixture::{FixtureLocation, FixtureGroupId};
+use roller_protocol::fixture::{FixtureGroupId, FixtureLocation};
 
 use crate::{
     clock::{self, ClockEvent},

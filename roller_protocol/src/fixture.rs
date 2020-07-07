@@ -1,6 +1,6 @@
 use derive_more::{Constructor, From, Into};
 use rustc_hash::{FxHashMap, FxHashSet};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     position::{degrees_to_percent, Position},
@@ -69,14 +69,14 @@ pub enum FixtureParameter {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-struct FixtureProfileChannel {
-    parameter: FixtureParameter,
-    channel: usize,
-    beam: Option<BeamId>,
+pub struct FixtureProfileChannel {
+    pub parameter: FixtureParameter,
+    pub channel: usize,
+    pub beam: Option<BeamId>,
     #[serde(default = "FixtureProfileChannel::default_min_value")]
-    min_value: u8,
+    pub min_value: u8,
     #[serde(default = "FixtureProfileChannel::default_max_value")]
-    max_value: u8,
+    pub max_value: u8,
 }
 impl FixtureProfileChannel {
     const fn default_min_value() -> u8 {
@@ -85,11 +85,11 @@ impl FixtureProfileChannel {
     const fn default_max_value() -> u8 {
         255
     }
-    fn channel_index(&self) -> usize {
+    pub fn channel_index(&self) -> usize {
         self.channel - 1
     }
     // value in range 0.0 - 1.0
-    fn encode_value(&self, value: f64) -> u8 {
+    pub fn encode_value(&self, value: f64) -> u8 {
         let range = self.max_value - self.min_value;
 
         self.min_value + (range as f64 * value) as u8
@@ -98,11 +98,11 @@ impl FixtureProfileChannel {
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct FixtureBeamProfile {
-    dimmer_channel: Option<FixtureProfileChannel>,
-    red_channel: Option<FixtureProfileChannel>,
-    green_channel: Option<FixtureProfileChannel>,
-    blue_channel: Option<FixtureProfileChannel>,
-    cool_white_channel: Option<FixtureProfileChannel>,
+    pub dimmer_channel: Option<FixtureProfileChannel>,
+    pub red_channel: Option<FixtureProfileChannel>,
+    pub green_channel: Option<FixtureProfileChannel>,
+    pub blue_channel: Option<FixtureProfileChannel>,
+    pub cool_white_channel: Option<FixtureProfileChannel>,
 }
 impl FixtureBeamProfile {
     pub fn is_dimmable(&self) -> bool {
@@ -113,7 +113,7 @@ impl FixtureBeamProfile {
             .iter()
             .all(|channel| channel.is_some())
     }
-    fn color_channels(
+    pub fn color_channels(
         &self,
     ) -> Option<(
         &FixtureProfileChannel,
@@ -135,15 +135,15 @@ impl FixtureBeamProfile {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FixtureProfile {
-    slug: String,
-    label: String,
-    channel_count: usize,
-    supported_effects: FxHashSet<FixtureEffectType>,
+    pub slug: String,
+    pub label: String,
+    pub channel_count: usize,
+    pub supported_effects: FxHashSet<FixtureEffectType>,
 
-    beams: FxIndexMap<BeamId, FixtureBeamProfile>,
-    dimmer_channel: Option<FixtureProfileChannel>,
-    pan_channel: Option<FixtureProfileChannel>,
-    tilt_channel: Option<FixtureProfileChannel>,
+    pub beams: FxIndexMap<BeamId, FixtureBeamProfile>,
+    pub dimmer_channel: Option<FixtureProfileChannel>,
+    pub pan_channel: Option<FixtureProfileChannel>,
+    pub tilt_channel: Option<FixtureProfileChannel>,
 }
 impl FixtureProfile {
     pub fn beam_count(&self) -> usize {

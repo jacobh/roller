@@ -1,4 +1,7 @@
-use roller_protocol::{ButtonCoordinate, ButtonGridLocation, FaderId, position::BasePositionMode, fixture::FixtureGroupId};
+use roller_protocol::{
+    fixture::FixtureGroupId, position::BasePositionMode, ButtonCoordinate, ButtonGridLocation,
+    FaderId,
+};
 
 use crate::{
     clock::{Beats, ClockOffset, ClockOffsetMode, Rate},

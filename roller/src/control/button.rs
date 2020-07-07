@@ -3,7 +3,10 @@ use std::hash::{Hash, Hasher};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
-use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent, position::BasePosition};
+use roller_protocol::{
+    fixture::FixtureGroupId, position::BasePosition, ButtonCoordinate, ButtonGridLocation,
+    ButtonState, InputEvent,
+};
 
 use crate::{
     clock::Rate,
@@ -11,7 +14,6 @@ use crate::{
     control::{control_mapping::ControlMapping, NoteState},
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
     lighting_engine::{ControlEvent, ControlMode, SceneId},
-    project::FixtureGroupId,
     utils::shift_remove_vec,
 };
 
