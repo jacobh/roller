@@ -3,7 +3,7 @@ use rustc_hash::FxHashMap;
 use std::time::Instant;
 
 use roller_protocol::{
-    fixture::FixtureGroupId,
+    fixture::{Fixture, FixtureGroupId},
     position::{BasePosition, BasePositionMode, Position},
     InputEvent,
 };
@@ -17,7 +17,6 @@ use crate::{
         NoteState,
     },
     effect::{self, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet, PositionEffect},
-    fixture::Fixture,
     utils::FxIndexMap,
 };
 

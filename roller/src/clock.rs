@@ -8,7 +8,9 @@ use std::iter::Sum;
 use std::ops::{Add, Mul, Sub};
 use std::time::{Duration, Instant};
 
-use crate::{effect::EffectDirection, fixture::Fixture};
+use roller_protocol::fixture::Fixture;
+
+use crate::effect::EffectDirection;
 
 fn duration_as_secs(duration: Duration) -> f64 {
     duration.as_micros() as f64 / 1_000_000.0

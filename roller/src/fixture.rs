@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use crate::utils::FxIndexMap;
 
-pub use roller_protocol::fixture::*;
+use roller_protocol::fixture::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 struct FixtureProfileData {

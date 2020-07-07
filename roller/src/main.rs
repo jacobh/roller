@@ -32,7 +32,7 @@ struct CliArgs {
 
 async fn run_tick<'a>(
     state: &mut EngineState<'a>,
-    fixtures: &mut Vec<fixture::Fixture>,
+    fixtures: &mut Vec<roller_protocol::fixture::Fixture>,
     dmx_sender: &async_std::sync::Sender<(i32, [u8; 512])>,
     midi_controller: Option<&control::midi::MidiController>,
     current_button_states: &mut rustc_hash::FxHashMap<ButtonRef<'a>, ButtonState>,

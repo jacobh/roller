@@ -2,12 +2,9 @@ use async_std::prelude::*;
 use rustc_hash::FxHashSet;
 use serde::Deserialize;
 
-use roller_protocol::fixture::{FixtureGroupId, FixtureLocation};
+use roller_protocol::fixture::{Fixture, FixtureEffectType, FixtureGroupId, FixtureLocation};
 
-use crate::{
-    clock::{self, ClockEvent},
-    fixture::{Fixture, FixtureEffectType},
-};
+use crate::clock::{self, ClockEvent};
 
 #[derive(Debug, Clone, Deserialize)]
 struct ProjectFixture {
