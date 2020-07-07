@@ -2,6 +2,9 @@ use derive_more::{From, Into};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+pub mod fixture;
+mod utils;
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum InputEvent {
     ButtonPressed(ButtonGridLocation, ButtonCoordinate),
