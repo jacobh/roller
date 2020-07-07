@@ -57,7 +57,7 @@ impl FixtureEffectType {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Hash)]
 #[serde(rename_all = "snake_case")]
-enum FixtureParameter {
+pub enum FixtureParameter {
     Dimmer,
     Red,
     Green,

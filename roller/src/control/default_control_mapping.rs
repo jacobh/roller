@@ -1,4 +1,4 @@
-use roller_protocol::{ButtonCoordinate, ButtonGridLocation, FaderId, position::BasePositionMode};
+use roller_protocol::{ButtonCoordinate, ButtonGridLocation, FaderId, position::BasePositionMode, fixture::FixtureGroupId};
 
 use crate::{
     clock::{Beats, ClockOffset, ClockOffsetMode, Rate},
@@ -16,7 +16,6 @@ use crate::{
         EffectDirection, PixelEffect, PixelModulator, PositionEffect, PositionModulator, Waveform,
     },
     lighting_engine::SceneId,
-    project::FixtureGroupId,
 };
 
 pub fn default_control_mapping() -> ControlMapping {

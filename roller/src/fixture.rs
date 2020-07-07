@@ -1,53 +1,14 @@
 use async_std::prelude::*;
-use derive_more::{Constructor, From, Into};
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
 
-use roller_protocol::position::{degrees_to_percent, Position};
+use roller_protocol::{position::{degrees_to_percent, Position}};
 
 use crate::{
-    project::{FixtureGroupId, FixtureLocation},
     utils::FxIndexMap,
 };
 
-#[derive(
-    Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Constructor, Deserialize, From, Into,
-)]
-pub struct BeamId(usize);
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Hash)]
-#[serde(rename_all = "snake_case")]
-pub enum FixtureEffectType {
-    Color,
-    Dimmer,
-    Pixel,
-    Position,
-}
-impl FixtureEffectType {
-    pub fn all() -> FxHashSet<FixtureEffectType> {
-        vec![
-            FixtureEffectType::Color,
-            FixtureEffectType::Dimmer,
-            FixtureEffectType::Pixel,
-            FixtureEffectType::Position,
-        ]
-        .into_iter()
-        .collect()
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Hash)]
-#[serde(rename_all = "snake_case")]
-enum FixtureParameter {
-    Dimmer,
-    Red,
-    Green,
-    Blue,
-    CoolWhite,
-    Pan,
-    Tilt,
-    Unused,
-}
+pub use roller_protocol::fixture::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 struct FixtureProfileChannel {

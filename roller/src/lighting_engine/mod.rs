@@ -2,7 +2,7 @@ use derive_more::Constructor;
 use rustc_hash::FxHashMap;
 use std::time::Instant;
 
-use roller_protocol::{position::{BasePositionMode, BasePosition, Position}, InputEvent};
+use roller_protocol::{position::{BasePositionMode, BasePosition, Position}, InputEvent, fixture::FixtureGroupId};
 
 use crate::{
     clock::{offsetted_for_fixture, Clock, ClockEvent, Rate},
@@ -14,7 +14,6 @@ use crate::{
     },
     effect::{self, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet, PositionEffect},
     fixture::Fixture,
-    project::FixtureGroupId,
     utils::FxIndexMap,
 };
 
