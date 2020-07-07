@@ -118,20 +118,3 @@ pub async fn load_fixture_profiles(
 
     Ok(fixture_profiles)
 }
-
-pub fn fold_fixture_dmx_data<'a>(
-    fixtures: impl IntoIterator<Item = &'a Fixture>,
-) -> FxHashMap<usize, [u8; 512]> {
-    let mut universe_dmx_data = FxHashMap::default();
-    universe_dmx_data.reserve(1);
-
-    for fixture in fixtures {
-        let dmx_data = universe_dmx_data
-            .entry(fixture.universe)
-            .or_insert_with(|| [0u8; 512]);
-
-        fixture.write_dmx(dmx_data);
-    }
-
-    universe_dmx_data
-}

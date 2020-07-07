@@ -4,7 +4,10 @@ use futures::stream::{self, StreamExt};
 use std::path::PathBuf;
 use std::time::Duration;
 
-use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent};
+use roller_protocol::{
+    fixture::{fold_fixture_dmx_data, Fixture},
+    ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent,
+};
 
 mod clock;
 mod color;
@@ -32,7 +35,7 @@ struct CliArgs {
 
 async fn run_tick<'a>(
     state: &mut EngineState<'a>,
-    fixtures: &mut Vec<roller_protocol::fixture::Fixture>,
+    fixtures: &mut Vec<Fixture>,
     dmx_sender: &async_std::sync::Sender<(i32, [u8; 512])>,
     midi_controller: Option<&control::midi::MidiController>,
     current_button_states: &mut rustc_hash::FxHashMap<ButtonRef<'a>, ButtonState>,
@@ -41,7 +44,7 @@ async fn run_tick<'a>(
     >,
 ) {
     state.update_fixtures(fixtures);
-    for (universe, dmx_data) in fixture::fold_fixture_dmx_data(fixtures.iter()).into_iter() {
+    for (universe, dmx_data) in fold_fixture_dmx_data(fixtures.iter()).into_iter() {
         dmx_sender.send((universe as i32, dmx_data)).await;
     }
 
