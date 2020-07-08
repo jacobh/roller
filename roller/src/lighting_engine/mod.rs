@@ -260,7 +260,7 @@ impl<'a> EngineState<'a> {
 
                 let clock_snapshot = clock_snapshot.with_rate(values.clock_rate);
 
-                let effect_dimmer = if fixture.dimmer_effects_enabled() {
+                let effect_dimmer = if fixture.params.dimmer_effects_enabled() {
                     values
                         .active_dimmer_effects
                         .iter()
@@ -283,7 +283,7 @@ impl<'a> EngineState<'a> {
                 let base_color = values.global_color().to_hsl();
                 let secondary_color = values.secondary_color.map(Color::to_hsl);
 
-                let color = if fixture.color_effects_enabled() {
+                let color = if fixture.params.color_effects_enabled() {
                     effect::color_intensity(
                         base_color,
                         values.active_color_effects.iter().fold(
@@ -307,25 +307,26 @@ impl<'a> EngineState<'a> {
                     base_color
                 };
 
-                let pixel_range_set: Option<PixelRangeSet> = if fixture.pixel_effects_enabled() {
-                    // TODO only using first active pixel effect
-                    values
-                        .active_pixel_effects
-                        .iter()
-                        .nth(0)
-                        .map(|(effect, rate)| {
-                            effect.pixel_range_set(&offsetted_for_fixture(
-                                effect.clock_offset.as_ref(),
-                                &clock_snapshot.with_rate(*rate),
-                                &fixture,
-                                &fixtures,
-                            ))
-                        })
-                } else {
-                    None
-                };
+                let pixel_range_set: Option<PixelRangeSet> =
+                    if fixture.params.pixel_effects_enabled() {
+                        // TODO only using first active pixel effect
+                        values
+                            .active_pixel_effects
+                            .iter()
+                            .nth(0)
+                            .map(|(effect, rate)| {
+                                effect.pixel_range_set(&offsetted_for_fixture(
+                                    effect.clock_offset.as_ref(),
+                                    &clock_snapshot.with_rate(*rate),
+                                    &fixture,
+                                    &fixtures,
+                                ))
+                            })
+                    } else {
+                        None
+                    };
 
-                let position = if fixture.position_effects_enabled() {
+                let position = if fixture.params.position_effects_enabled() {
                     Some(
                         values
                             .active_position_effects
@@ -357,22 +358,22 @@ impl<'a> EngineState<'a> {
         for (fixture, (dimmer, color, pixel_range, position)) in
             fixtures.iter_mut().zip(fixture_values)
         {
-            fixture.set_dimmer(dimmer);
-            fixture.set_color(color).unwrap();
+            fixture.state.set_dimmer(dimmer);
+            fixture.state.set_color(color);
 
             if fixture.params.profile.beam_count() > 1 {
                 if let Some(pixel_range) = pixel_range {
-                    fixture.set_beam_dimmers(
+                    fixture.state.set_beam_dimmers(
                         &pixel_range.pixel_dimmers(fixture.params.profile.beam_count()),
                     )
                 } else {
                     // If there's no active pixel effect, reset pixels
-                    fixture.set_all_beam_dimmers(1.0);
+                    fixture.state.set_all_beam_dimmers(1.0);
                 }
             }
 
             if let Some(position) = position {
-                fixture.set_position(position).unwrap();
+                fixture.state.set_position(position);
             }
         }
     }

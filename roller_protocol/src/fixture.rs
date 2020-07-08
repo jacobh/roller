@@ -208,12 +208,81 @@ pub struct FixtureParams {
     pub location: Option<FixtureLocation>,
     pub enabled_effects: FxHashSet<FixtureEffectType>,
 }
+impl FixtureParams {
+    fn enabled_effects(&self) -> impl Iterator<Item = &FixtureEffectType> {
+        self.profile
+            .supported_effects
+            .intersection(&self.enabled_effects)
+    }
+    pub fn dimmer_effects_enabled(&self) -> bool {
+        self.enabled_effects()
+            .any(|x| x == &FixtureEffectType::Dimmer)
+    }
+    pub fn color_effects_enabled(&self) -> bool {
+        self.enabled_effects()
+            .any(|x| x == &FixtureEffectType::Color)
+    }
+    pub fn pixel_effects_enabled(&self) -> bool {
+        self.enabled_effects()
+            .any(|x| x == &FixtureEffectType::Pixel)
+    }
+    pub fn position_effects_enabled(&self) -> bool {
+        self.enabled_effects()
+            .any(|x| x == &FixtureEffectType::Position)
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FixtureState {
     pub beams: FxIndexMap<BeamId, FixtureBeam>,
     pub dimmer: f64,
     pub position: Option<Position>, // degrees from home position
+}
+impl FixtureState {
+    pub fn set_dimmer(&mut self, dimmer: f64) {
+        self.dimmer = dimmer;
+    }
+    pub fn set_beam_dimmers(&mut self, dimmers: &[f64]) {
+        for (beam, dimmer) in self.beams.values_mut().zip(dimmers) {
+            beam.dimmer = *dimmer;
+        }
+    }
+    pub fn set_all_beam_dimmers(&mut self, dimmer: f64) {
+        for beam in self.beams.values_mut() {
+            beam.dimmer = dimmer;
+        }
+    }
+    pub fn set_color(&mut self, color: impl Into<palette::LinSrgb<f64>>) {
+        let color = color.into();
+
+        // Apply a subtle perceptual brightness scale to colors.
+        // Luma values have been eyeballed and might differ on a per-fixture basis in reality
+        const R_LUMA: f64 = 1.2;
+        const G_LUMA: f64 = 1.7;
+        const B_LUMA: f64 = 1.0;
+        let (r, g, b) = color.into_components();
+        let is_white = r == 1.0 && g == 1.0 && b == 1.0;
+
+        // Special casing white here for it to remain full brightness
+        // TODO some sort of enum like `BrightnessMode {Full, Perceuptual}`
+        let scale = if !is_white {
+            let luminance = r * R_LUMA + g * G_LUMA + b * B_LUMA;
+            1.0 / luminance * B_LUMA
+        } else {
+            1.0
+        };
+
+        let color = palette::LinSrgb::<f64>::new(r * scale, g * scale, b * scale);
+
+        for beam in self.beams.values_mut() {
+            if beam.profile.is_colorable() {
+                beam.color = Some(color.into_components());
+            }
+        }
+    }
+    pub fn set_position(&mut self, position: Position) {
+        self.position = Some(position);
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -251,85 +320,6 @@ impl Fixture {
                 dimmer: 1.0,
                 position: None,
             },
-        }
-    }
-    fn enabled_effects(&self) -> impl Iterator<Item = &FixtureEffectType> {
-        self.params
-            .profile
-            .supported_effects
-            .intersection(&self.params.enabled_effects)
-    }
-    pub fn dimmer_effects_enabled(&self) -> bool {
-        self.enabled_effects()
-            .any(|x| x == &FixtureEffectType::Dimmer)
-    }
-    pub fn color_effects_enabled(&self) -> bool {
-        self.enabled_effects()
-            .any(|x| x == &FixtureEffectType::Color)
-    }
-    pub fn pixel_effects_enabled(&self) -> bool {
-        self.enabled_effects()
-            .any(|x| x == &FixtureEffectType::Pixel)
-    }
-    pub fn position_effects_enabled(&self) -> bool {
-        self.enabled_effects()
-            .any(|x| x == &FixtureEffectType::Position)
-    }
-    pub fn set_dimmer(&mut self, dimmer: f64) {
-        self.state.dimmer = dimmer;
-    }
-    pub fn set_beam_dimmers(&mut self, dimmers: &[f64]) {
-        for (beam, dimmer) in self.state.beams.values_mut().zip(dimmers) {
-            beam.dimmer = *dimmer;
-        }
-    }
-    pub fn set_all_beam_dimmers(&mut self, dimmer: f64) {
-        for beam in self.state.beams.values_mut() {
-            beam.dimmer = dimmer;
-        }
-    }
-    pub fn set_color(
-        &mut self,
-        color: impl Into<palette::LinSrgb<f64>>,
-    ) -> Result<(), &'static str> {
-        let color = color.into();
-
-        // Apply a subtle perceptual brightness scale to colors.
-        // Luma values have been eyeballed and might differ on a per-fixture basis in reality
-        const R_LUMA: f64 = 1.2;
-        const G_LUMA: f64 = 1.7;
-        const B_LUMA: f64 = 1.0;
-        let (r, g, b) = color.into_components();
-        let is_white = r == 1.0 && g == 1.0 && b == 1.0;
-
-        // Special casing white here for it to remain full brightness
-        // TODO some sort of enum like `BrightnessMode {Full, Perceuptual}`
-        let scale = if !is_white {
-            let luminance = r * R_LUMA + g * G_LUMA + b * B_LUMA;
-            1.0 / luminance * B_LUMA
-        } else {
-            1.0
-        };
-
-        let color = palette::LinSrgb::<f64>::new(r * scale, g * scale, b * scale);
-
-        if self.params.profile.is_colorable() {
-            for beam in self.state.beams.values_mut() {
-                if beam.profile.is_colorable() {
-                    beam.color = Some(color.into_components());
-                }
-            }
-            Ok(())
-        } else {
-            Err("Unable to set color. profile does not support it")
-        }
-    }
-    pub fn set_position(&mut self, position: Position) -> Result<(), &'static str> {
-        if self.params.profile.is_positionable() {
-            self.state.position = Some(position);
-            Ok(())
-        } else {
-            Err("Unable to set position. profile does not support it")
         }
     }
     pub fn relative_dmx(&self) -> Vec<u8> {
