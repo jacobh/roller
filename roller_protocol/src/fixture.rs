@@ -175,15 +175,13 @@ impl FixtureProfile {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct FixtureBeam {
-    pub profile: FixtureBeamProfile,
+pub struct FixtureBeamState {
     pub dimmer: f64,
     pub color: Option<(f64, f64, f64)>,
 }
-impl FixtureBeam {
-    pub fn new(profile: FixtureBeamProfile) -> FixtureBeam {
-        FixtureBeam {
-            profile,
+impl FixtureBeamState {
+    pub fn new() -> FixtureBeamState {
+        FixtureBeamState {
             dimmer: 1.0,
             color: None,
         }
@@ -234,11 +232,25 @@ impl FixtureParams {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FixtureState {
-    pub beams: FxIndexMap<BeamId, FixtureBeam>,
+    pub beams: FxIndexMap<BeamId, FixtureBeamState>,
     pub dimmer: f64,
     pub position: Option<Position>, // degrees from home position
 }
 impl FixtureState {
+    pub fn new(profile: &FixtureProfile) -> FixtureState {
+        let beams = profile
+            .beams
+            .keys()
+            .into_iter()
+            .map(|beam_id| (*beam_id, FixtureBeamState::new()))
+            .collect();
+
+        FixtureState {
+            beams,
+            dimmer: 1.0,
+            position: None,
+        }
+    }
     pub fn set_dimmer(&mut self, dimmer: f64) {
         self.dimmer = dimmer;
     }
@@ -275,9 +287,7 @@ impl FixtureState {
         let color = palette::LinSrgb::<f64>::new(r * scale, g * scale, b * scale);
 
         for beam in self.beams.values_mut() {
-            if beam.profile.is_colorable() {
-                beam.color = Some(color.into_components());
-            }
+            beam.color = Some(color.into_components());
         }
     }
     pub fn set_position(&mut self, position: Position) {
@@ -299,14 +309,8 @@ impl Fixture {
         location: Option<FixtureLocation>,
         enabled_effects: FxHashSet<FixtureEffectType>,
     ) -> Fixture {
-        let beams = profile
-            .beams
-            .clone()
-            .into_iter()
-            .map(|(beam_id, profile)| (beam_id, FixtureBeam::new(profile)))
-            .collect();
-
         Fixture {
+            state: FixtureState::new(&profile),
             params: FixtureParams {
                 profile,
                 universe,
@@ -314,11 +318,6 @@ impl Fixture {
                 group_id,
                 location,
                 enabled_effects,
-            },
-            state: FixtureState {
-                beams,
-                dimmer: 1.0,
-                position: None,
             },
         }
     }
@@ -329,32 +328,39 @@ impl Fixture {
             dmx[dimmer_channel.channel_index()] = dimmer_channel.encode_value(self.state.dimmer)
         }
 
-        for beam in self.state.beams.values() {
+        let beam_profiles = self
+            .params
+            .profile
+            .beams
+            .values()
+            .zip(self.state.beams.values());
+
+        for (beam_profile, beam_state) in beam_profiles {
             // If fixture has a global dimmer, use that, otherwise dim on a per beam basis
             let beam_dimmer = if self.params.profile.dimmer_channel.is_some() {
-                beam.dimmer
+                beam_state.dimmer
             } else {
-                beam.dimmer * self.state.dimmer
+                beam_state.dimmer * self.state.dimmer
             };
 
-            if let Some(channel) = &beam.profile.dimmer_channel {
+            if let Some(channel) = &beam_profile.dimmer_channel {
                 dmx[channel.channel_index()] = channel.encode_value(beam_dimmer);
             }
 
             if let (Some(color), Some((red_channel, green_channel, blue_channel))) =
-                (beam.color, beam.profile.color_channels())
+                (beam_state.color, beam_profile.color_channels())
             {
                 let (mut red, mut green, mut blue) = color;
 
                 // Custom calibrated warmer white
-                if beam.is_white() {
+                if beam_state.is_white() {
                     red = 1.0;
                     green = 0.906;
                     blue = 0.49;
                 }
 
                 // If light doesn't have dimmer control, scale the color values instead
-                if !beam.profile.is_dimmable() {
+                if !beam_profile.is_dimmable() {
                     red *= beam_dimmer;
                     green *= beam_dimmer;
                     blue *= beam_dimmer;
@@ -365,9 +371,9 @@ impl Fixture {
                 dmx[blue_channel.channel_index()] = blue_channel.encode_value(blue);
             }
 
-            if let Some(white_channel) = beam.profile.cool_white_channel.as_ref() {
-                if beam.is_white() {
-                    let white_value = if beam.profile.is_dimmable() {
+            if let Some(white_channel) = beam_profile.cool_white_channel.as_ref() {
+                if beam_state.is_white() {
+                    let white_value = if beam_profile.is_dimmable() {
                         1.0
                     } else {
                         beam_dimmer
