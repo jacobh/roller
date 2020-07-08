@@ -1,5 +1,4 @@
 use async_std::prelude::*;
-use rustc_hash::FxHashSet;
 use serde::Deserialize;
 
 use roller_protocol::fixture::{Fixture, FixtureEffectType, FixtureGroupId, FixtureLocation};
@@ -14,7 +13,7 @@ struct ProjectFixture {
     #[serde(rename = "fixture_profile")]
     fixture_profile_slug: String,
     #[serde(default = "FixtureEffectType::all")]
-    enabled_effects: FxHashSet<FixtureEffectType>,
+    enabled_effects: Vec<FixtureEffectType>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

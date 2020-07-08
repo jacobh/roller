@@ -1,5 +1,5 @@
 use derive_more::{Constructor, From, Into};
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -55,15 +55,13 @@ pub enum FixtureEffectType {
     Position,
 }
 impl FixtureEffectType {
-    pub fn all() -> FxHashSet<FixtureEffectType> {
+    pub fn all() -> Vec<FixtureEffectType> {
         vec![
             FixtureEffectType::Color,
             FixtureEffectType::Dimmer,
             FixtureEffectType::Pixel,
             FixtureEffectType::Position,
         ]
-        .into_iter()
-        .collect()
     }
 }
 
@@ -150,7 +148,7 @@ pub struct FixtureProfile {
     pub slug: String,
     pub label: String,
     pub channel_count: usize,
-    pub supported_effects: FxHashSet<FixtureEffectType>,
+    pub supported_effects: Vec<FixtureEffectType>,
 
     pub beams: FxIndexMap<BeamId, FixtureBeamProfile>,
     pub dimmer_channel: Option<FixtureProfileChannel>,
@@ -204,29 +202,31 @@ pub struct FixtureParams {
     pub start_channel: usize,
     pub group_id: Option<FixtureGroupId>,
     pub location: Option<FixtureLocation>,
-    pub enabled_effects: FxHashSet<FixtureEffectType>,
+    pub enabled_effects: Vec<FixtureEffectType>,
 }
 impl FixtureParams {
-    fn enabled_effects(&self) -> impl Iterator<Item = &FixtureEffectType> {
+    fn enabled_effects(&self) -> impl Iterator<Item = FixtureEffectType> + '_ {
         self.profile
             .supported_effects
-            .intersection(&self.enabled_effects)
+            .clone()
+            .into_iter()
+            .filter(move |effect| self.enabled_effects.contains(&effect))
     }
     pub fn dimmer_effects_enabled(&self) -> bool {
         self.enabled_effects()
-            .any(|x| x == &FixtureEffectType::Dimmer)
+            .any(|x| x == FixtureEffectType::Dimmer)
     }
     pub fn color_effects_enabled(&self) -> bool {
         self.enabled_effects()
-            .any(|x| x == &FixtureEffectType::Color)
+            .any(|x| x == FixtureEffectType::Color)
     }
     pub fn pixel_effects_enabled(&self) -> bool {
         self.enabled_effects()
-            .any(|x| x == &FixtureEffectType::Pixel)
+            .any(|x| x == FixtureEffectType::Pixel)
     }
     pub fn position_effects_enabled(&self) -> bool {
         self.enabled_effects()
-            .any(|x| x == &FixtureEffectType::Position)
+            .any(|x| x == FixtureEffectType::Position)
     }
 }
 
@@ -307,7 +307,7 @@ impl Fixture {
         start_channel: usize,
         group_id: Option<FixtureGroupId>,
         location: Option<FixtureLocation>,
-        enabled_effects: FxHashSet<FixtureEffectType>,
+        enabled_effects: Vec<FixtureEffectType>,
     ) -> Fixture {
         Fixture {
             state: FixtureState::new(&profile),

@@ -1,5 +1,5 @@
 use async_std::prelude::*;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 use serde::Deserialize;
 
 use crate::utils::FxIndexMap;
@@ -12,7 +12,7 @@ struct FixtureProfileData {
     label: String,
     channel_count: usize,
     channels: Vec<FixtureProfileChannel>,
-    supported_effects: FxHashSet<FixtureEffectType>,
+    supported_effects: Vec<FixtureEffectType>,
 }
 
 pub async fn load_fixture_profile(
