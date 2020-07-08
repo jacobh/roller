@@ -72,7 +72,7 @@ impl BasePosition {
         // Ultimately we need a `location` attribute on a fixture
         let moving_fixtures = fixtures
             .iter()
-            .filter(|fixture| fixture.profile.is_positionable());
+            .filter(|fixture| fixture.params.profile.is_positionable());
         let fixture_i = moving_fixtures
             .enumerate()
             .find(|(_, f)| f == &fixture)

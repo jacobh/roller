@@ -200,17 +200,26 @@ impl FixtureBeam {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Fixture {
+pub struct FixtureParams {
     pub profile: FixtureProfile,
     pub universe: usize,
     pub start_channel: usize,
     pub group_id: Option<FixtureGroupId>,
     pub location: Option<FixtureLocation>,
     pub enabled_effects: FxHashSet<FixtureEffectType>,
+}
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct FixtureState {
     pub beams: FxIndexMap<BeamId, FixtureBeam>,
     pub dimmer: f64,
     pub position: Option<Position>, // degrees from home position
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Fixture {
+    pub params: FixtureParams,
+    pub state: FixtureState,
 }
 impl Fixture {
     pub fn new(
@@ -229,21 +238,26 @@ impl Fixture {
             .collect();
 
         Fixture {
-            profile,
-            universe,
-            start_channel,
-            group_id,
-            location,
-            enabled_effects,
-            beams,
-            dimmer: 1.0,
-            position: None,
+            params: FixtureParams {
+                profile,
+                universe,
+                start_channel,
+                group_id,
+                location,
+                enabled_effects,
+            },
+            state: FixtureState {
+                beams,
+                dimmer: 1.0,
+                position: None,
+            },
         }
     }
     fn enabled_effects(&self) -> impl Iterator<Item = &FixtureEffectType> {
-        self.profile
+        self.params
+            .profile
             .supported_effects
-            .intersection(&self.enabled_effects)
+            .intersection(&self.params.enabled_effects)
     }
     pub fn dimmer_effects_enabled(&self) -> bool {
         self.enabled_effects()
@@ -262,15 +276,15 @@ impl Fixture {
             .any(|x| x == &FixtureEffectType::Position)
     }
     pub fn set_dimmer(&mut self, dimmer: f64) {
-        self.dimmer = dimmer;
+        self.state.dimmer = dimmer;
     }
     pub fn set_beam_dimmers(&mut self, dimmers: &[f64]) {
-        for (beam, dimmer) in self.beams.values_mut().zip(dimmers) {
+        for (beam, dimmer) in self.state.beams.values_mut().zip(dimmers) {
             beam.dimmer = *dimmer;
         }
     }
     pub fn set_all_beam_dimmers(&mut self, dimmer: f64) {
-        for beam in self.beams.values_mut() {
+        for beam in self.state.beams.values_mut() {
             beam.dimmer = dimmer;
         }
     }
@@ -299,8 +313,8 @@ impl Fixture {
 
         let color = palette::LinSrgb::<f64>::new(r * scale, g * scale, b * scale);
 
-        if self.profile.is_colorable() {
-            for beam in self.beams.values_mut() {
+        if self.params.profile.is_colorable() {
+            for beam in self.state.beams.values_mut() {
                 if beam.profile.is_colorable() {
                     beam.color = Some(color.into_components());
                 }
@@ -311,26 +325,26 @@ impl Fixture {
         }
     }
     pub fn set_position(&mut self, position: Position) -> Result<(), &'static str> {
-        if self.profile.is_positionable() {
-            self.position = Some(position);
+        if self.params.profile.is_positionable() {
+            self.state.position = Some(position);
             Ok(())
         } else {
             Err("Unable to set position. profile does not support it")
         }
     }
     pub fn relative_dmx(&self) -> Vec<u8> {
-        let mut dmx: Vec<u8> = vec![0; self.profile.channel_count];
+        let mut dmx: Vec<u8> = vec![0; self.params.profile.channel_count];
 
-        if let Some(dimmer_channel) = &self.profile.dimmer_channel {
-            dmx[dimmer_channel.channel_index()] = dimmer_channel.encode_value(self.dimmer)
+        if let Some(dimmer_channel) = &self.params.profile.dimmer_channel {
+            dmx[dimmer_channel.channel_index()] = dimmer_channel.encode_value(self.state.dimmer)
         }
 
-        for beam in self.beams.values() {
+        for beam in self.state.beams.values() {
             // If fixture has a global dimmer, use that, otherwise dim on a per beam basis
-            let beam_dimmer = if self.profile.dimmer_channel.is_some() {
+            let beam_dimmer = if self.params.profile.dimmer_channel.is_some() {
                 beam.dimmer
             } else {
-                beam.dimmer * self.dimmer
+                beam.dimmer * self.state.dimmer
             };
 
             if let Some(channel) = &beam.profile.dimmer_channel {
@@ -375,9 +389,9 @@ impl Fixture {
         }
 
         if let (Some(position), Some(tilt_channel), Some(pan_channel)) = (
-            self.position,
-            &self.profile.tilt_channel,
-            &self.profile.pan_channel,
+            self.state.position,
+            &self.params.profile.tilt_channel,
+            &self.params.profile.pan_channel,
         ) {
             // TODO move to fixture profile
             const PAN_RANGE: f64 = 540.0;
@@ -394,7 +408,7 @@ impl Fixture {
     }
     pub fn write_dmx(&self, dmx: &mut [u8]) {
         for (i, channel) in self.relative_dmx().into_iter().enumerate() {
-            dmx[i + self.start_channel - 1] = channel
+            dmx[i + self.params.start_channel - 1] = channel
         }
     }
 }
@@ -407,7 +421,7 @@ pub fn fold_fixture_dmx_data<'a>(
 
     for fixture in fixtures {
         let dmx_data = universe_dmx_data
-            .entry(fixture.universe)
+            .entry(fixture.params.universe)
             .or_insert_with(|| [0u8; 512]);
 
         fixture.write_dmx(dmx_data);

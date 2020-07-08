@@ -252,7 +252,7 @@ impl<'a> EngineState<'a> {
         let fixture_values = fixtures
             .iter()
             .map(|fixture| {
-                let values = if let Some(group_id) = fixture.group_id {
+                let values = if let Some(group_id) = fixture.params.group_id {
                     fixture_group_values.get(&group_id).unwrap_or(&base_values)
                 } else {
                     &base_values
@@ -360,10 +360,11 @@ impl<'a> EngineState<'a> {
             fixture.set_dimmer(dimmer);
             fixture.set_color(color).unwrap();
 
-            if fixture.profile.beam_count() > 1 {
+            if fixture.params.profile.beam_count() > 1 {
                 if let Some(pixel_range) = pixel_range {
-                    fixture
-                        .set_beam_dimmers(&pixel_range.pixel_dimmers(fixture.profile.beam_count()))
+                    fixture.set_beam_dimmers(
+                        &pixel_range.pixel_dimmers(fixture.params.profile.beam_count()),
+                    )
                 } else {
                     // If there's no active pixel effect, reset pixels
                     fixture.set_all_beam_dimmers(1.0);
