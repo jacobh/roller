@@ -10,7 +10,7 @@ use warp::{
 
 use roller_protocol::{
     control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent},
-    fixture::{FixtureId, FixtureParams},
+    fixture::{FixtureId, FixtureParams, FixtureState},
     ClientMessage, ServerMessage,
 };
 
@@ -95,6 +95,7 @@ pub fn serve_frontend(
     initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), (String, ButtonState)>,
     fixture_params: FxHashMap<FixtureId, FixtureParams>,
     mut pad_state_update_recv: Receiver<Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>>,
+    mut fixture_state_updates_recv: Receiver<Vec<(FixtureId, FixtureState)>>,
     event_sender: Sender<InputEvent>,
 ) {
     let initial_button_states = Arc::new(Mutex::new(initial_button_states));
@@ -115,6 +116,17 @@ pub fn serve_frontend(
 
             let message = ServerMessage::ButtonStatesUpdated(coord_states);
             server_message_sender.send(message).await.unwrap();
+        }
+    });
+
+    // broadcast fixture states
+    let (mut server_message_sender, _) = server_message_channel.clone().split();
+    async_std::task::spawn(async move {
+        while let Some(updates) = fixture_state_updates_recv.next().await {
+            server_message_sender
+                .send(ServerMessage::FixtureStatesUpdated(updates))
+                .await
+                .unwrap();
         }
     });
 

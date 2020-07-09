@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use roller_protocol::{
     control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent},
-    fixture::{fold_fixture_dmx_data, Fixture},
+    fixture::{fold_fixture_dmx_data, Fixture, FixtureId, FixtureState},
 };
 
 mod clock;
@@ -42,11 +42,21 @@ async fn run_tick<'a>(
     web_pad_state_update_send: &async_std::sync::Sender<
         Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>,
     >,
+    web_fixture_state_updates_send: &async_std::sync::Sender<Vec<(FixtureId, FixtureState)>>,
 ) {
     state.update_fixtures(fixtures);
     for (universe, dmx_data) in fold_fixture_dmx_data(fixtures.iter()).into_iter() {
         dmx_sender.send((universe as i32, dmx_data)).await;
     }
+
+    web_fixture_state_updates_send
+        .send(
+            fixtures
+                .iter()
+                .map(|fixture| (fixture.id, fixture.state.clone()))
+                .collect(),
+        )
+        .await;
 
     let new_button_states = pad_states(
         &state.control_mapping,
@@ -142,6 +152,8 @@ async fn main() -> Result<(), async_std::io::Error> {
     let (web_input_events_send, web_input_events_recv) = async_std::sync::channel::<InputEvent>(64);
     let (web_pad_state_update_send, web_pad_state_update_recv) =
         async_std::sync::channel::<Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>>(64);
+    let (web_fixture_state_updates_send, web_fixture_state_updates_recv) =
+        async_std::sync::channel::<Vec<(FixtureId, FixtureState)>>(64);
 
     let web_input_events = Some(
         web_input_events_recv
@@ -185,6 +197,7 @@ async fn main() -> Result<(), async_std::io::Error> {
             .map(|fixture| (fixture.id, fixture.params))
             .collect(),
         web_pad_state_update_recv,
+        web_fixture_state_updates_recv,
         web_input_events_send,
     );
 
@@ -198,6 +211,7 @@ async fn main() -> Result<(), async_std::io::Error> {
                     midi_controller.as_ref(),
                     &mut current_button_states,
                     &web_pad_state_update_send,
+                    &web_fixture_state_updates_send,
                 )
                 .await;
             }
