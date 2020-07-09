@@ -8,17 +8,7 @@ use crate::{
 };
 
 #[derive(
-    Debug,
-    Copy,
-    Clone,
-    PartialEq,
-    Eq,
-    Hash,
-    PartialOrd,
-    From,
-    Into,
-    Serialize,
-    Deserialize,
+    Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, From, Into, Serialize, Deserialize,
 )]
 pub struct FixtureId(uuid::Uuid);
 impl FixtureId {

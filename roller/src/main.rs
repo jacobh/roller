@@ -179,6 +179,11 @@ async fn main() -> Result<(), async_std::io::Error> {
                 )
             })
             .collect(),
+        fixtures
+            .clone()
+            .into_iter()
+            .map(|fixture| (fixture.id, fixture.params))
+            .collect(),
         web_pad_state_update_recv,
         web_input_events_send,
     );

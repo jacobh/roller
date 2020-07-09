@@ -6,7 +6,7 @@ pub mod position;
 mod utils;
 
 use control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent};
-use fixture::{FixtureParams, FixtureState, FixtureId};
+use fixture::{FixtureId, FixtureParams, FixtureState};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Message {

@@ -10,11 +10,13 @@ use warp::{
 
 use roller_protocol::{
     control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent},
+    fixture::{FixtureId, FixtureParams},
     ClientMessage, ServerMessage,
 };
 
 async fn browser_session(
     websocket: WebSocket,
+    fixture_params: FxHashMap<FixtureId, FixtureParams>,
     initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), (String, ButtonState)>,
     server_message_recv: impl Stream<Item = ServerMessage> + Unpin,
     event_sender: Sender<InputEvent>,
@@ -35,6 +37,7 @@ async fn browser_session(
                 .map(|((loc, coord), (label, _))| (*loc, *coord, label.clone()))
                 .collect(),
         ),
+        ServerMessage::FixtureParamsUpdated(fixture_params.into_iter().collect()),
     ];
 
     for message in initial_messages {
@@ -90,6 +93,7 @@ async fn browser_session(
 
 pub fn serve_frontend(
     initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), (String, ButtonState)>,
+    fixture_params: FxHashMap<FixtureId, FixtureParams>,
     mut pad_state_update_recv: Receiver<Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>>,
     event_sender: Sender<InputEvent>,
 ) {
@@ -121,6 +125,7 @@ pub fn serve_frontend(
         .and(warp::path("ws"))
         .and(warp::ws())
         .map(move |ws: Ws| {
+            let fixture_params = fixture_params.clone();
             let event_sender = event_sender.clone();
             let initial_button_states =
                 async_std::task::block_on(initial_button_states.lock()).clone();
@@ -129,6 +134,7 @@ pub fn serve_frontend(
             ws.on_upgrade(move |websocket| {
                 browser_session(
                     websocket,
+                    fixture_params,
                     initial_button_states,
                     server_message_recv,
                     event_sender,
