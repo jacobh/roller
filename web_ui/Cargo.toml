@@ -10,7 +10,7 @@ version = "0.1.0"
 crate-type = ["cdylib"]
 
 [dependencies]
-roller_protocol = {path = "../roller_protocol"}
+roller_protocol = {path = "../roller_protocol", features = ["wasm-bindgen"]}
 wasm-bindgen = "^0.2"
 yew = { version = "0.15", features = ["web_sys"] }
 im-rc = "*"
