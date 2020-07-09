@@ -6,6 +6,7 @@ pub mod position;
 mod utils;
 
 use control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent};
+use fixture::{FixtureParams, FixtureState, FixtureId};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Message {
@@ -22,4 +23,6 @@ pub enum ClientMessage {
 pub enum ServerMessage {
     ButtonStatesUpdated(Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>),
     ButtonLabelsUpdated(Vec<(ButtonGridLocation, ButtonCoordinate, String)>),
+    FixtureParamsUpdated(Vec<(FixtureId, FixtureParams)>),
+    FixtureStatesUpdated(Vec<(FixtureId, FixtureState)>),
 }

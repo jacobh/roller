@@ -15,6 +15,26 @@ use crate::{
     Eq,
     Hash,
     PartialOrd,
+    From,
+    Into,
+    Serialize,
+    Deserialize,
+)]
+pub struct FixtureId(uuid::Uuid);
+impl FixtureId {
+    fn new() -> FixtureId {
+        FixtureId(uuid::Uuid::new_v4())
+    }
+}
+
+#[derive(
+    Debug,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    PartialOrd,
     Constructor,
     From,
     Into,
@@ -297,6 +317,7 @@ impl FixtureState {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Fixture {
+    pub id: FixtureId,
     pub params: FixtureParams,
     pub state: FixtureState,
 }
@@ -310,6 +331,7 @@ impl Fixture {
         enabled_effects: Vec<FixtureEffectType>,
     ) -> Fixture {
         Fixture {
+            id: FixtureId::new(),
             state: FixtureState::new(&profile),
             params: FixtureParams {
                 profile,

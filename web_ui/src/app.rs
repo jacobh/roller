@@ -147,6 +147,12 @@ impl Component for App {
                     grid[coords.column_idx][coords.row_idx].0 = Some(label);
                 }
             }
+            AppMsg::ServerMessage(ServerMessage::FixtureParamsUpdated(_updates)) => {
+                unimplemented!()
+            }
+            AppMsg::ServerMessage(ServerMessage::FixtureStatesUpdated(_updates)) => {
+                unimplemented!()
+            }
             AppMsg::FaderOverlayToggled => {
                 self.fader_overlay_open = !self.fader_overlay_open;
             }
