@@ -5,8 +5,8 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use roller_protocol::{
+    control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent},
     fixture::{fold_fixture_dmx_data, Fixture},
-    ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent,
 };
 
 mod clock;

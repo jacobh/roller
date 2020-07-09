@@ -1,7 +1,7 @@
 use ordered_float::OrderedFloat;
 use serde::{Deserialize, Serialize};
 
-use roller_protocol::{fixture::FixtureGroupId, FaderId};
+use roller_protocol::{control::FaderId, fixture::FixtureGroupId};
 
 use crate::{effect::sigmoid, lighting_engine::ControlEvent};
 

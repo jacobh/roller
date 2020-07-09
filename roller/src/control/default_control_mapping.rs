@@ -1,6 +1,7 @@
 use roller_protocol::{
-    fixture::FixtureGroupId, position::BasePositionMode, ButtonCoordinate, ButtonGridLocation,
-    FaderId,
+    control::{ButtonCoordinate, ButtonGridLocation, FaderId},
+    fixture::FixtureGroupId,
+    position::BasePositionMode,
 };
 
 use crate::{

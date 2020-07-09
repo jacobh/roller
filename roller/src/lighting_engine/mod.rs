@@ -3,9 +3,9 @@ use rustc_hash::FxHashMap;
 use std::time::Instant;
 
 use roller_protocol::{
+    control::InputEvent,
     fixture::{Fixture, FixtureGroupId},
-    position::{BasePosition, BasePositionMode, Position},
-    InputEvent,
+    position::BasePosition,
 };
 
 use crate::{

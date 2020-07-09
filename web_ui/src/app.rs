@@ -13,8 +13,8 @@ use crate::{
     utils::callback_fn,
 };
 use roller_protocol::{
-    ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, FaderId, InputEvent,
-    ServerMessage,
+    control::{ButtonCoordinate, ButtonGridLocation, ButtonState, FaderId, InputEvent},
+    ClientMessage, ServerMessage,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

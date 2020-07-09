@@ -9,7 +9,8 @@ use warp::{
 };
 
 use roller_protocol::{
-    ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, InputEvent, ServerMessage,
+    control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent},
+    ClientMessage, ServerMessage,
 };
 
 async fn browser_session(

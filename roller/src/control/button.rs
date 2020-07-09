@@ -4,8 +4,9 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
 use roller_protocol::{
-    fixture::FixtureGroupId, position::BasePosition, ButtonCoordinate, ButtonGridLocation,
-    ButtonState, InputEvent,
+    control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent},
+    fixture::FixtureGroupId,
+    position::BasePosition,
 };
 
 use crate::{

@@ -1,7 +1,7 @@
 use yew::prelude::*;
 
 use crate::{app::ButtonAction, utils::callback_fn};
-use roller_protocol::ButtonState;
+use roller_protocol::control::ButtonState;
 
 pub struct Button<T>
 where
