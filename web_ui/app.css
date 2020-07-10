@@ -118,6 +118,7 @@ body {
 .mode-select .button {
     text-align: center;
     padding: 17% 0;
+    margin-bottom: 10px;
 }
 
 .fader-overlay {
