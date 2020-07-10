@@ -1,5 +1,6 @@
 use yew::prelude::*;
 
+pub mod buttons;
 pub mod faders;
 
 pub struct Page {

@@ -8,7 +8,7 @@ use yew::{
 
 use crate::{
     button_grid::ButtonGrid,
-    pages::{faders::FadersPage, Page},
+    pages::{buttons::ButtonsPage, faders::FadersPage, Page},
     ui::button::Button,
     utils::callback_fn,
 };
@@ -181,13 +181,11 @@ impl Component for App {
 
     fn view(&self) -> Html {
         let link = self.link.to_owned();
-        let button_callback_fn = callback_fn(move |(location, coord, action)| match action {
-            ButtonAction::Press => {
-                link.send_message(AppMsg::ButtonPressed(location, coord));
-            }
-            ButtonAction::Release => {
-                link.send_message(AppMsg::ButtonReleased(location, coord));
-            }
+        let button_callback_fn = callback_fn(move |(location, coord, action)| {
+            link.send_message(match action {
+                ButtonAction::Press => AppMsg::ButtonPressed(location, coord),
+                ButtonAction::Release => AppMsg::ButtonReleased(location, coord),
+            })
         });
 
         let link = self.link.to_owned();
@@ -201,33 +199,20 @@ impl Component for App {
 
         html! {
             <div id="app">
-                <div class="row row--top">
-                    <ButtonGrid
-                        location={ButtonGridLocation::Main}
-                        button_states={self.button_states[&ButtonGridLocation::Main].clone()}
-                        on_button_action={button_callback_fn.clone()}
-                    />
-                    <ButtonGrid
-                        location={ButtonGridLocation::MetaRight}
-                        button_states={self.button_states[&ButtonGridLocation::MetaRight].clone()}
-                        on_button_action={button_callback_fn.clone()}
+                <div class="mode-select">
+                    <Button<()>
+                        id={()}
+                        label={"Faders"}
+                        state={if self.fader_overlay_open {ButtonState::Active} else {ButtonState::Unused}}
+                        on_action={fader_button_callback_fn}
                     />
                 </div>
-                <div class="row row--bottom">
-                    <div class="mode-select">
-                        <Button<()>
-                            id={()}
-                            label={"Faders"}
-                            state={if self.fader_overlay_open {ButtonState::Active} else {ButtonState::Unused}}
-                            on_action={fader_button_callback_fn}
-                        />
-                    </div>
-                    <ButtonGrid
-                        location={ButtonGridLocation::MetaBottom}
-                        button_states={self.button_states[&ButtonGridLocation::MetaBottom].clone()}
-                        on_button_action={button_callback_fn.clone()}
+                <Page active={!self.fader_overlay_open}>
+                    <ButtonsPage
+                        button_states={self.button_states.clone()}
+                        on_button_action={button_callback_fn}
                     />
-                </div>
+                </Page>
                 <Page active={self.fader_overlay_open}>
                     <FadersPage
                         fader_states={self.fader_states.clone()}
