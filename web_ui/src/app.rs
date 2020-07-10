@@ -29,7 +29,8 @@ type FaderValue = f64;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum PageType {
     Buttons,
-    Faders
+    Faders,
+    Preview
 }
 impl PageType {
     fn is_buttons(&self) -> bool {
@@ -37,6 +38,9 @@ impl PageType {
     }
     fn is_faders(&self) -> bool {
         self == &PageType::Faders
+    }
+    fn is_preview(&self) -> bool {
+        self == &PageType::Preview
     }
 }
 
@@ -215,16 +219,22 @@ impl Component for App {
             <div id="app">
                 <div class="mode-select">
                     <Button<PageType>
-                        id={PageType::Faders}
-                        label={"Faders"}
-                        state={if self.active_page.is_faders() {ButtonState::Active} else {ButtonState::Inactive}}
-                        on_action={fader_button_callback_fn}
-                    />
-                    <Button<PageType>
                         id={PageType::Buttons}
                         label={"Buttons"}
                         state={if self.active_page.is_buttons() {ButtonState::Active} else {ButtonState::Inactive}}
-                        on_action={fader_button_callback_fn}
+                        on_action={fader_button_callback_fn.clone()}
+                    />
+                    <Button<PageType>
+                        id={PageType::Faders}
+                        label={"Faders"}
+                        state={if self.active_page.is_faders() {ButtonState::Active} else {ButtonState::Inactive}}
+                        on_action={fader_button_callback_fn.clone()}
+                    />
+                    <Button<PageType>
+                        id={PageType::Preview}
+                        label={"Preview"}
+                        state={if self.active_page.is_preview() {ButtonState::Active} else {ButtonState::Inactive}}
+                        on_action={fader_button_callback_fn.clone()}
                     />
                 </div>
                 <Page active={self.active_page.is_buttons()}>
@@ -242,6 +252,9 @@ impl Component for App {
                             })
                         }
                     />
+                </Page>
+                <Page active={self.active_page.is_preview()}>
+                        <h1>{"Preview coming soon"}</h1>
                 </Page>
             </div>
         }

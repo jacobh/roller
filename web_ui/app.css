@@ -19,15 +19,23 @@ body {
 
 #app {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     height: 100vh;
     width: 100%;
+    padding: 20px;
 }
 
-.page--active {
-    width: 100%;
+.page {
+    width: 92%;
     height: 100%;
-    position: absolute;
+}
+
+.page--inactive {
+    display: none;
+}
+
+.page-contents {
+    height: 100%;
 }
 
 .row {
@@ -49,24 +57,24 @@ body {
     width: 100%;
     height: 100%;
 
-    padding-top: 20px;
-    padding-left: 20px;
-}
-
-.row .button-grid:last-child {
+    padding-bottom: 20px;
     padding-right: 20px;
 }
 
+.row .button-grid:last-child {
+    padding-right: 0;
+}
+
 .row:last-child .button-grid {
-    padding-bottom: 20px;
+    padding-bottom: 0;
 }
 
 .button-grid--main {
-    width: 85%;
+    width: 90%;
 }
 
 .button-grid--meta-right {
-    width: 15%;
+    width: 10%;
 }
 
 .button-grid__row {
@@ -102,30 +110,22 @@ body {
 }
 
 .mode-select {
-    padding-top: 20px;
     height: 100%;
-    padding-bottom: 20px;
-    padding-left: 20px;
+    width: 8%;
+    margin-right: 20px;
 }
 
 .mode-select .button {
     text-align: center;
-    height: 85%;
-    padding-top: 25%;
+    padding: 17% 0;
 }
 
 .fader-overlay {
     background-color: #828479;
-    position: absolute;
-    height: 75%;
-    width: 100%;
     display: flex;
     justify-content: center;
     padding: 10px;
-}
-
-.fader-overlay--closed {
-    display: none;
+    height: 100%;
 }
 
 .fader {

@@ -38,7 +38,7 @@ impl Component for ButtonsPage {
 
     fn view(&self) -> Html {
         html! {
-            <div>
+            <div class="page-contents">
                 <div class="row row--top">
                     <ButtonGrid
                         location={ButtonGridLocation::Main}
