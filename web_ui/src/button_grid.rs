@@ -1,53 +1,26 @@
 use im_rc::Vector;
 use yew::prelude::*;
 
-use crate::{app::ButtonAction, ui::button::Button, utils::callback_fn};
+use crate::{app::ButtonAction, ui::button::Button, utils::callback_fn, pure::{Pure, PureComponent}};
 use roller_protocol::control::{ButtonCoordinate, ButtonGridLocation, ButtonState};
 
-pub struct ButtonGrid {
-    props: ButtonGridProps,
-}
-
-pub enum Msg {}
+pub type ButtonGrid = Pure<PureButtonGrid>;
 
 #[derive(Properties, Clone, PartialEq)]
-pub struct ButtonGridProps {
+pub struct PureButtonGrid {
     pub location: ButtonGridLocation,
     pub button_states: Vector<Vector<(Option<String>, ButtonState)>>,
     pub on_button_action: Callback<(ButtonGridLocation, ButtonCoordinate, ButtonAction)>,
 }
 
-impl Component for ButtonGrid {
-    type Message = Msg;
-    type Properties = ButtonGridProps;
+impl PureComponent for PureButtonGrid {
+    fn render(&self) -> Html {
+        let location = self.location.clone();
+        let on_button_action = self.on_button_action.clone();
 
-    fn create(props: Self::Properties, _: ComponentLink<Self>) -> Self {
-        ButtonGrid { props }
-    }
-
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        true
-    }
-
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        if self.props != props {
-            self.props = props;
-            true
-        } else {
-            false
-        }
-    }
-
-    fn view(&self) -> Html {
-        let ButtonGridProps {
-            location,
-            on_button_action,
-            ..
-        } = self.props.clone();
         let container_class = format!("button-grid button-grid--{}", location.css_name());
-        let columns = self.props.button_states.len();
+        let columns = self.button_states.len();
         let rows = self
-            .props
             .button_states
             .iter()
             .map(|row| row.len())
@@ -65,8 +38,8 @@ impl Component for ButtonGrid {
                     {(0..columns).map(|column_idx| html! {
                         <Button<ButtonCoordinate>
                             id={ButtonCoordinate{ row_idx, column_idx }}
-                            label={get_button_label(&self.props.button_states, column_idx, row_idx)}
-                            state={get_button_state(&self.props.button_states, column_idx, row_idx)}
+                            label={get_button_label(&self.button_states, column_idx, row_idx)}
+                            state={get_button_state(&self.button_states, column_idx, row_idx)}
                             on_action={callback.clone()}
                         />
                     }).collect::<Html>()}
