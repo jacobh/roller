@@ -7,6 +7,7 @@ mod button_grid;
 mod pages;
 mod ui;
 mod utils;
+mod yewtil;
 
 #[wasm_bindgen]
 pub fn run_app() -> Result<(), JsValue> {
