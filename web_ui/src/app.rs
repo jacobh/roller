@@ -26,13 +26,27 @@ pub enum ButtonAction {
 
 type FaderValue = f64;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum PageType {
+    Buttons,
+    Faders
+}
+impl PageType {
+    fn is_buttons(&self) -> bool {
+        self == &PageType::Buttons
+    }
+    fn is_faders(&self) -> bool {
+        self == &PageType::Faders
+    }
+}
+
 pub struct App {
     link: ComponentLink<Self>,
     websocket: WebSocketTask,
     button_states: HashMap<ButtonGridLocation, Vector<Vector<(Option<String>, ButtonState)>>>,
     fader_states: OrdMap<FaderId, FaderValue>,
     fixture_states: HashMap<FixtureId, (FixtureParams, Option<FixtureState>)>,
-    fader_overlay_open: bool,
+    active_page: PageType,
 }
 
 impl App {
@@ -48,7 +62,7 @@ pub enum AppMsg {
     ButtonReleased(ButtonGridLocation, ButtonCoordinate),
     FaderValueUpdated(FaderId, FaderValue),
     ServerMessage(ServerMessage),
-    FaderOverlayToggled,
+    ActivePageUpdated(PageType),
     NoOp,
 }
 
@@ -113,7 +127,7 @@ impl Component for App {
             button_states,
             fader_states,
             fixture_states: HashMap::new(),
-            fader_overlay_open: false,
+            active_page: PageType::Buttons,
         }
     }
 
@@ -167,8 +181,8 @@ impl Component for App {
                     }
                 }
             }
-            AppMsg::FaderOverlayToggled => {
-                self.fader_overlay_open = !self.fader_overlay_open;
+            AppMsg::ActivePageUpdated(page_type) => {
+                self.active_page = page_type;
             }
             AppMsg::NoOp => {}
         };
@@ -189,9 +203,9 @@ impl Component for App {
         });
 
         let link = self.link.to_owned();
-        let fader_button_callback_fn = callback_fn(move |((), action)| {
+        let fader_button_callback_fn = callback_fn(move |(page_type, action)| {
             if action == ButtonAction::Press {
-                link.send_message(AppMsg::FaderOverlayToggled)
+                link.send_message(AppMsg::ActivePageUpdated(page_type))
             }
         });
 
@@ -200,20 +214,26 @@ impl Component for App {
         html! {
             <div id="app">
                 <div class="mode-select">
-                    <Button<()>
-                        id={()}
+                    <Button<PageType>
+                        id={PageType::Faders}
                         label={"Faders"}
-                        state={if self.fader_overlay_open {ButtonState::Active} else {ButtonState::Unused}}
+                        state={if self.active_page.is_faders() {ButtonState::Active} else {ButtonState::Inactive}}
+                        on_action={fader_button_callback_fn}
+                    />
+                    <Button<PageType>
+                        id={PageType::Buttons}
+                        label={"Buttons"}
+                        state={if self.active_page.is_buttons() {ButtonState::Active} else {ButtonState::Inactive}}
                         on_action={fader_button_callback_fn}
                     />
                 </div>
-                <Page active={!self.fader_overlay_open}>
+                <Page active={self.active_page.is_buttons()}>
                     <ButtonsPage
                         button_states={self.button_states.clone()}
                         on_button_action={button_callback_fn}
                     />
                 </Page>
-                <Page active={self.fader_overlay_open}>
+                <Page active={self.active_page.is_faders()}>
                     <FadersPage
                         fader_states={self.fader_states.clone()}
                         on_fader_update={
