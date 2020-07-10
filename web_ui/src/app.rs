@@ -7,7 +7,6 @@ use yew::{
 };
 
 use crate::{
-    button_grid::ButtonGrid,
     pages::{buttons::ButtonsPage, faders::FadersPage, Page},
     ui::button::Button,
     utils::callback_fn,
@@ -27,7 +26,7 @@ pub enum ButtonAction {
 type FaderValue = f64;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum PageType {
+pub enum PageType {
     Buttons,
     Faders,
     Preview,
