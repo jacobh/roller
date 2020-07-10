@@ -9,7 +9,7 @@ use yew::{
 use crate::{
     button_grid::ButtonGrid,
     console_log,
-    ui::{button::Button, fader::Fader},
+    ui::{button::Button, fader::Fader, page::Page},
     utils::callback_fn,
 };
 use roller_protocol::{
@@ -228,29 +228,26 @@ impl Component for App {
                         on_button_action={button_callback_fn.clone()}
                     />
                 </div>
-                <div
-                    class={format!(
-                        "fader-overlay {}",
-                        if self.fader_overlay_open {"fader-overlay--open"} else {"fader-overlay--closed"}
-                    )}
-                >
-                {self.fader_states
-                    .clone()
-                    .into_iter()
-                    .map(|(fader_id, fader_value)| {
-                        let link = link.clone();
-                        let on_update_fn = callback_fn(move |value| {
-                            link.send_message(AppMsg::FaderValueUpdated(fader_id, value))
-                        });
-                        html! {
-                            <Fader
-                                value={fader_value}
-                                on_update={on_update_fn}
-                            />
-                        }
-                    })
-                    .collect::<Html>()}
-                </div>
+                <Page active={self.fader_overlay_open}>
+                    <div class="fader-overlay fader-overlay--open">
+                        {self.fader_states
+                            .clone()
+                            .into_iter()
+                            .map(|(fader_id, fader_value)| {
+                                let link = link.clone();
+                                let on_update_fn = callback_fn(move |value| {
+                                    link.send_message(AppMsg::FaderValueUpdated(fader_id, value))
+                                });
+                                html! {
+                                    <Fader
+                                        value={fader_value}
+                                        on_update={on_update_fn}
+                                    />
+                                }
+                            })
+                            .collect::<Html>()}
+                    </div>
+                </Page>
             </div>
         }
     }
