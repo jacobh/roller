@@ -1,7 +1,12 @@
 use im_rc::Vector;
 use yew::prelude::*;
 
-use crate::{app::ButtonAction, ui::button::Button, utils::callback_fn, pure::{Pure, PureComponent}};
+use crate::{
+    app::ButtonAction,
+    pure::{Pure, PureComponent},
+    ui::button::Button,
+    utils::callback_fn,
+};
 use roller_protocol::control::{ButtonCoordinate, ButtonGridLocation, ButtonState};
 
 pub type ButtonGrid = Pure<PureButtonGrid>;

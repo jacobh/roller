@@ -7,7 +7,7 @@ use yew::{
 };
 
 use crate::{
-    pages::{buttons::ButtonsPage, faders::FadersPage, Page, preview::PreviewPage},
+    pages::{buttons::ButtonsPage, faders::FadersPage, preview::PreviewPage, Page},
     ui::button::Button,
     utils::callback_fn,
 };
