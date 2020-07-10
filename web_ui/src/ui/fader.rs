@@ -1,15 +1,10 @@
 use std::str::FromStr;
 use yew::prelude::*;
 
-pub struct Fader {
-    link: ComponentLink<Self>,
-    props: FaderProps,
-}
+use crate::utils::callback_fn;
 
-#[allow(dead_code)]
-pub enum Msg {
-    ValueUpdated(f64),
-    NoOp,
+pub struct Fader {
+    props: FaderProps,
 }
 
 #[derive(Properties, Clone, PartialEq)]
@@ -21,21 +16,15 @@ pub struct FaderProps {
 }
 
 impl Component for Fader {
-    type Message = Msg;
+    type Message = ();
     type Properties = FaderProps;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
-        Fader { link, props }
+        Fader { props }
     }
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
-        match msg {
-            Msg::ValueUpdated(value) => {
-                self.props.on_update.emit(value);
-                true
-            }
-            Msg::NoOp => false,
-        }
+        false
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
@@ -51,10 +40,11 @@ impl Component for Fader {
         let _label = self.props.label.as_deref().unwrap_or("");
         let fill_style = format!("height: {}%", 100.0 - (self.props.value * 100.0));
 
-        let oninput_callback = self.link.callback(move |evt: InputData| {
+        let on_update = self.props.on_update.clone();
+        let oninput_callback = callback_fn(move |evt: InputData| {
             // value 0 - 1000
             let value = f64::from_str(&evt.value).unwrap();
-            Msg::ValueUpdated(value / 1000.0)
+            on_update.emit(value / 1000.0);
         });
 
         html! {
