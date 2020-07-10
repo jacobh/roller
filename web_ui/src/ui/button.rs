@@ -1,19 +1,16 @@
 use yew::prelude::*;
 
-use crate::{app::ButtonAction, utils::callback_fn};
+use crate::{
+    app::ButtonAction,
+    pure::{Pure, PureComponent},
+    utils::callback_fn,
+};
 use roller_protocol::control::ButtonState;
 
-pub struct Button<T>
-where
-    T: Clone,
-{
-    props: ButtonProps<T>,
-}
-
-pub enum Msg {}
+pub type Button<T> = Pure<PureButton<T>>;
 
 #[derive(Properties, Clone, PartialEq)]
-pub struct ButtonProps<T>
+pub struct PureButton<T>
 where
     T: Clone,
 {
@@ -26,32 +23,13 @@ where
     pub on_action: Option<Callback<(T, ButtonAction)>>,
 }
 
-impl<T> Component for Button<T>
+impl<T> PureComponent for PureButton<T>
 where
     T: 'static + Clone + Copy + PartialEq,
 {
-    type Message = Msg;
-    type Properties = ButtonProps<T>;
-
-    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        Button { props }
-    }
-
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        true
-    }
-
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        if self.props != props {
-            self.props = props;
-            true
-        } else {
-            false
-        }
-    }
-
-    fn view(&self) -> Html {
-        let ButtonProps { id, on_action, .. } = self.props.clone();
+    fn render(&self) -> Html {
+        let id = self.id.clone();
+        let on_action = self.on_action.clone();
         let on_action2 = on_action.clone();
 
         let onmousedown_callback = callback_fn(move |_evt| {
@@ -66,11 +44,11 @@ where
             }
         });
 
-        let label = self.props.label.as_deref().unwrap_or("");
+        let label = self.label.as_deref().unwrap_or("");
 
         html! {
             <div
-                class=format!("button {}", self.props.state.css_class())
+                class=format!("button {}", self.state.css_class())
                 onmousedown={onmousedown_callback}
                 onmouseup={onmouseup_callback}
             >
