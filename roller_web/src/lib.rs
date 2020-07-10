@@ -123,10 +123,8 @@ pub fn serve_frontend(
     let (mut server_message_sender, _) = server_message_channel.clone().split();
     async_std::task::spawn(async move {
         while let Some(updates) = fixture_state_updates_recv.next().await {
-            server_message_sender
-                .send(ServerMessage::FixtureStatesUpdated(updates))
-                .await
-                .unwrap();
+            let _result = server_message_sender
+                .send(ServerMessage::FixtureStatesUpdated(updates)).await;
         }
     });
 
