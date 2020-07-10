@@ -8,7 +8,6 @@ use yew::{
 
 use crate::{
     button_grid::ButtonGrid,
-    console_log,
     pages::{faders::FadersPage, Page},
     ui::button::Button,
     utils::callback_fn,

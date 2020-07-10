@@ -3,7 +3,7 @@ use yew::prelude::*;
 
 use roller_protocol::control::FaderId;
 
-use crate::{pages::Page, ui::fader::Fader, utils::callback_fn};
+use crate::{ui::fader::Fader, utils::callback_fn};
 
 type FaderValue = f64;
 

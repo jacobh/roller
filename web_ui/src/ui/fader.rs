@@ -1,5 +1,4 @@
 use std::str::FromStr;
-use wasm_bindgen::JsCast;
 use yew::prelude::*;
 
 pub struct Fader {
@@ -7,6 +6,7 @@ pub struct Fader {
     props: FaderProps,
 }
 
+#[allow(dead_code)]
 pub enum Msg {
     ValueUpdated(f64),
     NoOp,
