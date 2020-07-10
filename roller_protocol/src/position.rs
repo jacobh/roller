@@ -1,9 +1,10 @@
 use ordered_float::OrderedFloat;
+use serde::{Deserialize, Serialize};
 use std::ops::Add;
 
 use crate::{fixture::Fixture, utils::clamp};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Position {
     pan: OrderedFloat<f64>,
     tilt: OrderedFloat<f64>,
@@ -59,8 +60,8 @@ impl Default for BasePositionMode {
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct BasePosition {
-    position: Position,
-    mode: BasePositionMode,
+    pub position: Position,
+    pub mode: BasePositionMode,
 }
 impl BasePosition {
     pub fn new(position: Position, mode: BasePositionMode) -> BasePosition {
@@ -71,7 +72,7 @@ impl BasePosition {
         // Ultimately we need a `location` attribute on a fixture
         let moving_fixtures = fixtures
             .iter()
-            .filter(|fixture| fixture.profile.is_positionable());
+            .filter(|fixture| fixture.params.profile.is_positionable());
         let fixture_i = moving_fixtures
             .enumerate()
             .find(|(_, f)| f == &fixture)

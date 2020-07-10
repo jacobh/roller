@@ -8,7 +8,9 @@ use std::iter::Sum;
 use std::ops::{Add, Mul, Sub};
 use std::time::{Duration, Instant};
 
-use crate::{effect::EffectDirection, fixture::Fixture};
+use roller_protocol::fixture::Fixture;
+
+use crate::effect::EffectDirection;
 
 fn duration_as_secs(duration: Duration) -> f64 {
     duration.as_micros() as f64 / 1_000_000.0
@@ -250,6 +252,7 @@ impl ClockOffset {
             ClockOffsetMode::GroupId => {
                 self.offset
                     * fixture
+                        .params
                         .group_id
                         .map(|group_id| usize::from(group_id) as f64 - 1.0)
                         .unwrap_or(0.0)
@@ -265,9 +268,9 @@ impl ClockOffset {
             ClockOffsetMode::Location(direction) => {
                 let fixture_locations = fixtures
                     .iter()
-                    .flat_map(|fixture| fixture.location.as_ref());
+                    .flat_map(|fixture| fixture.params.location.as_ref());
 
-                match (fixture.location.as_ref(), direction) {
+                match (fixture.params.location.as_ref(), direction) {
                     (Some(location), EffectDirection::LeftToRight) => {
                         let location_idx = fixture_locations
                             .map(|location| location.x)

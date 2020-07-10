@@ -1,7 +1,6 @@
-use roller_protocol::FaderId;
 use rustc_hash::FxHashMap;
 
-use roller_protocol::{ButtonCoordinate, ButtonGridLocation};
+use roller_protocol::control::{ButtonCoordinate, ButtonGridLocation, FaderId};
 
 use crate::control::{
     button::{ButtonGroup, ButtonMapping, ButtonRef, MetaButtonMapping},

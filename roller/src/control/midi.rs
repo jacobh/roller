@@ -2,11 +2,12 @@ use async_std::prelude::*;
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
 use midi::{MidiEvent, MidiInput, MidiOutput, Note};
-use roller_protocol::FaderId;
 use rustc_hash::FxHashMap;
 use std::time::{Duration, Instant};
 
-use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent};
+use roller_protocol::control::{
+    ButtonCoordinate, ButtonGridLocation, ButtonState, FaderId, InputEvent,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum AkaiPadState {

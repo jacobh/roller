@@ -9,11 +9,14 @@ use warp::{
 };
 
 use roller_protocol::{
-    ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, InputEvent, ServerMessage,
+    control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent},
+    fixture::{FixtureId, FixtureParams, FixtureState},
+    ClientMessage, ServerMessage,
 };
 
 async fn browser_session(
     websocket: WebSocket,
+    fixture_params: FxHashMap<FixtureId, FixtureParams>,
     initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), (String, ButtonState)>,
     server_message_recv: impl Stream<Item = ServerMessage> + Unpin,
     event_sender: Sender<InputEvent>,
@@ -34,6 +37,7 @@ async fn browser_session(
                 .map(|((loc, coord), (label, _))| (*loc, *coord, label.clone()))
                 .collect(),
         ),
+        ServerMessage::FixtureParamsUpdated(fixture_params.into_iter().collect()),
     ];
 
     for message in initial_messages {
@@ -89,7 +93,9 @@ async fn browser_session(
 
 pub fn serve_frontend(
     initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), (String, ButtonState)>,
+    fixture_params: FxHashMap<FixtureId, FixtureParams>,
     mut pad_state_update_recv: Receiver<Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>>,
+    mut fixture_state_updates_recv: Receiver<Vec<(FixtureId, FixtureState)>>,
     event_sender: Sender<InputEvent>,
 ) {
     let initial_button_states = Arc::new(Mutex::new(initial_button_states));
@@ -113,6 +119,17 @@ pub fn serve_frontend(
         }
     });
 
+    // broadcast fixture states
+    let (mut server_message_sender, _) = server_message_channel.clone().split();
+    async_std::task::spawn(async move {
+        while let Some(updates) = fixture_state_updates_recv.next().await {
+            server_message_sender
+                .send(ServerMessage::FixtureStatesUpdated(updates))
+                .await
+                .unwrap();
+        }
+    });
+
     let index = warp::get().and(warp::fs::file("web_ui/index.html"));
     let assets = warp::get().and(warp::fs::dir("web_ui"));
 
@@ -120,6 +137,7 @@ pub fn serve_frontend(
         .and(warp::path("ws"))
         .and(warp::ws())
         .map(move |ws: Ws| {
+            let fixture_params = fixture_params.clone();
             let event_sender = event_sender.clone();
             let initial_button_states =
                 async_std::task::block_on(initial_button_states.lock()).clone();
@@ -128,6 +146,7 @@ pub fn serve_frontend(
             ws.on_upgrade(move |websocket| {
                 browser_session(
                     websocket,
+                    fixture_params,
                     initial_button_states,
                     server_message_recv,
                     event_sender,

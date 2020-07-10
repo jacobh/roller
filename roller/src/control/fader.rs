@@ -1,9 +1,9 @@
 use ordered_float::OrderedFloat;
 use serde::{Deserialize, Serialize};
 
-use roller_protocol::FaderId;
+use roller_protocol::{control::FaderId, fixture::FixtureGroupId};
 
-use crate::{effect::sigmoid, lighting_engine::ControlEvent, project::FixtureGroupId};
+use crate::{effect::sigmoid, lighting_engine::ControlEvent};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum FaderType {

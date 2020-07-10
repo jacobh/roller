@@ -1,9 +1,10 @@
 use ordered_float::OrderedFloat;
 
+use roller_protocol::position::Position;
+
 use crate::{
     clock::{Beats, ClockOffset, ClockSnapshot},
     effect::Waveform,
-    position::Position,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

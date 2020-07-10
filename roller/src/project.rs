@@ -1,28 +1,9 @@
 use async_std::prelude::*;
-use derive_more::{Constructor, From, Into};
-use rustc_hash::FxHashSet;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-use crate::{
-    clock::{self, ClockEvent},
-    fixture::{Fixture, FixtureEffectType},
-};
+use roller_protocol::fixture::{Fixture, FixtureEffectType, FixtureGroupId, FixtureLocation};
 
-#[derive(
-    Debug,
-    Copy,
-    Clone,
-    PartialEq,
-    Eq,
-    Hash,
-    PartialOrd,
-    Constructor,
-    From,
-    Into,
-    Serialize,
-    Deserialize,
-)]
-pub struct FixtureGroupId(usize);
+use crate::clock::{self, ClockEvent};
 
 #[derive(Debug, Clone, Deserialize)]
 struct ProjectFixture {
@@ -32,13 +13,7 @@ struct ProjectFixture {
     #[serde(rename = "fixture_profile")]
     fixture_profile_slug: String,
     #[serde(default = "FixtureEffectType::all")]
-    enabled_effects: FxHashSet<FixtureEffectType>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor, Deserialize)]
-pub struct FixtureLocation {
-    pub x: isize,
-    pub y: isize,
+    enabled_effects: Vec<FixtureEffectType>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

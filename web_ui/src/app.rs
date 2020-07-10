@@ -13,8 +13,9 @@ use crate::{
     utils::callback_fn,
 };
 use roller_protocol::{
-    ButtonCoordinate, ButtonGridLocation, ButtonState, ClientMessage, FaderId, InputEvent,
-    ServerMessage,
+    control::{ButtonCoordinate, ButtonGridLocation, ButtonState, FaderId, InputEvent},
+    fixture::{FixtureId, FixtureParams, FixtureState},
+    ClientMessage, ServerMessage,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -30,6 +31,7 @@ pub struct App {
     websocket: WebSocketTask,
     button_states: HashMap<ButtonGridLocation, Vector<Vector<(Option<String>, ButtonState)>>>,
     fader_states: OrdMap<FaderId, FaderValue>,
+    fixture_states: HashMap<FixtureId, (FixtureParams, Option<FixtureState>)>,
     fader_overlay_open: bool,
 }
 
@@ -110,6 +112,7 @@ impl Component for App {
             websocket,
             button_states,
             fader_states,
+            fixture_states: HashMap::new(),
             fader_overlay_open: false,
         }
     }
@@ -145,6 +148,23 @@ impl Component for App {
                 for (location, coords, label) in updates {
                     let grid = self.button_states.get_mut(&location).unwrap();
                     grid[coords.column_idx][coords.row_idx].0 = Some(label);
+                }
+            }
+            AppMsg::ServerMessage(ServerMessage::FixtureParamsUpdated(updates)) => {
+                for (fixture_id, fixture_params1) in updates {
+                    let fixture_params2 = fixture_params1.clone();
+
+                    self.fixture_states
+                        .entry(fixture_id)
+                        .or_insert((fixture_params1, None))
+                        .0 = fixture_params2;
+                }
+            }
+            AppMsg::ServerMessage(ServerMessage::FixtureStatesUpdated(updates)) => {
+                for (fixture_id, fixture_state) in updates {
+                    if let Some((_params, state)) = self.fixture_states.get_mut(&fixture_id) {
+                        *state = Some(fixture_state)
+                    }
                 }
             }
             AppMsg::FaderOverlayToggled => {

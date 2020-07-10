@@ -4,7 +4,10 @@ use futures::stream::{self, StreamExt};
 use std::path::PathBuf;
 use std::time::Duration;
 
-use roller_protocol::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent};
+use roller_protocol::{
+    control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent},
+    fixture::{fold_fixture_dmx_data, Fixture, FixtureId, FixtureState},
+};
 
 mod clock;
 mod color;
@@ -12,7 +15,6 @@ mod control;
 mod effect;
 mod fixture;
 mod lighting_engine;
-mod position;
 mod project;
 mod utils;
 
@@ -33,18 +35,28 @@ struct CliArgs {
 
 async fn run_tick<'a>(
     state: &mut EngineState<'a>,
-    fixtures: &mut Vec<fixture::Fixture>,
+    fixtures: &mut Vec<Fixture>,
     dmx_sender: &async_std::sync::Sender<(i32, [u8; 512])>,
     midi_controller: Option<&control::midi::MidiController>,
     current_button_states: &mut rustc_hash::FxHashMap<ButtonRef<'a>, ButtonState>,
     web_pad_state_update_send: &async_std::sync::Sender<
         Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>,
     >,
+    web_fixture_state_updates_send: &async_std::sync::Sender<Vec<(FixtureId, FixtureState)>>,
 ) {
     state.update_fixtures(fixtures);
-    for (universe, dmx_data) in fixture::fold_fixture_dmx_data(fixtures.iter()).into_iter() {
+    for (universe, dmx_data) in fold_fixture_dmx_data(fixtures.iter()).into_iter() {
         dmx_sender.send((universe as i32, dmx_data)).await;
     }
+
+    web_fixture_state_updates_send
+        .send(
+            fixtures
+                .iter()
+                .map(|fixture| (fixture.id, fixture.state.clone()))
+                .collect(),
+        )
+        .await;
 
     let new_button_states = pad_states(
         &state.control_mapping,
@@ -140,6 +152,8 @@ async fn main() -> Result<(), async_std::io::Error> {
     let (web_input_events_send, web_input_events_recv) = async_std::sync::channel::<InputEvent>(64);
     let (web_pad_state_update_send, web_pad_state_update_recv) =
         async_std::sync::channel::<Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>>(64);
+    let (web_fixture_state_updates_send, web_fixture_state_updates_recv) =
+        async_std::sync::channel::<Vec<(FixtureId, FixtureState)>>(64);
 
     let web_input_events = Some(
         web_input_events_recv
@@ -177,7 +191,13 @@ async fn main() -> Result<(), async_std::io::Error> {
                 )
             })
             .collect(),
+        fixtures
+            .clone()
+            .into_iter()
+            .map(|fixture| (fixture.id, fixture.params))
+            .collect(),
         web_pad_state_update_recv,
+        web_fixture_state_updates_recv,
         web_input_events_send,
     );
 
@@ -191,6 +211,7 @@ async fn main() -> Result<(), async_std::io::Error> {
                     midi_controller.as_ref(),
                     &mut current_button_states,
                     &web_pad_state_update_send,
+                    &web_fixture_state_updates_send,
                 )
                 .await;
             }
