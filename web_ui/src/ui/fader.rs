@@ -1,46 +1,27 @@
 use std::str::FromStr;
 use yew::prelude::*;
 
-use crate::utils::callback_fn;
+use crate::{
+    pure::{Pure, PureComponent},
+    utils::callback_fn,
+};
 
-pub struct Fader {
-    props: FaderProps,
-}
+pub type Fader = Pure<PureFader>;
 
 #[derive(Properties, Clone, PartialEq)]
-pub struct FaderProps {
+pub struct PureFader {
     #[prop_or_default]
     pub label: Option<String>,
     pub value: f64,
     pub on_update: Callback<f64>,
 }
 
-impl Component for Fader {
-    type Message = ();
-    type Properties = FaderProps;
+impl PureComponent for PureFader {
+    fn render(&self) -> Html {
+        let _label = self.label.as_deref().unwrap_or("");
+        let fill_style = format!("height: {}%", 100.0 - (self.value * 100.0));
 
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
-        Fader { props }
-    }
-
-    fn update(&mut self, msg: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        if self.props != props {
-            self.props = props;
-            true
-        } else {
-            false
-        }
-    }
-
-    fn view(&self) -> Html {
-        let _label = self.props.label.as_deref().unwrap_or("");
-        let fill_style = format!("height: {}%", 100.0 - (self.props.value * 100.0));
-
-        let on_update = self.props.on_update.clone();
+        let on_update = self.on_update.clone();
         let oninput_callback = callback_fn(move |evt: InputData| {
             // value 0 - 1000
             let value = f64::from_str(&evt.value).unwrap();
