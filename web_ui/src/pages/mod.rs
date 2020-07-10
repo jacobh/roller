@@ -1,5 +1,7 @@
 use yew::prelude::*;
 
+pub mod faders;
+
 pub struct Page {
     props: PageProps,
 }

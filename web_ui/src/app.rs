@@ -9,7 +9,8 @@ use yew::{
 use crate::{
     button_grid::ButtonGrid,
     console_log,
-    ui::{button::Button, fader::Fader, page::Page},
+    pages::{faders::FadersPage, Page},
+    ui::button::Button,
     utils::callback_fn,
 };
 use roller_protocol::{
@@ -229,24 +230,14 @@ impl Component for App {
                     />
                 </div>
                 <Page active={self.fader_overlay_open}>
-                    <div class="fader-overlay fader-overlay--open">
-                        {self.fader_states
-                            .clone()
-                            .into_iter()
-                            .map(|(fader_id, fader_value)| {
-                                let link = link.clone();
-                                let on_update_fn = callback_fn(move |value| {
-                                    link.send_message(AppMsg::FaderValueUpdated(fader_id, value))
-                                });
-                                html! {
-                                    <Fader
-                                        value={fader_value}
-                                        on_update={on_update_fn}
-                                    />
-                                }
+                    <FadersPage
+                        fader_states={self.fader_states.clone()}
+                        on_fader_update={
+                            callback_fn(move |(fader_id, value)| {
+                                link.send_message(AppMsg::FaderValueUpdated(fader_id, value))
                             })
-                            .collect::<Html>()}
-                    </div>
+                        }
+                    />
                 </Page>
             </div>
         }

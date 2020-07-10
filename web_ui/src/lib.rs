@@ -4,6 +4,7 @@ use wasm_bindgen::prelude::*;
 
 mod app;
 mod button_grid;
+mod pages;
 mod ui;
 mod utils;
 
