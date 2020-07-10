@@ -7,7 +7,7 @@ use yew::{
 };
 
 use crate::{
-    pages::{buttons::ButtonsPage, faders::FadersPage, Page},
+    pages::{buttons::ButtonsPage, faders::FadersPage, Page, preview::PreviewPage},
     ui::button::Button,
     utils::callback_fn,
 };
@@ -251,7 +251,7 @@ impl Component for App {
                     />
                 </Page>
                 <Page active={self.active_page.is_preview()}>
-                        <h1>{"Preview coming soon"}</h1>
+                    <PreviewPage fixture_states={self.fixture_states.clone()} />
                 </Page>
             </div>
         }
