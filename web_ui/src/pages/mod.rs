@@ -38,7 +38,7 @@ impl Component for Page {
         if self.props.active {
             html! {
                 <div class="page page--active">
-                    {self.props.children.render()}
+                    {self.props.children.clone()}
                 </div>
             }
         } else {

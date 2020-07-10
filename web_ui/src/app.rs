@@ -30,7 +30,7 @@ type FaderValue = f64;
 enum PageType {
     Buttons,
     Faders,
-    Preview
+    Preview,
 }
 impl PageType {
     fn is_buttons(&self) -> bool {
@@ -76,29 +76,27 @@ impl Component for App {
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         let host = window().location().host().unwrap();
-        let mut websocket = WebSocketService::new();
 
-        let websocket = websocket
-            .connect_binary(
-                &format!("ws://{}/ws", host),
-                link.callback(|msg: Binary| match msg {
-                    Ok(buff) => {
-                        let msg = bincode::deserialize::<ServerMessage>(&buff)
-                            .expect("bincode::deserialize");
+        let websocket = WebSocketService::connect_binary(
+            &format!("ws://{}/ws", host),
+            link.callback(|msg: Binary| match msg {
+                Ok(buff) => {
+                    let msg =
+                        bincode::deserialize::<ServerMessage>(&buff).expect("bincode::deserialize");
 
-                        AppMsg::ServerMessage(msg)
-                    }
-                    Err(e) => {
-                        crate::console_log!("websocket recv error: {:?}", e);
-                        AppMsg::NoOp
-                    }
-                }),
-                link.callback(|status: WebSocketStatus| {
-                    crate::console_log!("websocket status: {:?}", status);
+                    AppMsg::ServerMessage(msg)
+                }
+                Err(e) => {
+                    crate::console_log!("websocket recv error: {:?}", e);
                     AppMsg::NoOp
-                }),
-            )
-            .expect("websocket.connect_binary");
+                }
+            }),
+            link.callback(|status: WebSocketStatus| {
+                crate::console_log!("websocket status: {:?}", status);
+                AppMsg::NoOp
+            }),
+        )
+        .expect("websocket.connect_binary");
 
         let mut button_states = HashMap::new();
 
