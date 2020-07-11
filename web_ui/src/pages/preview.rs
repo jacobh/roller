@@ -6,6 +6,20 @@ use roller_protocol::fixture::{FixtureId, FixtureParams, FixtureState};
 
 use crate::pure::{Pure, PureComponent};
 
+struct FixtureRef<'a> {
+    id: &'a FixtureId,
+    params: &'a FixtureParams,
+    state: &'a FixtureState,
+}
+
+impl<'a> From<(&'a FixtureId, &'a FixtureParams, &'a FixtureState)> for FixtureRef<'a> {
+    fn from(
+        (id, params, state): (&'a FixtureId, &'a FixtureParams, &'a FixtureState),
+    ) -> FixtureRef<'a> {
+        FixtureRef { id, params, state }
+    }
+}
+
 pub type PreviewPage = Pure<PurePreviewPage>;
 
 #[derive(Properties, Clone, PartialEq)]
@@ -14,24 +28,25 @@ pub struct PurePreviewPage {
 }
 impl PureComponent for PurePreviewPage {
     fn render(&self) -> Html {
-        let fixtures: Vec<(&FixtureId, &FixtureParams, &FixtureState)> = self
+        let fixtures: Vec<FixtureRef<'_>> = self
             .fixture_states
             .iter()
             .filter_map(|(fixture_id, (params, state))| match state {
                 Some(state) => Some((fixture_id, params, state)),
                 None => None,
             })
+            .map(FixtureRef::from)
             .collect();
 
         let rows = fixtures
             .iter()
-            .filter_map(|(_, params, _)| params.location.as_ref())
+            .filter_map(|fixture| fixture.params.location.as_ref())
             .map(|location| location.y)
             .unique()
             .count();
         let columns = fixtures
             .iter()
-            .filter_map(|(_, params, _)| params.location.as_ref())
+            .filter_map(|fixture| fixture.params.location.as_ref())
             .map(|location| location.x)
             .unique()
             .count();
