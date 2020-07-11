@@ -150,3 +150,10 @@ body {
     background-color: #4f504b;
     pointer-events: none;
 }
+
+.preview__cell {
+    border: black solid 1px;
+    margin: 4%;
+    padding: 4%;
+    display: inline-block;
+}
