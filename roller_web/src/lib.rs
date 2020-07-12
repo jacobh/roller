@@ -124,7 +124,8 @@ pub fn serve_frontend(
     async_std::task::spawn(async move {
         while let Some(updates) = fixture_state_updates_recv.next().await {
             let _result = server_message_sender
-                .send(ServerMessage::FixtureStatesUpdated(updates)).await;
+                .send(ServerMessage::FixtureStatesUpdated(updates))
+                .await;
         }
     });
 
