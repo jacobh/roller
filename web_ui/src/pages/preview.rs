@@ -6,6 +6,29 @@ use roller_protocol::fixture::{FixtureId, FixtureParams, FixtureState};
 
 use crate::pure::{Pure, PureComponent};
 
+fn sorted_unique<T>(items: impl Iterator<Item = T>) -> Vec<T>
+where
+    T: PartialOrd + PartialEq,
+{
+    items.fold(Vec::with_capacity(8), |mut output, a| {
+        for (i, b) in output.iter().enumerate() {
+            // if a is already in the array, skip it
+            if &a == b {
+                return output;
+            }
+            // if a is less than the b, insert a before b
+            else if b > &a {
+                output.insert(i, a);
+                return output;
+            }
+        }
+
+        // a larger than all existing values, so append it to the end
+        output.push(a);
+        output
+    })
+}
+
 struct FixtureRef<'a> {
     id: &'a FixtureId,
     params: &'a FixtureParams,
@@ -38,26 +61,40 @@ impl PureComponent for PurePreviewPage {
             .map(FixtureRef::from)
             .collect();
 
-        let rows = fixtures
-            .iter()
-            .filter_map(|fixture| fixture.params.location.as_ref())
-            .map(|location| location.y)
-            .unique()
-            .count();
-        let columns = fixtures
-            .iter()
-            .filter_map(|fixture| fixture.params.location.as_ref())
-            .map(|location| location.x)
-            .unique()
-            .count();
+        let sorted_rows: Vec<isize> = sorted_unique(
+            fixtures
+                .iter()
+                .filter_map(|fixture| fixture.params.location.as_ref())
+                .map(|location| location.y),
+        );
+
+        let sorted_columns: Vec<isize> = sorted_unique(
+            fixtures
+                .iter()
+                .filter_map(|fixture| fixture.params.location.as_ref())
+                .map(|location| location.x)
+                .unique(),
+        );
+
+        let fixture_grid: Vec<Vec<Vec<FixtureRef<'_>>>> = {
+            let mut grid: Vec<Vec<_>> = (0..sorted_rows.len())
+                .map(|_row_idx| {
+                    (0..sorted_columns.len())
+                        .map(|_col_idx| Vec::with_capacity(1))
+                        .collect()
+                })
+                .collect();
+
+            grid
+        };
 
         html! {
             <div class="page-contents">
                 <h2>{"Fixtures"}</h2>
                 <div>
-                    {(0..rows).map(|row_idx| html! {
+                    {(0..sorted_rows.len()).map(|row_idx| html! {
                         <div class="preview__row">
-                        {(0..columns).map(|column_idx| html! {
+                        {(0..sorted_columns.len()).map(|column_idx| html! {
                             <div id={format!("preview__cell-{}-{}", column_idx, row_idx)} class="preview__cell"></div>
                         }).collect::<Html>()}
                         </div>
