@@ -242,7 +242,7 @@ impl FixtureParams {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FixtureState {
-    pub beams: FxIndexMap<BeamId, FixtureBeamState>,
+    pub beams: Vec<FixtureBeamState>,
     pub dimmer: f64,
     pub position: Option<Position>, // degrees from home position
 }
@@ -252,7 +252,7 @@ impl FixtureState {
             .beams
             .keys()
             .into_iter()
-            .map(|beam_id| (*beam_id, FixtureBeamState::new()))
+            .map(|_beam_id| FixtureBeamState::new())
             .collect();
 
         FixtureState {
@@ -265,12 +265,12 @@ impl FixtureState {
         self.dimmer = dimmer;
     }
     pub fn set_beam_dimmers(&mut self, dimmers: &[f64]) {
-        for (beam, dimmer) in self.beams.values_mut().zip(dimmers) {
+        for (beam, dimmer) in self.beams.iter_mut().zip(dimmers) {
             beam.dimmer = *dimmer;
         }
     }
     pub fn set_all_beam_dimmers(&mut self, dimmer: f64) {
-        for beam in self.beams.values_mut() {
+        for beam in self.beams.iter_mut() {
             beam.dimmer = dimmer;
         }
     }
@@ -296,7 +296,7 @@ impl FixtureState {
 
         let color = palette::LinSrgb::<f64>::new(r * scale, g * scale, b * scale);
 
-        for beam in self.beams.values_mut() {
+        for beam in self.beams.iter_mut() {
             beam.color = Some(color.into_components());
         }
     }
@@ -345,7 +345,7 @@ impl Fixture {
             .profile
             .beams
             .values()
-            .zip(self.state.beams.values());
+            .zip(self.state.beams.iter());
 
         for (beam_profile, beam_state) in beam_profiles {
             // If fixture has a global dimmer, use that, otherwise dim on a per beam basis

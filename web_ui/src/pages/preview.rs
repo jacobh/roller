@@ -136,7 +136,7 @@ pub struct PurePreviewCell {
 }
 impl PureComponent for PurePreviewCell {
     fn render(&self) -> Html {
-        let beam = self.fixture_state.beams.values().nth(0).unwrap();
+        let beam = &self.fixture_state.beams[0];
         let color = beam.color.unwrap_or((0.0, 0.0, 0.0));
         let opacity = self.fixture_state.dimmer * beam.dimmer;
 
