@@ -111,14 +111,46 @@ impl PureComponent for PurePreviewPage {
             <div class="page-contents">
                 <h2>{"Fixtures"}</h2>
                 <div>
-                    {(0..sorted_rows.len()).map(|row_idx| html! {
+                    {fixture_grid.iter().map(|row| html! {
                         <div class="preview__row">
-                        {(0..sorted_columns.len()).map(|column_idx| html! {
-                            <div id={format!("preview__cell-{}-{}", column_idx, row_idx)} class="preview__cell"></div>
-                        }).collect::<Html>()}
+                        {row.iter().map(|column|
+                            if let Some(fixture) = column.first() {
+                                html! { <PreviewCell fixture_state={fixture.state.clone()}/> }
+                            } else {
+                                html! { <div class="preview__cell"></div> }
+                            }
+                        ).collect::<Html>()}
                         </div>
                     }).collect::<Html>()}
                 </div>
+            </div>
+        }
+    }
+}
+
+pub type PreviewCell = Pure<PurePreviewCell>;
+
+#[derive(Properties, Clone, PartialEq)]
+pub struct PurePreviewCell {
+    pub fixture_state: FixtureState,
+}
+impl PureComponent for PurePreviewCell {
+    fn render(&self) -> Html {
+        let beam = self.fixture_state.beams.values().nth(0).unwrap();
+        let color = beam.color.unwrap_or((0.0, 0.0, 0.0));
+        let opacity = self.fixture_state.dimmer * beam.dimmer;
+
+        let fill_style = format!(
+            "background-color: rgb({}, {}, {}); opacity: {};",
+            color.0 * 255.0,
+            color.1 * 255.0,
+            color.2 * 255.0,
+            opacity
+        );
+
+        html! {
+            <div class="preview__cell preview__cell--active">
+                <div class="preview__cell-fill" style={fill_style}/>
             </div>
         }
     }
