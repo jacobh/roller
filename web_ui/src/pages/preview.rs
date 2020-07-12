@@ -111,9 +111,9 @@ impl PureComponent for PurePreviewPage {
             <div class="page-contents">
                 <h2>{"Fixtures"}</h2>
                 <div>
-                    {fixture_grid.iter().map(|row| html! {
+                    {fixture_grid.iter().rev().map(|row| html! {
                         <div class="preview__row">
-                        {row.iter().map(|column|
+                        {row.iter().rev().map(|column|
                             if let Some(fixture) = column.first() {
                                 html! { <PreviewCell fixture_state={fixture.state.clone()}/> }
                             } else {
