@@ -29,6 +29,16 @@ where
     })
 }
 
+fn find_index<T>(vec: &Vec<T>, item: &T) -> Option<usize>
+where
+    T: PartialEq,
+{
+    vec.iter()
+        .enumerate()
+        .filter_map(|(i, x)| if x == item { Some(i) } else { None })
+        .nth(0)
+}
+
 struct FixtureRef<'a> {
     id: &'a FixtureId,
     params: &'a FixtureParams,
@@ -84,6 +94,15 @@ impl PureComponent for PurePreviewPage {
                         .collect()
                 })
                 .collect();
+
+            for fixture in fixtures.into_iter() {
+                if let Some(location) = fixture.params.location.as_ref() {
+                    let row_idx = find_index(&sorted_rows, &location.y).unwrap();
+                    let col_idx = find_index(&sorted_columns, &location.x).unwrap();
+
+                    grid[row_idx][col_idx].push(fixture);
+                }
+            }
 
             grid
         };
