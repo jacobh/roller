@@ -85,6 +85,9 @@ pub async fn load_fixture_profile(
             .collect()
     };
 
+    // flatten beams out into a vec
+    let beams: Vec<_> = beams.into_iter().map(|(_, profile)| profile).collect();
+
     // Ensure channel count is correct
     assert_eq!(profile_data.channel_count, profile_data.channels.len());
 

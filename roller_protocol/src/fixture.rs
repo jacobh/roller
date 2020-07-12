@@ -2,10 +2,7 @@ use derive_more::{Constructor, From, Into};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    position::{degrees_to_percent, Position},
-    utils::FxIndexMap,
-};
+use crate::position::{degrees_to_percent, Position};
 
 #[derive(
     Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, From, Into, Serialize, Deserialize,
@@ -160,7 +157,7 @@ pub struct FixtureProfile {
     pub channel_count: usize,
     pub supported_effects: Vec<FixtureEffectType>,
 
-    pub beams: FxIndexMap<BeamId, FixtureBeamProfile>,
+    pub beams: Vec<FixtureBeamProfile>,
     pub dimmer_channel: Option<FixtureProfileChannel>,
     pub pan_channel: Option<FixtureProfileChannel>,
     pub tilt_channel: Option<FixtureProfileChannel>,
@@ -170,10 +167,10 @@ impl FixtureProfile {
         self.beams.len()
     }
     pub fn is_dimmable(&self) -> bool {
-        self.beams.values().any(FixtureBeamProfile::is_dimmable)
+        self.beams.iter().any(FixtureBeamProfile::is_dimmable)
     }
     pub fn is_colorable(&self) -> bool {
-        self.beams.values().any(FixtureBeamProfile::is_colorable)
+        self.beams.iter().any(FixtureBeamProfile::is_colorable)
     }
     pub fn is_positionable(&self) -> bool {
         [&self.pan_channel, &self.tilt_channel]
@@ -250,9 +247,8 @@ impl FixtureState {
     pub fn new(profile: &FixtureProfile) -> FixtureState {
         let beams = profile
             .beams
-            .keys()
-            .into_iter()
-            .map(|_beam_id| FixtureBeamState::new())
+            .iter()
+            .map(|_| FixtureBeamState::new())
             .collect();
 
         FixtureState {
@@ -344,7 +340,7 @@ impl Fixture {
             .params
             .profile
             .beams
-            .values()
+            .iter()
             .zip(self.state.beams.iter());
 
         for (beam_profile, beam_state) in beam_profiles {
