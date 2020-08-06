@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 num-traits = "*"
 num-derive = "*"
-coremidi = "*"
+midir = "*"
 async-std = "*"
 thiserror = "1.0"
 serde = "1.0"

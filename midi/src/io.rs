@@ -15,38 +15,32 @@ pub enum MidiIoError {
     DestinationNotFound,
 }
 
-#[derive(Debug)]
-struct MidiInputState {
-    _client: coremidi::Client,
-    _input_port: coremidi::InputPort,
-    _source: coremidi::Source,
-}
-
-// TODO unclear if this is legitimate
-unsafe impl Send for MidiInputState {}
-unsafe impl Sync for MidiInputState {}
-
-#[derive(Debug, Clone)]
+unsafe impl Send for MidiInput {}
+unsafe impl Sync for MidiInput {}
+#[derive(Clone)]
 pub struct MidiInput {
-    state: Arc<MidiInputState>,
+    midi_conn: Arc<midir::MidiInputConnection<()>>,
     input_receiver: async_std::sync::Receiver<MidiEvent>,
 }
 impl MidiInput {
     pub fn new(name: &str) -> Result<MidiInput, MidiIoError> {
-        let client = coremidi::Client::new(&format!("roller-input-{}", name))
-            .map_err(|_| MidiIoError::InitFailed)?;
-
-        let source = coremidi::Sources
-            .into_iter()
-            .find(|source| source.display_name().as_deref() == Some(name))
-            .ok_or(MidiIoError::SourceNotFound)?;
-
         let (input_sender, input_receiver) = async_std::sync::channel::<MidiEvent>(1024);
 
-        let midi_input_port = client
-            .input_port(&format!("roller-input-{}", name), move |packet_list| {
-                for packet in packet_list.iter() {
-                    let mut stream = MidiMessageStream::new(packet.data());
+        let midi_input = midir::MidiInput::new(&format!("roller-input-{}", name))
+            .map_err(|_| MidiIoError::InitFailed)?;
+
+        let midi_input_port = midi_input
+            .ports()
+            .into_iter()
+            .find(|port| midi_input.port_name(port).unwrap_or(String::new()) == name)
+            .ok_or(MidiIoError::SourceNotFound)?;
+
+        let midi_conn = midi_input
+            .connect(
+                &midi_input_port,
+                &format!("roller-input-port-{}", name),
+                move |_timestamp, bytes, ()| {
+                    let mut stream = MidiMessageStream::new(bytes);
 
                     loop {
                         match MidiEvent::read_next(&mut stream) {
@@ -59,20 +53,13 @@ impl MidiInput {
                             Err(e) => eprintln!("error reading midi event: {:?}", e),
                         }
                     }
-                }
-            })
-            .map_err(|_| MidiIoError::InitFailed)?;
-
-        midi_input_port
-            .connect_source(&source)
+                },
+                (),
+            )
             .map_err(|_| MidiIoError::InitFailed)?;
 
         Ok(MidiInput {
-            state: Arc::new(MidiInputState {
-                _client: client,
-                _input_port: midi_input_port,
-                _source: source,
-            }),
+            midi_conn: Arc::new(midi_conn),
             input_receiver,
         })
     }
@@ -91,40 +78,35 @@ unsafe impl Send for MidiOutput {}
 unsafe impl Sync for MidiOutput {}
 #[derive(Debug)]
 pub struct MidiOutput {
-    _client: coremidi::Client,
     output_sender: async_std::sync::Sender<Vec<u8>>,
 }
 impl MidiOutput {
     pub fn new(name: &str) -> Result<MidiOutput, MidiIoError> {
-        let client = coremidi::Client::new(&format!("roller-output-{}", name))
+        let midi_output = midir::MidiOutput::new(&format!("roller-output-{}", name)).unwrap();
+
+        let midi_output_port = midi_output
+            .ports()
+            .into_iter()
+            .find(|port| midi_output.port_name(port).unwrap_or(String::new()) == name)
+            .ok_or(MidiIoError::DestinationNotFound)?;
+
+        let mut midi_conn = midi_output
+            .connect(&midi_output_port, &format!("roller-output-conn-{}", name))
             .map_err(|_| MidiIoError::InitFailed)?;
 
         let (output_sender, mut output_receiver) = async_std::sync::channel::<Vec<u8>>(512);
 
-        let destination = coremidi::Destinations
-            .into_iter()
-            .find(|dest| dest.display_name().as_deref() == Some(name))
-            .ok_or(MidiIoError::DestinationNotFound)?;
-
-        let midi_output_port = client
-            .output_port(&format!("roller-output-{}", name))
-            .map_err(|_| MidiIoError::InitFailed)?;
-
         async_std::task::spawn(async move {
             while let Some(packet) = output_receiver.next().await {
-                let packets = coremidi::PacketBuffer::new(0, &packet);
-                midi_output_port
-                    .send(&destination, &packets)
+                midi_conn
+                    .send(&packet)
                     .map_err(|_| "failed to send packets")
                     .unwrap();
                 async_std::task::sleep(Duration::from_millis(1)).await;
             }
         });
 
-        Ok(MidiOutput {
-            _client: client,
-            output_sender,
-        })
+        Ok(MidiOutput { output_sender })
     }
     pub async fn send_packet(&self, packet: impl Into<Vec<u8>>) {
         self.output_sender.send(packet.into()).await
