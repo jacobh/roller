@@ -7,7 +7,9 @@ edition = "2018"
 [dependencies]
 num-traits = "*"
 num-derive = "*"
-coremidi = "*"
 async-std = "*"
 thiserror = "1.0"
 serde = "1.0"
+
+[target.'cfg(macos)'.dependencies]
+coremidi = "*"

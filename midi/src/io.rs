@@ -3,6 +3,9 @@ use std::pin::Pin;
 use std::time::Duration;
 use thiserror::Error;
 
+#[cfg(target_os = "macos")]
+extern crate coremidi;
+
 use crate::{MidiEvent, MidiMessageStream};
 
 #[derive(Debug, Error)]
@@ -33,6 +36,10 @@ pub struct MidiInput {
 }
 impl MidiInput {
     pub fn new(name: &str) -> Result<MidiInput, MidiIoError> {
+        if !cfg!(macos) {
+            unimplemented!()
+        }
+
         let client = coremidi::Client::new(&format!("roller-input-{}", name))
             .map_err(|_| MidiIoError::InitFailed)?;
 
@@ -96,6 +103,10 @@ pub struct MidiOutput {
 }
 impl MidiOutput {
     pub fn new(name: &str) -> Result<MidiOutput, MidiIoError> {
+        if !cfg!(macos) {
+            unimplemented!()
+        }
+
         let client = coremidi::Client::new(&format!("roller-output-{}", name))
             .map_err(|_| MidiIoError::InitFailed)?;
 
