@@ -19,11 +19,16 @@ pub enum MidiIoError {
 }
 
 #[derive(Debug)]
+#[cfg(target_os = "macos")]
 struct MidiInputState {
     _client: coremidi::Client,
     _input_port: coremidi::InputPort,
     _source: coremidi::Source,
 }
+
+#[derive(Debug)]
+#[cfg(not(target_os = "macos"))]
+struct MidiInputState {}
 
 // TODO unclear if this is legitimate
 unsafe impl Send for MidiInputState {}
@@ -94,11 +99,20 @@ impl Stream for MidiInput {
     }
 }
 
+#[derive(Debug)]
+#[cfg(target_os = "macos")]
+struct MidiOutputState {
+    client: coremidi::Client,
+}
+
+#[cfg(not(target_os = "macos"))]
+struct MidiOutputState {}
+
 unsafe impl Send for MidiOutput {}
 unsafe impl Sync for MidiOutput {}
 #[derive(Debug)]
 pub struct MidiOutput {
-    _client: coremidi::Client,
+    state: MidiOutputState,
     output_sender: async_std::sync::Sender<Vec<u8>>,
 }
 impl MidiOutput {
@@ -133,7 +147,7 @@ impl MidiOutput {
         });
 
         Ok(MidiOutput {
-            _client: client,
+            state: MidiOutputState { client },
             output_sender,
         })
     }
