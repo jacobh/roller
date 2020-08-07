@@ -36,7 +36,7 @@ pub struct MidiInput {
 }
 impl MidiInput {
     pub fn new(name: &str) -> Result<MidiInput, MidiIoError> {
-        if !cfg!(macos) {
+        if !cfg!(target_os = "macos") {
             unimplemented!()
         }
 
@@ -103,7 +103,7 @@ pub struct MidiOutput {
 }
 impl MidiOutput {
     pub fn new(name: &str) -> Result<MidiOutput, MidiIoError> {
-        if !cfg!(macos) {
+        if !cfg!(target_os = "macos") {
             unimplemented!()
         }
 

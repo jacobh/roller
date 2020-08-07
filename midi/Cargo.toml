@@ -11,5 +11,5 @@ async-std = "*"
 thiserror = "1.0"
 serde = "1.0"
 
-[target.'cfg(macos)'.dependencies]
+[target.'cfg(target_os = "macos")'.dependencies]
 coremidi = "*"
