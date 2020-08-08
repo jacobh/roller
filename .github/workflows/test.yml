@@ -1,4 +1,4 @@
-name: Web UI
+name: Roller
 
 on:
   push:
@@ -8,10 +8,21 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-
+  roller:
     runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Cache target dirs
+      uses: actions/cache@v2
+      with:
+        path: |
+          **/target
+        key: ${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+    - name: Check
+      run: cargo check --verbose
 
+  web_ui:
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
     - name: Install wasm32 target
