@@ -19,6 +19,12 @@ jobs:
       with:
           toolchain: stable
           target: wasm32-unknown-unknown
+    - name: Cache target dirs
+      uses: actions/cache@v2
+      with:
+        path: |
+          **/target
+        key: ${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
     - name: Check
       # we're just checking the libs as there's some sort of bug causing cargo to attempt to check macos dependencies on linux
       run: cargo check --verbose
