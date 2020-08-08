@@ -17,4 +17,5 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Check
-      run: cargo check --verbose
+      # we're just checking the libs as there's some sort of bug causing cargo to attempt to check macos dependencies on linux
+      run: cargo check --lib --verbose
