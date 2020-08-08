@@ -7,7 +7,7 @@ use yew::{
 };
 
 use crate::{
-    pages::{buttons::ButtonsPage, faders::FadersPage, preview::PreviewPage, Page},
+    pages::{buttons::ButtonsPage, faders::FadersPage, preview_2d::Preview2dPage, Page},
     ui::button::Button,
     utils::callback_fn,
 };
@@ -29,7 +29,7 @@ type FaderValue = f64;
 pub enum PageType {
     Buttons,
     Faders,
-    Preview,
+    Preview2d,
 }
 impl PageType {
     fn is_buttons(&self) -> bool {
@@ -38,8 +38,8 @@ impl PageType {
     fn is_faders(&self) -> bool {
         self == &PageType::Faders
     }
-    fn is_preview(&self) -> bool {
-        self == &PageType::Preview
+    fn is_preview_2d(&self) -> bool {
+        self == &PageType::Preview2d
     }
 }
 
@@ -228,9 +228,9 @@ impl Component for App {
                         on_action={fader_button_callback_fn.clone()}
                     />
                     <Button<PageType>
-                        id={PageType::Preview}
-                        label={"Preview"}
-                        state={if self.active_page.is_preview() {ButtonState::Active} else {ButtonState::Inactive}}
+                        id={PageType::Preview2d}
+                        label={"Preview 2D"}
+                        state={if self.active_page.is_preview_2d() {ButtonState::Active} else {ButtonState::Inactive}}
                         on_action={fader_button_callback_fn.clone()}
                     />
                 </div>
@@ -250,8 +250,8 @@ impl Component for App {
                         }
                     />
                 </Page>
-                <Page active={self.active_page.is_preview()}>
-                    <PreviewPage fixture_states={self.fixture_states.clone()} />
+                <Page active={self.active_page.is_preview_2d()}>
+                    <Preview2dPage fixture_states={self.fixture_states.clone()} />
                 </Page>
             </div>
         }

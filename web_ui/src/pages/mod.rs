@@ -2,7 +2,7 @@ use yew::prelude::*;
 
 pub mod buttons;
 pub mod faders;
-pub mod preview;
+pub mod preview_2d;
 
 pub struct Page {
     props: PageProps,

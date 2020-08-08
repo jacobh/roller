@@ -53,13 +53,13 @@ impl<'a> From<(&'a FixtureId, &'a FixtureParams, &'a FixtureState)> for FixtureR
     }
 }
 
-pub type PreviewPage = Pure<PurePreviewPage>;
+pub type Preview2dPage = Pure<PurePreview2dPage>;
 
 #[derive(Properties, Clone, PartialEq)]
-pub struct PurePreviewPage {
+pub struct PurePreview2dPage {
     pub fixture_states: HashMap<FixtureId, (FixtureParams, Option<FixtureState>)>,
 }
-impl PureComponent for PurePreviewPage {
+impl PureComponent for PurePreview2dPage {
     fn render(&self) -> Html {
         let fixtures: Vec<FixtureRef<'_>> = self
             .fixture_states
