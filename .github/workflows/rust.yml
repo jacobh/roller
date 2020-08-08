@@ -19,3 +19,5 @@ jobs:
     - name: Check
       # we're just checking the libs as there's some sort of bug causing cargo to attempt to check macos dependencies on linux
       run: cargo check --lib --verbose
+    - name: Check Web UI
+      run: (cd web_ui && make check)
