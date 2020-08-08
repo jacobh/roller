@@ -3,8 +3,6 @@ name: Rust
 on:
   push:
     branches: "**"
-  pull_request:
-    branches: "**"
 
 env:
   CARGO_TERM_COLOR: always
@@ -16,6 +14,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Install wasm32 target
+        uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            target: wasm32-unknown-unknown
     - name: Check
       # we're just checking the libs as there's some sort of bug causing cargo to attempt to check macos dependencies on linux
       run: cargo check --lib --verbose
