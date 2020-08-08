@@ -9,7 +9,7 @@ wasm = ["uuid/wasm-bindgen"]
 
 [dependencies]
 thiserror = "1.0"
-serde = "1.0"
+serde = { version = "*", features = ["derive"] }
 derive_more = "*"
 rustc-hash = "*"
 palette = "*"
