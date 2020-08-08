@@ -18,16 +18,16 @@ pub enum MidiIoError {
     DestinationNotFound,
 }
 
-#[derive(Debug)]
 #[cfg(target_os = "macos")]
+#[derive(Debug)]
 struct MidiInputState {
     _client: coremidi::Client,
     _input_port: coremidi::InputPort,
     _source: coremidi::Source,
 }
 
-#[derive(Debug)]
 #[cfg(not(target_os = "macos"))]
+#[derive(Debug)]
 struct MidiInputState {}
 
 // TODO unclear if this is legitimate
@@ -40,11 +40,8 @@ pub struct MidiInput {
     input_receiver: async_std::sync::Receiver<MidiEvent>,
 }
 impl MidiInput {
+    #[cfg(target_os = "macos")]
     pub fn new(name: &str) -> Result<MidiInput, MidiIoError> {
-        if !cfg!(target_os = "macos") {
-            unimplemented!()
-        }
-
         let client = coremidi::Client::new(&format!("roller-input-{}", name))
             .map_err(|_| MidiIoError::InitFailed)?;
 
@@ -88,6 +85,10 @@ impl MidiInput {
             input_receiver,
         })
     }
+    #[cfg(not(target_os = "macos"))]
+    pub fn new(name: &str) -> Result<MidiInput, MidiIoError> {
+        unimplemented!()
+    }
 }
 impl Stream for MidiInput {
     type Item = MidiEvent;
@@ -99,13 +100,14 @@ impl Stream for MidiInput {
     }
 }
 
-#[derive(Debug)]
 #[cfg(target_os = "macos")]
+#[derive(Debug)]
 struct MidiOutputState {
     client: coremidi::Client,
 }
 
 #[cfg(not(target_os = "macos"))]
+#[derive(Debug)]
 struct MidiOutputState {}
 
 unsafe impl Send for MidiOutput {}
@@ -116,11 +118,8 @@ pub struct MidiOutput {
     output_sender: async_std::sync::Sender<Vec<u8>>,
 }
 impl MidiOutput {
+    #[cfg(target_os = "macos")]
     pub fn new(name: &str) -> Result<MidiOutput, MidiIoError> {
-        if !cfg!(target_os = "macos") {
-            unimplemented!()
-        }
-
         let client = coremidi::Client::new(&format!("roller-output-{}", name))
             .map_err(|_| MidiIoError::InitFailed)?;
 
@@ -150,6 +149,10 @@ impl MidiOutput {
             state: MidiOutputState { client },
             output_sender,
         })
+    }
+    #[cfg(not(target_os = "macos"))]
+    pub fn new(name: &str) -> Result<MidiOutput, MidiIoError> {
+        unimplemented!()
     }
     pub async fn send_packet(&self, packet: impl Into<Vec<u8>>) {
         self.output_sender.send(packet.into()).await

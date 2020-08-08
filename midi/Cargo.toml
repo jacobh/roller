@@ -7,9 +7,9 @@ edition = "2018"
 [dependencies]
 num-traits = "*"
 num-derive = "*"
-async-std = "*"
+async-std = { version = "*", features = ["unstable"] }
 thiserror = "1.0"
-serde = "1.0"
+serde = { version = "*", features = ["derive"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 coremidi = "*"
