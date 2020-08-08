@@ -1,0 +1,30 @@
+name: Web UI
+
+on:
+  push:
+    branches: "**"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install wasm32 target
+      uses: actions-rs/toolchain@v1
+      with:
+          toolchain: stable
+          default: true
+          target: wasm32-unknown-unknown
+    - name: Cache target dirs
+      uses: actions/cache@v2
+      with:
+        path: |
+          **/target
+        key: ${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+    - name: Check Web UI
+      run: (cd web_ui && make check)
