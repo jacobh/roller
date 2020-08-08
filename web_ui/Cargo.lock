@@ -588,6 +588,7 @@ dependencies = [
  "im-rc",
  "itertools",
  "roller_protocol",
+ "serde",
  "wasm-bindgen",
  "web-sys",
  "yew",

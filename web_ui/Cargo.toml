@@ -10,6 +10,7 @@ version = "0.1.0"
 crate-type = ["cdylib"]
 
 [dependencies]
+serde = { version = "*", features = ["derive"] }
 roller_protocol = {path = "../roller_protocol", features = ["wasm"]}
 wasm-bindgen = "^0.2"
 yew = { version = "0.17", features = ["web_sys"] }
