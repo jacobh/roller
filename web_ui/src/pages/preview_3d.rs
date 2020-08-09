@@ -51,7 +51,7 @@ impl Component for Preview3dPage {
             console_log!("{}", babylon::Engine::version());
 
             let canvas_element: web_sys::HtmlCanvasElement = self.canvas_ref.cast().unwrap();
-            let engine = babylon::Engine::new(&canvas_element, false);
+            let engine = babylon::Engine::new(&canvas_element, Some(true), None, None);
             let scene = babylon::Scene::new(&engine);
 
             let camera = babylon::ArcRotateCamera::new(

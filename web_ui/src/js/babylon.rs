@@ -18,10 +18,18 @@ extern "C" {
     fn z(this: &Vector3) -> f64;
 
     #[derive(Debug)]
+    pub type EngineOptions;
+
+    #[derive(Debug)]
     pub type Engine;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
-    pub fn new(canvas_element: &web_sys::HtmlCanvasElement, x: bool) -> Engine;
+    pub fn new(
+        canvas_element: &web_sys::HtmlCanvasElement,
+        antialias: Option<bool>,
+        options: Option<EngineOptions>,
+        adapt_to_device_ratio: Option<bool>,
+    ) -> Engine;
 
     // static get Version(): string;
     #[wasm_bindgen(static_method_of = Engine, getter, js_name = "Version", js_namespace = BABYLON)]
