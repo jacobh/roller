@@ -1,4 +1,5 @@
 use im_rc::HashMap;
+use wasm_bindgen::prelude::*;
 use yew::prelude::*;
 
 use roller_protocol::fixture::{FixtureId, FixtureParams, FixtureState};
@@ -15,6 +16,7 @@ struct CanvasState {
     canvas_element: web_sys::HtmlCanvasElement,
     engine: babylon::Engine,
     scene: babylon::Scene,
+    run_loop_closure: Closure<dyn FnMut()>,
 }
 
 #[derive(Debug)]
@@ -83,10 +85,17 @@ impl Component for Preview3dPage {
                 babylon::MeshBuilder::create_sphere("sphere".to_string(), options, Some(&scene))
             };
 
+            let scene1 = scene.clone();
+            let run_loop_closure = Closure::new(move || {
+                scene1.render(None, None);
+            });
+            engine.run_render_loop(&run_loop_closure);
+
             self.canvas_state = Some(CanvasState {
                 canvas_element,
                 engine,
                 scene,
+                run_loop_closure
             });
 
             console_log!("{:?}", self.canvas_state);

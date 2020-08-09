@@ -49,15 +49,21 @@ extern "C" {
         adapt_to_device_ratio: Option<bool>,
     ) -> Engine;
 
+    #[wasm_bindgen(method, js_namespace = BABYLON, js_name="runRenderLoop")]
+    pub fn run_render_loop(this: &Engine, render: &Closure<dyn FnMut()>);
+
     // static get Version(): string;
     #[wasm_bindgen(static_method_of = Engine, getter, js_name = "Version", js_namespace = BABYLON)]
     pub fn version() -> String;
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type Scene;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
     pub fn new(engine: &Engine) -> Scene;
+
+    #[wasm_bindgen(method, js_namespace = BABYLON)]
+    pub fn render(this: &Scene, update_cameras: Option<bool>, ignore_animation: Option<bool>);
 
     #[derive(Debug)]
     pub type ArcRotateCamera;
