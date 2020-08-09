@@ -67,14 +67,22 @@ impl Component for Preview3dPage {
             );
             camera.attach_control(&canvas_element, None, None, None);
 
-            let light1 = babylon::HemisphericLight::new(
-                "light1".to_string(),
-                babylon::Vector3::new(1.0, 1.0, 0.0),
-                &scene,
-            );
-            let light2 = babylon::PointLight::new(
-                "light2".to_string(),
-                babylon::Vector3::new(0.0, 1.0, -1.0),
+            // let light1 = babylon::HemisphericLight::new(
+            //     "light1".to_string(),
+            //     babylon::Vector3::new(1.0, 1.0, 0.0),
+            //     &scene,
+            // );
+            // let light2 = babylon::PointLight::new(
+            //     "light2".to_string(),
+            //     babylon::Vector3::new(0.0, 1.0, -1.0),
+            //     &scene,
+            // );
+            let light3 = babylon::SpotLight::new(
+                "light3".to_string(),
+                babylon::Vector3::new(0.0, 30.0, -5.0),
+                babylon::Vector3::new(0.0, -1.0, 0.0),
+                std::f64::consts::PI / 3.0,
+                2.0,
                 &scene,
             );
 
