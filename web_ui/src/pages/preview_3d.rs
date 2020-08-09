@@ -76,6 +76,13 @@ impl Component for Preview3dPage {
                 &scene,
             );
 
+            let sphere = {
+                let mut options = babylon::CreateSphereOptions::default();
+                options.diameter = Some(2.0);
+
+                babylon::MeshBuilder::create_sphere("sphere".to_string(), options, Some(&scene))
+            };
+
             self.canvas_state = Some(CanvasState {
                 canvas_element,
                 engine,

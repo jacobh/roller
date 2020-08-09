@@ -18,6 +18,24 @@ extern "C" {
     fn z(this: &Vector3) -> f64;
 
     #[derive(Debug)]
+    pub type Vector4;
+
+    #[wasm_bindgen(constructor, js_namespace = BABYLON)]
+    pub fn new(w: f64, x: f64, y: f64, z: f64) -> Vector4;
+
+    #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
+    fn w(this: &Vector4) -> f64;
+
+    #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
+    fn x(this: &Vector4) -> f64;
+
+    #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
+    fn y(this: &Vector4) -> f64;
+
+    #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
+    fn z(this: &Vector4) -> f64;
+
+    #[derive(Debug)]
     pub type EngineOptions;
 
     #[derive(Debug)]
@@ -75,4 +93,30 @@ extern "C" {
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
     pub fn new(name: String, position: Vector3, scene: &Scene) -> PointLight;
+
+    #[derive(Debug)]
+    pub type Mesh;
+
+    #[derive(Debug)]
+    pub type MeshBuilder;
+
+    #[wasm_bindgen(static_method_of = MeshBuilder, js_name="CreateSphere", js_namespace = BABYLON)]
+    pub fn create_sphere(name: String, options: CreateSphereOptions, scene: Option<&Scene>)
+        -> Mesh;
+}
+
+#[wasm_bindgen]
+#[derive(Debug, Default)]
+pub struct CreateSphereOptions {
+    pub arc: Option<f64>,
+    pub backUVs: Option<bool>, // TODO should be `Vector4`
+    pub diameter: Option<f64>,
+    pub diameterX: Option<f64>,
+    pub diameterY: Option<f64>,
+    pub diameterZ: Option<f64>,
+    pub frontUVs: Option<bool>, // TODO should be `Vector4`
+    pub segments: Option<f64>,
+    pub sideOrientation: Option<f64>,
+    pub slice: Option<f64>,
+    pub updatable: Option<bool>,
 }
