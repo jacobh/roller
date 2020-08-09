@@ -101,6 +101,19 @@ extern "C" {
     pub fn new(name: String, position: Vector3, scene: &Scene) -> PointLight;
 
     #[derive(Debug)]
+    pub type SpotLight;
+
+    #[wasm_bindgen(constructor, js_namespace = BABYLON)]
+    pub fn new(
+        name: String,
+        position: Vector3,
+        direction: Vector3,
+        angle: f64,
+        exponent: f64,
+        scene: &Scene,
+    ) -> SpotLight;
+
+    #[derive(Debug)]
     pub type Mesh;
 
     #[wasm_bindgen(method, js_name="setPositionWithLocalVector", js_namespace = BABYLON)]
