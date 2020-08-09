@@ -86,14 +86,24 @@ impl Component for Preview3dPage {
                 },
                 Some(&scene),
             );
-            let box_ = babylon::MeshBuilder::create_box(
-                "box".to_string(),
+            let box1 = babylon::MeshBuilder::create_box(
+                "box1".to_string(),
                 babylon::CreateBoxOptions {
-                    size: Some(1.5),
+                    size: Some(2.0),
                     ..Default::default()
                 },
                 Some(&scene),
             );
+            let box2 = babylon::MeshBuilder::create_box(
+                "box2".to_string(),
+                babylon::CreateBoxOptions {
+                    size: Some(2.0),
+                    ..Default::default()
+                },
+                Some(&scene),
+            );
+            box1.set_position_with_local_vector(babylon::Vector3::new(-5.0, 0.0, 0.0));
+            box2.set_position_with_local_vector(babylon::Vector3::new(5.0, 0.0, 0.0));
 
             let scene1 = scene.clone();
             let run_loop_closure = Closure::new(move || {

@@ -103,6 +103,9 @@ extern "C" {
     #[derive(Debug)]
     pub type Mesh;
 
+    #[wasm_bindgen(method, js_name="setPositionWithLocalVector", js_namespace = BABYLON)]
+    pub fn set_position_with_local_vector(this: &Mesh, position: Vector3) -> TransformNode;
+
     #[derive(Debug)]
     pub type MeshBuilder;
 
@@ -112,6 +115,9 @@ extern "C" {
 
     #[wasm_bindgen(static_method_of = MeshBuilder, js_name="CreateBox", js_namespace = BABYLON)]
     pub fn create_box(name: String, options: CreateBoxOptions, scene: Option<&Scene>) -> Mesh;
+
+    #[derive(Debug)]
+    pub type TransformNode;
 }
 
 #[wasm_bindgen]
