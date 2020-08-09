@@ -54,6 +54,17 @@ impl Component for Preview3dPage {
             let engine = babylon::Engine::new(&canvas_element, false);
             let scene = babylon::Scene::new(&engine);
 
+            let camera = babylon::ArcRotateCamera::new(
+                "Camera".to_string(),
+                std::f64::consts::PI / 2.0,
+                std::f64::consts::PI / 2.0,
+                2.0,
+                &babylon::Vector3::new(0.0, 0.0, 5.0),
+                &scene,
+                None,
+            );
+            camera.attach_control(&canvas_element, None, None, None);
+
             self.canvas_state = Some(CanvasState {
                 canvas_element,
                 engine,
