@@ -109,6 +109,9 @@ extern "C" {
     #[wasm_bindgen(static_method_of = MeshBuilder, js_name="CreateSphere", js_namespace = BABYLON)]
     pub fn create_sphere(name: String, options: CreateSphereOptions, scene: Option<&Scene>)
         -> Mesh;
+
+    #[wasm_bindgen(static_method_of = MeshBuilder, js_name="CreateBox", js_namespace = BABYLON)]
+    pub fn create_box(name: String, options: CreateBoxOptions, scene: Option<&Scene>) -> Mesh;
 }
 
 #[wasm_bindgen]
@@ -125,4 +128,22 @@ pub struct CreateSphereOptions {
     pub sideOrientation: Option<f64>,
     pub slice: Option<f64>,
     pub updatable: Option<bool>,
+}
+
+#[wasm_bindgen]
+#[derive(Debug, Default)]
+pub struct CreateBoxOptions {
+    pub backUVs: Option<bool>, // Vector4
+    pub bottomBaseAt: Option<f64>,
+    pub depth: Option<f64>,
+    pub faceColors: Option<bool>, // Color4[]
+    pub faceUV: Option<bool>,     // Vector4[]
+    pub frontUVs: Option<bool>,   // Vector4
+    pub height: Option<f64>,
+    pub sideOrientation: Option<f64>,
+    pub size: Option<f64>,
+    pub topBaseAt: Option<f64>,
+    pub updatable: Option<bool>,
+    pub width: Option<f64>,
+    pub wrap: Option<bool>,
 }

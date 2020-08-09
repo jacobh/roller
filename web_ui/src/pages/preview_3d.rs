@@ -86,6 +86,14 @@ impl Component for Preview3dPage {
                 },
                 Some(&scene),
             );
+            let box_ = babylon::MeshBuilder::create_box(
+                "box".to_string(),
+                babylon::CreateBoxOptions {
+                    size: Some(1.5),
+                    ..Default::default()
+                },
+                Some(&scene),
+            );
 
             let scene1 = scene.clone();
             let run_loop_closure = Closure::new(move || {
