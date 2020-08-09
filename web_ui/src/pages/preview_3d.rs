@@ -5,13 +5,23 @@ use roller_protocol::fixture::{FixtureId, FixtureParams, FixtureState};
 
 use crate::{console_log, js::babylon, yewtil::neq_assign::NeqAssign};
 
-#[derive(Properties, Clone, PartialEq)]
+#[derive(Debug, Properties, Clone, PartialEq)]
 pub struct PurePreview3dProps {
     pub fixture_states: HashMap<FixtureId, (FixtureParams, Option<FixtureState>)>,
 }
 
+#[derive(Debug)]
+struct CanvasState {
+    canvas_element: web_sys::HtmlCanvasElement,
+    engine: babylon::Engine,
+    scene: babylon::Scene,
+}
+
+#[derive(Debug)]
 pub struct Preview3dPage {
     props: PurePreview3dProps,
+    canvas_ref: NodeRef,
+    canvas_state: Option<CanvasState>,
 }
 
 impl Component for Preview3dPage {
@@ -19,7 +29,13 @@ impl Component for Preview3dPage {
     type Properties = PurePreview3dProps;
 
     fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        Preview3dPage { props }
+        let canvas_ref = NodeRef::default();
+
+        Preview3dPage {
+            props,
+            canvas_ref,
+            canvas_state: None,
+        }
     }
 
     fn update(&mut self, _msg: Self::Message) -> ShouldRender {
@@ -32,7 +48,19 @@ impl Component for Preview3dPage {
 
     fn rendered(&mut self, first_render: bool) {
         if first_render {
-            console_log!("{}", babylon::Engine::version())
+            console_log!("{}", babylon::Engine::version());
+
+            let canvas_element: web_sys::HtmlCanvasElement = self.canvas_ref.cast().unwrap();
+            let engine = babylon::Engine::new(&canvas_element, false);
+            let scene = babylon::Scene::new(&engine);
+
+            self.canvas_state = Some(CanvasState {
+                canvas_element,
+                engine,
+                scene,
+            });
+
+            console_log!("{:?}", self.canvas_state);
         }
     }
 
@@ -41,7 +69,7 @@ impl Component for Preview3dPage {
             <div class="page-contents">
                 <h2>{"Fixtures 3D"}</h2>
                 <div>
-                    <canvas id="preview-3d-canvas"></canvas>
+                    <canvas id="preview-3d-canvas" ref=self.canvas_ref.clone()></canvas>
                 </div>
             </div>
         }
