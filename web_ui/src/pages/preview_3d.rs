@@ -105,6 +105,18 @@ impl Component for Preview3dPage {
             box1.set_position_with_local_vector(babylon::Vector3::new(-5.0, 0.0, 0.0));
             box2.set_position_with_local_vector(babylon::Vector3::new(5.0, 0.0, 0.0));
 
+            let floor = babylon::MeshBuilder::create_box(
+                "floor".to_string(),
+                babylon::CreateBoxOptions {
+                    width: Some(20.0),
+                    depth: Some(20.0),
+                    height: Some(0.1),
+                    ..Default::default()
+                },
+                Some(&scene),
+            );
+            floor.set_position_with_local_vector(babylon::Vector3::new(0.0, -2.0, 0.0));
+
             let scene1 = scene.clone();
             let run_loop_closure = Closure::new(move || {
                 scene1.render(None, None);
