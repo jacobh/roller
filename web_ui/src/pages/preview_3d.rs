@@ -78,12 +78,14 @@ impl Component for Preview3dPage {
                 &scene,
             );
 
-            let sphere = {
-                let mut options = babylon::CreateSphereOptions::default();
-                options.diameter = Some(2.0);
-
-                babylon::MeshBuilder::create_sphere("sphere".to_string(), options, Some(&scene))
-            };
+            let sphere = babylon::MeshBuilder::create_sphere(
+                "sphere".to_string(),
+                babylon::CreateSphereOptions {
+                    diameter: Some(2.0),
+                    ..Default::default()
+                },
+                Some(&scene),
+            );
 
             let scene1 = scene.clone();
             let run_loop_closure = Closure::new(move || {
@@ -95,7 +97,7 @@ impl Component for Preview3dPage {
                 canvas_element,
                 engine,
                 scene,
-                run_loop_closure
+                run_loop_closure,
             });
 
             console_log!("{:?}", self.canvas_state);
