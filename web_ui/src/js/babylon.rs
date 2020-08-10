@@ -116,6 +116,12 @@ extern "C" {
     #[derive(Debug)]
     pub type Mesh;
 
+    #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
+    pub fn material(this: &Mesh) -> StandardMaterial;
+
+    #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
+    pub fn set_material(this: &Mesh, val: &StandardMaterial);
+
     #[wasm_bindgen(method, js_name="setPositionWithLocalVector", js_namespace = BABYLON)]
     pub fn set_position_with_local_vector(this: &Mesh, position: Vector3) -> TransformNode;
 
@@ -131,6 +137,30 @@ extern "C" {
 
     #[derive(Debug)]
     pub type TransformNode;
+
+    #[derive(Debug)]
+    pub type Texture;
+
+    #[wasm_bindgen(constructor, js_namespace = BABYLON)]
+    pub fn new(image_path: String, scene: &Scene) -> Texture;
+
+    #[derive(Debug)]
+    pub type StandardMaterial;
+
+    #[wasm_bindgen(constructor, js_namespace = BABYLON)]
+    pub fn new(name: String, scene: &Scene) -> StandardMaterial;
+
+    #[wasm_bindgen(method, getter, js_name="diffuseTexture", js_namespace = BABYLON)]
+    pub fn diffuse_texture(this: &StandardMaterial) -> Texture;
+
+    #[wasm_bindgen(method, setter, js_name="diffuseTexture", js_namespace = BABYLON)]
+    pub fn set_diffuse_texture(this: &StandardMaterial, val: &Texture);
+
+    #[wasm_bindgen(method, getter, js_name="bumpTexture", js_namespace = BABYLON)]
+    pub fn bump_texture(this: &StandardMaterial) -> Texture;
+
+    #[wasm_bindgen(method, setter, js_name="bumpTexture", js_namespace = BABYLON)]
+    pub fn set_bump_texture(this: &StandardMaterial, val: &Texture);
 }
 
 #[wasm_bindgen]

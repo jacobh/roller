@@ -56,6 +56,26 @@ impl Component for Preview3dPage {
             let engine = babylon::Engine::new(&canvas_element, Some(true), None, None);
             let scene = babylon::Scene::new(&engine);
 
+            let concrete1 = babylon::StandardMaterial::new("concrete1".to_string(), &scene);
+            concrete1.set_diffuse_texture(&babylon::Texture::new(
+                "/assets/textures/Concrete-0202b.jpg".to_string(),
+                &scene,
+            ));
+            concrete1.set_bump_texture(&babylon::Texture::new(
+                "/assets/textures/Concrete-0202b-normal.png".to_string(),
+                &scene,
+            ));
+
+            let concrete2 = babylon::StandardMaterial::new("concrete2".to_string(), &scene);
+            concrete2.set_diffuse_texture(&babylon::Texture::new(
+                "/assets/textures/Concrete-2341b.jpg".to_string(),
+                &scene,
+            ));
+            concrete2.set_bump_texture(&babylon::Texture::new(
+                "/assets/textures/Concrete-2341b-normal.jpg".to_string(),
+                &scene,
+            ));
+
             let camera = babylon::ArcRotateCamera::new(
                 "Camera".to_string(),
                 std::f64::consts::PI / 2.0,
@@ -102,6 +122,7 @@ impl Component for Preview3dPage {
                 },
                 Some(&scene),
             );
+            box1.set_material(&concrete2);
             let box2 = babylon::MeshBuilder::create_box(
                 "box2".to_string(),
                 babylon::CreateBoxOptions {
@@ -110,6 +131,8 @@ impl Component for Preview3dPage {
                 },
                 Some(&scene),
             );
+            box2.set_material(&concrete2);
+
             box1.set_position_with_local_vector(babylon::Vector3::new(-5.0, 0.0, 0.0));
             box2.set_position_with_local_vector(babylon::Vector3::new(5.0, 0.0, 0.0));
 
@@ -123,6 +146,7 @@ impl Component for Preview3dPage {
                 },
                 Some(&scene),
             );
+            floor.set_material(&concrete1);
             floor.set_position_with_local_vector(babylon::Vector3::new(0.0, -2.0, 0.0));
 
             let scene1 = scene.clone();
