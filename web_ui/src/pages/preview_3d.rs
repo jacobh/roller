@@ -136,6 +136,20 @@ impl Component for Preview3dPage {
             box1.set_position(&babylon::Vector3::new(-5.0, 0.0, 0.0));
             box2.set_position(&babylon::Vector3::new(5.0, 0.0, 0.0));
 
+            let cone = babylon::MeshBuilder::create_cylinder(
+                "cone1".to_string(),
+                babylon::CreateCylinderOptions {
+                    height: Some(3.0),
+                    diameterTop: Some(0.0),
+                    diameterBottom: Some(3.0),
+                    tessellation: Some(96.0),
+                    subdivisions: Some(4.0),
+                    ..Default::default()
+                },
+                Some(&scene)
+            );
+            cone.set_position(&babylon::Vector3::new(5.0, 1.0, 5.0));
+
             let floor = babylon::MeshBuilder::create_box(
                 "floor".to_string(),
                 babylon::CreateBoxOptions {

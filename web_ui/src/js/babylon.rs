@@ -138,6 +138,9 @@ extern "C" {
     #[wasm_bindgen(static_method_of = MeshBuilder, js_name="CreateBox", js_namespace = BABYLON)]
     pub fn create_box(name: String, options: CreateBoxOptions, scene: Option<&Scene>) -> Mesh;
 
+    #[wasm_bindgen(static_method_of = MeshBuilder, js_name="CreateCylinder", js_namespace = BABYLON)]
+    pub fn create_cylinder(name: String, options: CreateCylinderOptions, scene: Option<&Scene>) -> Mesh;
+
     #[derive(Debug)]
     pub type TransformNode;
 
@@ -198,4 +201,25 @@ pub struct CreateBoxOptions {
     pub updatable: Option<bool>,
     pub width: Option<f64>,
     pub wrap: Option<bool>,
+}
+
+#[wasm_bindgen]
+#[derive(Debug, Default)]
+pub struct CreateCylinderOptions {
+    pub arc: Option<f64>,
+    pub backUVs: Option<bool>, // Vector4
+    pub cap: Option<f64>,
+    pub diameter: Option<f64>,
+    pub diameterBottom: Option<f64>,
+    pub diameterTop: Option<f64>,
+    pub enclose: Option<bool>,
+    pub faceColors: Option<bool>, // Color4[]
+    pub faceUV: Option<bool>, // Vector4[]
+    pub frontUVs: Option<bool>, // Vector4
+    pub hasRings: Option<bool>,
+    pub height: Option<f64>,
+    pub sideOrientation: Option<f64>,
+    pub subdivisions: Option<f64>,
+    pub tessellation: Option<f64>,
+    pub updatable: Option<bool>,
 }
