@@ -133,8 +133,8 @@ impl Component for Preview3dPage {
             );
             box2.set_material(&concrete2);
 
-            box1.set_position_with_local_vector(babylon::Vector3::new(-5.0, 0.0, 0.0));
-            box2.set_position_with_local_vector(babylon::Vector3::new(5.0, 0.0, 0.0));
+            box1.set_position(&babylon::Vector3::new(-5.0, 0.0, 0.0));
+            box2.set_position(&babylon::Vector3::new(5.0, 0.0, 0.0));
 
             let floor = babylon::MeshBuilder::create_box(
                 "floor".to_string(),
@@ -147,7 +147,7 @@ impl Component for Preview3dPage {
                 Some(&scene),
             );
             floor.set_material(&concrete1);
-            floor.set_position_with_local_vector(babylon::Vector3::new(0.0, -2.0, 0.0));
+            floor.set_position(&babylon::Vector3::new(0.0, -2.0, 0.0));
 
             let scene1 = scene.clone();
             let run_loop_closure = Closure::new(move || {

@@ -117,13 +117,16 @@ extern "C" {
     pub type Mesh;
 
     #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
+    pub fn position(this: &Mesh) -> Vector3;
+
+    #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
+    pub fn set_position(this: &Mesh, val: &Vector3);
+
+    #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
     pub fn material(this: &Mesh) -> StandardMaterial;
 
     #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
     pub fn set_material(this: &Mesh, val: &StandardMaterial);
-
-    #[wasm_bindgen(method, js_name="setPositionWithLocalVector", js_namespace = BABYLON)]
-    pub fn set_position_with_local_vector(this: &Mesh, position: Vector3) -> TransformNode;
 
     #[derive(Debug)]
     pub type MeshBuilder;
