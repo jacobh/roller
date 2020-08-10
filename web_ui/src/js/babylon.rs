@@ -117,13 +117,13 @@ extern "C" {
     pub type Mesh;
 
     #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
-    pub fn position(this: &Mesh) -> Vector3;
+    pub fn position(this: &Mesh) -> Option<Vector3>;
 
     #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
     pub fn set_position(this: &Mesh, val: &Vector3);
 
     #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
-    pub fn material(this: &Mesh) -> StandardMaterial;
+    pub fn material(this: &Mesh) -> Option<StandardMaterial>;
 
     #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
     pub fn set_material(this: &Mesh, val: &StandardMaterial);
@@ -139,7 +139,11 @@ extern "C" {
     pub fn create_box(name: String, options: CreateBoxOptions, scene: Option<&Scene>) -> Mesh;
 
     #[wasm_bindgen(static_method_of = MeshBuilder, js_name="CreateCylinder", js_namespace = BABYLON)]
-    pub fn create_cylinder(name: String, options: CreateCylinderOptions, scene: Option<&Scene>) -> Mesh;
+    pub fn create_cylinder(
+        name: String,
+        options: CreateCylinderOptions,
+        scene: Option<&Scene>,
+    ) -> Mesh;
 
     #[derive(Debug)]
     pub type TransformNode;
@@ -150,6 +154,12 @@ extern "C" {
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
     pub fn new(image_path: String, scene: &Scene) -> Texture;
 
+    #[wasm_bindgen(method, getter, js_name="getAlphaFromRGB", js_namespace = BABYLON)]
+    pub fn get_alpha_from_rgb(this: &Texture) -> bool;
+
+    #[wasm_bindgen(method, setter, js_name="getAlphaFromRGB", js_namespace = BABYLON)]
+    pub fn set_get_alpha_from_rgb(this: &Texture, val: bool);
+
     #[derive(Debug)]
     pub type StandardMaterial;
 
@@ -157,16 +167,22 @@ extern "C" {
     pub fn new(name: String, scene: &Scene) -> StandardMaterial;
 
     #[wasm_bindgen(method, getter, js_name="diffuseTexture", js_namespace = BABYLON)]
-    pub fn diffuse_texture(this: &StandardMaterial) -> Texture;
+    pub fn diffuse_texture(this: &StandardMaterial) -> Option<Texture>;
 
     #[wasm_bindgen(method, setter, js_name="diffuseTexture", js_namespace = BABYLON)]
     pub fn set_diffuse_texture(this: &StandardMaterial, val: &Texture);
 
     #[wasm_bindgen(method, getter, js_name="bumpTexture", js_namespace = BABYLON)]
-    pub fn bump_texture(this: &StandardMaterial) -> Texture;
+    pub fn bump_texture(this: &StandardMaterial) -> Option<Texture>;
 
     #[wasm_bindgen(method, setter, js_name="bumpTexture", js_namespace = BABYLON)]
     pub fn set_bump_texture(this: &StandardMaterial, val: &Texture);
+
+    #[wasm_bindgen(method, getter, js_name="opacityTexture", js_namespace = BABYLON)]
+    pub fn opacity_texture(this: &StandardMaterial) -> Option<Texture>;
+
+    #[wasm_bindgen(method, setter, js_name="opacityTexture", js_namespace = BABYLON)]
+    pub fn set_opacity_texture(this: &StandardMaterial, val: &Texture);
 }
 
 #[wasm_bindgen]
@@ -214,8 +230,8 @@ pub struct CreateCylinderOptions {
     pub diameterTop: Option<f64>,
     pub enclose: Option<bool>,
     pub faceColors: Option<bool>, // Color4[]
-    pub faceUV: Option<bool>, // Vector4[]
-    pub frontUVs: Option<bool>, // Vector4
+    pub faceUV: Option<bool>,     // Vector4[]
+    pub frontUVs: Option<bool>,   // Vector4
     pub hasRings: Option<bool>,
     pub height: Option<f64>,
     pub sideOrientation: Option<f64>,

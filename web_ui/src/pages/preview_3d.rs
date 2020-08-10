@@ -76,6 +76,17 @@ impl Component for Preview3dPage {
                 &scene,
             ));
 
+            let lightbeam_falloff1 =
+                babylon::StandardMaterial::new("lightbeam_falloff1".to_string(), &scene);
+            lightbeam_falloff1.set_opacity_texture(&{
+                let texture = babylon::Texture::new(
+                    "/assets/textures/lightbeam_falloff1.jpg".to_string(),
+                    &scene,
+                );
+                texture.set_get_alpha_from_rgb(true);
+                texture
+            });
+
             let camera = babylon::ArcRotateCamera::new(
                 "Camera".to_string(),
                 std::f64::consts::PI / 2.0,
@@ -140,15 +151,16 @@ impl Component for Preview3dPage {
                 "cone1".to_string(),
                 babylon::CreateCylinderOptions {
                     height: Some(3.0),
-                    diameterTop: Some(0.0),
+                    diameterTop: Some(0.5),
                     diameterBottom: Some(3.0),
                     tessellation: Some(96.0),
                     subdivisions: Some(4.0),
                     ..Default::default()
                 },
-                Some(&scene)
+                Some(&scene),
             );
             cone.set_position(&babylon::Vector3::new(5.0, 1.0, 5.0));
+            cone.set_material(&lightbeam_falloff1);
 
             let floor = babylon::MeshBuilder::create_box(
                 "floor".to_string(),
