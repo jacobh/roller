@@ -1,57 +1,39 @@
 use crate::js::babylon;
 
-pub fn load_concrete_floor(scene: &babylon::Scene) -> babylon::PBRMaterial {
-    let concrete_floor = babylon::PBRMaterial::new("concrete_floor".to_string(), &scene);
-    concrete_floor.set_albedo_texture(&babylon::Texture::new(
-        "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Albedo.jpg".to_string(),
-        &scene,
-    ));
-    concrete_floor.set_reflectivity_texture(&babylon::Texture::new(
-        "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Specular.jpg".to_string(),
-        &scene,
-    ));
-    concrete_floor.set_micro_surface_texture(&babylon::Texture::new(
-        "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Gloss.jpg".to_string(),
-        &scene,
-    ));
-    concrete_floor.set_bump_texture(&babylon::Texture::new(
-        "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Normal.jpg".to_string(),
-        &scene,
-    ));
-    concrete_floor.set_ambient_texture(&babylon::Texture::new(
-        "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_AO.jpg".to_string(),
-        &scene,
-    ));
-    concrete_floor.set_use_physical_light_falloff(false);
+fn load_megascans_material(slug: &str, id: &str, scene: &babylon::Scene) -> babylon::PBRMaterial {
+    let material = babylon::PBRMaterial::new(format!("{}_{}", slug, id), &scene);
 
-    concrete_floor
+    material.set_albedo_texture(&babylon::Texture::new(
+        format!("/assets/textures/{}_{}/{}_4K_Albedo.jpg", slug, id, id),
+        &scene,
+    ));
+    material.set_reflectivity_texture(&babylon::Texture::new(
+        format!("/assets/textures/{}_{}/{}_4K_Specular.jpg", slug, id, id),
+        &scene,
+    ));
+    material.set_micro_surface_texture(&babylon::Texture::new(
+        format!("/assets/textures/{}_{}/{}_4K_Gloss.jpg", slug, id, id),
+        &scene,
+    ));
+    material.set_bump_texture(&babylon::Texture::new(
+        format!("/assets/textures/{}_{}/{}_4K_Normal.jpg", slug, id, id),
+        &scene,
+    ));
+    material.set_ambient_texture(&babylon::Texture::new(
+        format!("/assets/textures/{}_{}/{}_4K_AO.jpg", slug, id, id),
+        &scene,
+    ));
+    material.set_use_physical_light_falloff(false);
+
+    material
+}
+
+pub fn load_concrete_floor(scene: &babylon::Scene) -> babylon::PBRMaterial {
+    load_megascans_material("concrete_rough", "uhroebug", scene)
 }
 
 pub fn load_wooden_floor(scene: &babylon::Scene) -> babylon::PBRMaterial {
-    let wooden_floor = babylon::PBRMaterial::new("wooden_floor".to_string(), &scene);
-    wooden_floor.set_albedo_texture(&babylon::Texture::new(
-        "/assets/textures/wood_board_ugcwcevaw/ugcwcevaw_4K_Albedo.jpg".to_string(),
-        &scene,
-    ));
-    wooden_floor.set_reflectivity_texture(&babylon::Texture::new(
-        "/assets/textures/wood_board_ugcwcevaw/ugcwcevaw_4K_Specular.jpg".to_string(),
-        &scene,
-    ));
-    wooden_floor.set_micro_surface_texture(&babylon::Texture::new(
-        "/assets/textures/wood_board_ugcwcevaw/ugcwcevaw_4K_Gloss.jpg".to_string(),
-        &scene,
-    ));
-    wooden_floor.set_bump_texture(&babylon::Texture::new(
-        "/assets/textures/wood_board_ugcwcevaw/ugcwcevaw_4K_Normal.jpg".to_string(),
-        &scene,
-    ));
-    wooden_floor.set_ambient_texture(&babylon::Texture::new(
-        "/assets/textures/wood_board_ugcwcevaw/ugcwcevaw_4K_AO.jpg".to_string(),
-        &scene,
-    ));
-    wooden_floor.set_use_physical_light_falloff(false);
-
-    wooden_floor
+    load_megascans_material("wood_board", "ugcwcevaw", scene)
 }
 
 pub fn load_lightbeam_falloff(scene: &babylon::Scene) -> babylon::StandardMaterial {
