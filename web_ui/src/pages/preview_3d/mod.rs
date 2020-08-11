@@ -80,17 +80,17 @@ impl Component for Preview3dPage {
             //     babylon::Vector3::new(1.0, 50.0, 0.0),
             //     &scene,
             // );
-            // let light2 = babylon::PointLight::new(
-            //     "light2".to_string(),
-            //     babylon::Vector3::new(0.0, 1.0, -1.0),
-            //     &scene,
-            // );
+            let light2 = babylon::PointLight::new(
+                "light2".to_string(),
+                babylon::Vector3::new(0.0, 15.0, -5.0),
+                &scene,
+            );
             let light3 = babylon::SpotLight::new(
                 "light3".to_string(),
-                babylon::Vector3::new(0.0, 30.0, -5.0),
+                babylon::Vector3::new(0.0, 15.0, -5.0),
                 babylon::Vector3::new(0.0, -1.0, 0.0),
                 std::f64::consts::PI / 3.0,
-                15.0,
+                3.0,
                 &scene,
             );
             let light3: &babylon::Light = light3.as_ref();
