@@ -36,6 +36,10 @@ pub fn load_wooden_floor(scene: &babylon::Scene) -> babylon::PBRMaterial {
     load_megascans_material("wood_board", "ugcwcevaw", scene)
 }
 
+pub fn load_black_fabric(scene: &babylon::Scene) -> babylon::PBRMaterial {
+    load_megascans_material("fabric_plain", "pgjeuxp0", scene)
+}
+
 pub fn load_lightbeam_falloff(scene: &babylon::Scene) -> babylon::StandardMaterial {
     let lightbeam_falloff =
         babylon::StandardMaterial::new("lightbeam_falloff1".to_string(), &scene);

@@ -61,6 +61,7 @@ impl Component for Preview3dPage {
             let concrete_floor = materials::load_concrete_floor(&scene);
             let wooden_floor = materials::load_wooden_floor(&scene);
             let lightbeam_falloff = materials::load_lightbeam_falloff(&scene);
+            let black_fabric = materials::load_black_fabric(&scene);
 
             let camera = babylon::ArcRotateCamera::new(
                 "Camera".to_string(),
@@ -119,7 +120,7 @@ impl Component for Preview3dPage {
                 },
                 Some(&scene),
             );
-            box2.set_material(&concrete_floor);
+            box2.set_material(&black_fabric);
 
             box1.set_position(&babylon::Vector3::new(-5.0, 0.0, 0.0));
             box2.set_position(&babylon::Vector3::new(5.0, 0.0, 0.0));
