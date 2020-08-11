@@ -56,26 +56,6 @@ impl Component for Preview3dPage {
             let engine = babylon::Engine::new(&canvas_element, Some(true), None, None);
             let scene = babylon::Scene::new(&engine);
 
-            let concrete1 = babylon::StandardMaterial::new("concrete1".to_string(), &scene);
-            concrete1.set_diffuse_texture(&babylon::Texture::new(
-                "/assets/textures/Concrete-0202b.jpg".to_string(),
-                &scene,
-            ));
-            concrete1.set_bump_texture(&babylon::Texture::new(
-                "/assets/textures/Concrete-0202b-normal.png".to_string(),
-                &scene,
-            ));
-
-            let concrete2 = babylon::StandardMaterial::new("concrete2".to_string(), &scene);
-            concrete2.set_diffuse_texture(&babylon::Texture::new(
-                "/assets/textures/Concrete-2341b.jpg".to_string(),
-                &scene,
-            ));
-            concrete2.set_bump_texture(&babylon::Texture::new(
-                "/assets/textures/Concrete-2341b-normal.jpg".to_string(),
-                &scene,
-            ));
-
             let concrete_floor = babylon::PBRMaterial::new("concrete_floor".to_string(), &scene);
             concrete_floor.set_albedo_texture(&babylon::Texture::new(
                 "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Albedo.jpg".to_string(),
