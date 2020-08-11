@@ -183,6 +183,26 @@ extern "C" {
 
     #[wasm_bindgen(method, setter, js_name="opacityTexture", js_namespace = BABYLON)]
     pub fn set_opacity_texture(this: &StandardMaterial, val: &Texture);
+
+    #[derive(Debug)]
+    pub type PBRMetallicRoughnessMaterial;
+
+    #[wasm_bindgen(constructor, js_namespace = BABYLON)]
+    pub fn new(name: String, scene: &Scene) -> PBRMetallicRoughnessMaterial;
+
+    #[wasm_bindgen(method, setter, js_name="baseTexture", js_namespace = BABYLON)]
+    pub fn set_base_texture(this: &PBRMetallicRoughnessMaterial, val: &Texture);
+
+    // todo detailMap
+
+    #[wasm_bindgen(method, setter, js_name="metallicRoughnessTexture", js_namespace = BABYLON)]
+    pub fn set_metallic_roughness_texture(this: &PBRMetallicRoughnessMaterial, val: &Texture);
+
+    #[wasm_bindgen(method, setter, js_name="normalTexture", js_namespace = BABYLON)]
+    pub fn set_normal_texture(this: &PBRMetallicRoughnessMaterial, val: &Texture);
+
+    #[wasm_bindgen(method, setter, js_name="occlusionTexture", js_namespace = BABYLON)]
+    pub fn set_occlusion_texture(this: &PBRMetallicRoughnessMaterial, val: &Texture);
 }
 
 #[wasm_bindgen]

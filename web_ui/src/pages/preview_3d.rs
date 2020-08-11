@@ -76,6 +76,25 @@ impl Component for Preview3dPage {
                 &scene,
             ));
 
+            let concrete_floor =
+                babylon::PBRMetallicRoughnessMaterial::new("concrete_floor".to_string(), &scene);
+            concrete_floor.set_base_texture(&babylon::Texture::new(
+                "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Albedo.jpg".to_string(),
+                &scene,
+            ));
+            concrete_floor.set_metallic_roughness_texture(&babylon::Texture::new(
+                "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Roughness.jpg".to_string(),
+                &scene,
+            ));
+            concrete_floor.set_normal_texture(&babylon::Texture::new(
+                "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Normal.jpg".to_string(),
+                &scene,
+            ));
+            concrete_floor.set_occlusion_texture(&babylon::Texture::new(
+                "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_AO.jpg".to_string(),
+                &scene,
+            ));
+
             let lightbeam_falloff1 =
                 babylon::StandardMaterial::new("lightbeam_falloff1".to_string(), &scene);
             lightbeam_falloff1.set_opacity_texture(&{
