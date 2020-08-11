@@ -153,6 +153,20 @@ impl Component for Preview3dPage {
             floor.set_material(&wooden_floor);
             floor.set_position(&babylon::Vector3::new(0.0, -2.0, 0.0));
 
+            let front_wall = babylon::MeshBuilder::create_box(
+                "front_wall".to_string(),
+                babylon::CreateBoxOptions {
+                    width: Some(20.0),
+                    depth: Some(0.1),
+                    height: Some(10.0),
+                    ..Default::default()
+                },
+                Some(&scene),
+            );
+            front_wall.set_material(&black_fabric);
+            front_wall.set_position(&babylon::Vector3::new(0.0, 3.0, -10.0));
+
+
             let scene1 = scene.clone();
             let run_loop_closure = Closure::new(move || {
                 scene1.render(None, None);
