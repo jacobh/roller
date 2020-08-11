@@ -81,26 +81,35 @@ impl Component for Preview3dPage {
                 "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Albedo.jpg".to_string(),
                 &scene,
             ));
-            concrete_floor.set_metallic_texture(&babylon::Texture::new(
-                "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Roughness.jpg".to_string(),
+            concrete_floor.set_reflectivity_texture(&babylon::Texture::new(
+                "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Specular.jpg".to_string(),
+                &scene,
+            ));
+            concrete_floor.set_micro_surface_texture(&babylon::Texture::new(
+                "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Gloss.jpg".to_string(),
                 &scene,
             ));
             concrete_floor.set_bump_texture(&babylon::Texture::new(
-                "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Bump.jpg".to_string(),
+                "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Normal.jpg".to_string(),
                 &scene,
             ));
             concrete_floor.set_ambient_texture(&babylon::Texture::new(
                 "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_AO.jpg".to_string(),
                 &scene,
             ));
+            concrete_floor.set_use_physical_light_falloff(false);
 
             let wooden_floor = babylon::PBRMaterial::new("wooden_floor".to_string(), &scene);
             wooden_floor.set_albedo_texture(&babylon::Texture::new(
                 "/assets/textures/wood_board_ugcwcevaw/ugcwcevaw_4K_Albedo.jpg".to_string(),
                 &scene,
             ));
-            wooden_floor.set_metallic_texture(&babylon::Texture::new(
-                "/assets/textures/wood_board_ugcwcevaw/ugcwcevaw_4K_Roughness.jpg".to_string(),
+            wooden_floor.set_reflectivity_texture(&babylon::Texture::new(
+                "/assets/textures/wood_board_ugcwcevaw/ugcwcevaw_4K_Specular.jpg".to_string(),
+                &scene,
+            ));
+            wooden_floor.set_micro_surface_texture(&babylon::Texture::new(
+                "/assets/textures/wood_board_ugcwcevaw/ugcwcevaw_4K_Gloss.jpg".to_string(),
                 &scene,
             ));
             wooden_floor.set_bump_texture(&babylon::Texture::new(
@@ -112,9 +121,6 @@ impl Component for Preview3dPage {
                 &scene,
             ));
             wooden_floor.set_use_physical_light_falloff(false);
-            wooden_floor.set_use_roughness_from_metallic_texture_alpha(false);
-            wooden_floor.set_use_roughness_from_metallic_texture_green(true);
-            wooden_floor.set_use_metallness_from_metallic_texture_blue(true);
 
             let lightbeam_falloff1 =
                 babylon::StandardMaterial::new("lightbeam_falloff1".to_string(), &scene);
@@ -153,11 +159,11 @@ impl Component for Preview3dPage {
                 babylon::Vector3::new(0.0, 30.0, -5.0),
                 babylon::Vector3::new(0.0, -1.0, 0.0),
                 std::f64::consts::PI / 3.0,
-                1.5,
+                15.0,
                 &scene,
             );
             let light3: &babylon::Light = light3.as_ref();
-            light3.set_intensity(5.0);
+            light3.set_intensity(10.0);
 
             let sphere = babylon::MeshBuilder::create_sphere(
                 "sphere".to_string(),
@@ -175,7 +181,7 @@ impl Component for Preview3dPage {
                 },
                 Some(&scene),
             );
-            box1.set_material(&concrete2);
+            box1.set_material(&concrete_floor);
             let box2 = babylon::MeshBuilder::create_box(
                 "box2".to_string(),
                 babylon::CreateBoxOptions {
@@ -184,7 +190,7 @@ impl Component for Preview3dPage {
                 },
                 Some(&scene),
             );
-            box2.set_material(&concrete2);
+            box2.set_material(&concrete_floor);
 
             box1.set_position(&babylon::Vector3::new(-5.0, 0.0, 0.0));
             box2.set_position(&babylon::Vector3::new(5.0, 0.0, 0.0));

@@ -230,6 +230,12 @@ extern "C" {
 
     #[wasm_bindgen(method, setter, js_name="metallicTexture", js_namespace = BABYLON)]
     pub fn set_metallic_texture(this: &PBRMaterial, val: &Texture);
+
+    #[wasm_bindgen(method, setter, js_name="reflectivityTexture", js_namespace = BABYLON)]
+    pub fn set_reflectivity_texture(this: &PBRMaterial, val: &Texture);
+
+    #[wasm_bindgen(method, setter, js_name="microSurfaceTexture", js_namespace = BABYLON)]
+    pub fn set_micro_surface_texture(this: &PBRMaterial, val: &Texture);
 }
 
 #[wasm_bindgen]
