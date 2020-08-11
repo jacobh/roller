@@ -59,6 +59,7 @@ impl Component for Preview3dPage {
             let scene = babylon::Scene::new(&engine);
 
             let concrete_floor = materials::load_concrete_floor(&scene);
+            let concrete_wall = materials::load_concrete_wall(&scene);
             let wooden_floor = materials::load_wooden_floor(&scene);
             let lightbeam_falloff = materials::load_lightbeam_falloff(&scene);
             let black_fabric = materials::load_black_fabric(&scene);
@@ -166,6 +167,31 @@ impl Component for Preview3dPage {
             front_wall.set_material(&black_fabric);
             front_wall.set_position(&babylon::Vector3::new(0.0, 3.0, -10.0));
 
+            let left_wall = babylon::MeshBuilder::create_box(
+                "left_wall".to_string(),
+                babylon::CreateBoxOptions {
+                    width: Some(0.1),
+                    depth: Some(20.0),
+                    height: Some(10.0),
+                    ..Default::default()
+                },
+                Some(&scene),
+            );
+            left_wall.set_material(&concrete_wall);
+            left_wall.set_position(&babylon::Vector3::new(-10.0, 3.0, 0.0));
+
+            let right_wall = babylon::MeshBuilder::create_box(
+                "right_wall".to_string(),
+                babylon::CreateBoxOptions {
+                    width: Some(0.1),
+                    depth: Some(20.0),
+                    height: Some(10.0),
+                    ..Default::default()
+                },
+                Some(&scene),
+            );
+            right_wall.set_material(&concrete_wall);
+            right_wall.set_position(&babylon::Vector3::new(10.0, 3.0, 0.0));
 
             let scene1 = scene.clone();
             let run_loop_closure = Closure::new(move || {

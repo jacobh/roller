@@ -32,6 +32,10 @@ pub fn load_concrete_floor(scene: &babylon::Scene) -> babylon::PBRMaterial {
     load_megascans_material("concrete_rough", "uhroebug", scene)
 }
 
+pub fn load_concrete_wall(scene: &babylon::Scene) -> babylon::PBRMaterial {
+    load_megascans_material("concrete_rough", "ugxkfj0dy", scene)
+}
+
 pub fn load_wooden_floor(scene: &babylon::Scene) -> babylon::PBRMaterial {
     load_megascans_material("wood_board", "ugcwcevaw", scene)
 }
