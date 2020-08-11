@@ -89,17 +89,29 @@ extern "C" {
     );
 
     #[derive(Debug)]
+    pub type Light;
+
+    #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
+    pub fn intensity(this: &Light) -> f64;
+
+    #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
+    pub fn set_intensity(this: &Light, val: f64);
+
+    #[wasm_bindgen(extends = Light)]
+    #[derive(Debug)]
     pub type HemisphericLight;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
     pub fn new(name: String, direction: Vector3, scene: &Scene) -> HemisphericLight;
 
+    #[wasm_bindgen(extends = Light)]
     #[derive(Debug)]
     pub type PointLight;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
     pub fn new(name: String, position: Vector3, scene: &Scene) -> PointLight;
 
+    #[wasm_bindgen(extends = Light)]
     #[derive(Debug)]
     pub type SpotLight;
 
@@ -123,10 +135,10 @@ extern "C" {
     pub fn set_position(this: &Mesh, val: &Vector3);
 
     #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
-    pub fn material(this: &Mesh) -> Option<StandardMaterial>;
+    pub fn material(this: &Mesh) -> Option<Material>;
 
     #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
-    pub fn set_material(this: &Mesh, val: &StandardMaterial);
+    pub fn set_material(this: &Mesh, val: &Material);
 
     #[derive(Debug)]
     pub type MeshBuilder;
@@ -161,6 +173,10 @@ extern "C" {
     pub fn set_get_alpha_from_rgb(this: &Texture, val: bool);
 
     #[derive(Debug)]
+    pub type Material;
+
+    #[wasm_bindgen(extends = Material)]
+    #[derive(Debug)]
     pub type StandardMaterial;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
@@ -184,25 +200,36 @@ extern "C" {
     #[wasm_bindgen(method, setter, js_name="opacityTexture", js_namespace = BABYLON)]
     pub fn set_opacity_texture(this: &StandardMaterial, val: &Texture);
 
+    #[wasm_bindgen(extends = Material)]
     #[derive(Debug)]
-    pub type PBRMetallicRoughnessMaterial;
+    pub type PBRMaterial;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
-    pub fn new(name: String, scene: &Scene) -> PBRMetallicRoughnessMaterial;
+    pub fn new(name: String, scene: &Scene) -> PBRMaterial;
 
-    #[wasm_bindgen(method, setter, js_name="baseTexture", js_namespace = BABYLON)]
-    pub fn set_base_texture(this: &PBRMetallicRoughnessMaterial, val: &Texture);
+    #[wasm_bindgen(method, setter, js_name="useRoughnessFromMetallicTextureAlpha", js_namespace = BABYLON)]
+    pub fn set_use_roughness_from_metallic_texture_alpha(this: &PBRMaterial, val: bool);
 
-    // todo detailMap
+    #[wasm_bindgen(method, setter, js_name="useRoughnessFromMetallicTextureGreen", js_namespace = BABYLON)]
+    pub fn set_use_roughness_from_metallic_texture_green(this: &PBRMaterial, val: bool);
 
-    #[wasm_bindgen(method, setter, js_name="metallicRoughnessTexture", js_namespace = BABYLON)]
-    pub fn set_metallic_roughness_texture(this: &PBRMetallicRoughnessMaterial, val: &Texture);
+    #[wasm_bindgen(method, setter, js_name="useMetallnessFromMetallicTextureBlue", js_namespace = BABYLON)]
+    pub fn set_use_metallness_from_metallic_texture_blue(this: &PBRMaterial, val: bool);
 
-    #[wasm_bindgen(method, setter, js_name="normalTexture", js_namespace = BABYLON)]
-    pub fn set_normal_texture(this: &PBRMetallicRoughnessMaterial, val: &Texture);
+    #[wasm_bindgen(method, setter, js_name="usePhysicalLightFalloff", js_namespace = BABYLON)]
+    pub fn set_use_physical_light_falloff(this: &PBRMaterial, val: bool);
 
-    #[wasm_bindgen(method, setter, js_name="occlusionTexture", js_namespace = BABYLON)]
-    pub fn set_occlusion_texture(this: &PBRMetallicRoughnessMaterial, val: &Texture);
+    #[wasm_bindgen(method, setter, js_name="albedoTexture", js_namespace = BABYLON)]
+    pub fn set_albedo_texture(this: &PBRMaterial, val: &Texture);
+
+    #[wasm_bindgen(method, setter, js_name="ambientTexture", js_namespace = BABYLON)]
+    pub fn set_ambient_texture(this: &PBRMaterial, val: &Texture);
+
+    #[wasm_bindgen(method, setter, js_name="bumpTexture", js_namespace = BABYLON)]
+    pub fn set_bump_texture(this: &PBRMaterial, val: &Texture);
+
+    #[wasm_bindgen(method, setter, js_name="metallicTexture", js_namespace = BABYLON)]
+    pub fn set_metallic_texture(this: &PBRMaterial, val: &Texture);
 }
 
 #[wasm_bindgen]
