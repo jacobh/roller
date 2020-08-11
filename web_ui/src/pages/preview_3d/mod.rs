@@ -6,6 +6,8 @@ use roller_protocol::fixture::{FixtureId, FixtureParams, FixtureState};
 
 use crate::{console_log, js::babylon, yewtil::neq_assign::NeqAssign};
 
+mod materials;
+
 #[derive(Debug, Properties, Clone, PartialEq)]
 pub struct PurePreview3dProps {
     pub fixture_states: HashMap<FixtureId, (FixtureParams, Option<FixtureState>)>,
@@ -56,62 +58,9 @@ impl Component for Preview3dPage {
             let engine = babylon::Engine::new(&canvas_element, Some(true), None, None);
             let scene = babylon::Scene::new(&engine);
 
-            let concrete_floor = babylon::PBRMaterial::new("concrete_floor".to_string(), &scene);
-            concrete_floor.set_albedo_texture(&babylon::Texture::new(
-                "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Albedo.jpg".to_string(),
-                &scene,
-            ));
-            concrete_floor.set_reflectivity_texture(&babylon::Texture::new(
-                "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Specular.jpg".to_string(),
-                &scene,
-            ));
-            concrete_floor.set_micro_surface_texture(&babylon::Texture::new(
-                "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Gloss.jpg".to_string(),
-                &scene,
-            ));
-            concrete_floor.set_bump_texture(&babylon::Texture::new(
-                "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_Normal.jpg".to_string(),
-                &scene,
-            ));
-            concrete_floor.set_ambient_texture(&babylon::Texture::new(
-                "/assets/textures/concrete_rough_uhroebug/uhroebug_4K_AO.jpg".to_string(),
-                &scene,
-            ));
-            concrete_floor.set_use_physical_light_falloff(false);
-
-            let wooden_floor = babylon::PBRMaterial::new("wooden_floor".to_string(), &scene);
-            wooden_floor.set_albedo_texture(&babylon::Texture::new(
-                "/assets/textures/wood_board_ugcwcevaw/ugcwcevaw_4K_Albedo.jpg".to_string(),
-                &scene,
-            ));
-            wooden_floor.set_reflectivity_texture(&babylon::Texture::new(
-                "/assets/textures/wood_board_ugcwcevaw/ugcwcevaw_4K_Specular.jpg".to_string(),
-                &scene,
-            ));
-            wooden_floor.set_micro_surface_texture(&babylon::Texture::new(
-                "/assets/textures/wood_board_ugcwcevaw/ugcwcevaw_4K_Gloss.jpg".to_string(),
-                &scene,
-            ));
-            wooden_floor.set_bump_texture(&babylon::Texture::new(
-                "/assets/textures/wood_board_ugcwcevaw/ugcwcevaw_4K_Normal.jpg".to_string(),
-                &scene,
-            ));
-            wooden_floor.set_ambient_texture(&babylon::Texture::new(
-                "/assets/textures/wood_board_ugcwcevaw/ugcwcevaw_4K_AO.jpg".to_string(),
-                &scene,
-            ));
-            wooden_floor.set_use_physical_light_falloff(false);
-
-            let lightbeam_falloff1 =
-                babylon::StandardMaterial::new("lightbeam_falloff1".to_string(), &scene);
-            lightbeam_falloff1.set_opacity_texture(&{
-                let texture = babylon::Texture::new(
-                    "/assets/textures/lightbeam_falloff1.jpg".to_string(),
-                    &scene,
-                );
-                texture.set_get_alpha_from_rgb(true);
-                texture
-            });
+            let concrete_floor = materials::load_concrete_floor(&scene);
+            let wooden_floor = materials::load_wooden_floor(&scene);
+            let lightbeam_falloff = materials::load_lightbeam_falloff(&scene);
 
             let camera = babylon::ArcRotateCamera::new(
                 "Camera".to_string(),
@@ -188,7 +137,7 @@ impl Component for Preview3dPage {
                 Some(&scene),
             );
             cone.set_position(&babylon::Vector3::new(5.0, 1.0, 5.0));
-            cone.set_material(&lightbeam_falloff1);
+            cone.set_material(&lightbeam_falloff);
 
             let floor = babylon::MeshBuilder::create_box(
                 "floor".to_string(),
