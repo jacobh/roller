@@ -118,6 +118,9 @@ extern "C" {
     #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
     pub fn set_ellipsoid(this: &UniversalCamera, val: &Vector3);
 
+    #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
+    pub fn set_speed(this: &UniversalCamera, val: f64);
+
     #[wasm_bindgen(method, js_name="attachControl", js_namespace = BABYLON)]
     pub fn attach_control(
         this: &UniversalCamera,

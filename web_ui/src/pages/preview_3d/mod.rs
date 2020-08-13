@@ -77,6 +77,7 @@ impl Component for Preview3dPage {
             camera.set_check_collisions(true);
             camera.set_apply_gravity(true);
             camera.set_ellipsoid(&babylon::Vector3::new(1.5, 1.5, 1.5));
+            camera.set_speed(0.5);
 
             // let light1 = babylon::HemisphericLight::new(
             //     "light1".to_string(),
