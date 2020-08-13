@@ -65,6 +65,9 @@ extern "C" {
     #[wasm_bindgen(method, js_namespace = BABYLON)]
     pub fn render(this: &Scene, update_cameras: Option<bool>, ignore_animation: Option<bool>);
 
+    #[wasm_bindgen(method, setter, js_name="clearColor", js_namespace = BABYLON)]
+    pub fn set_clear_color(this: &Scene, color: Vector4);
+
     ///
     /// Camera
     ///

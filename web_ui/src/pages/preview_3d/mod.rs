@@ -57,6 +57,7 @@ impl Component for Preview3dPage {
             let canvas_element: web_sys::HtmlCanvasElement = self.canvas_ref.cast().unwrap();
             let engine = babylon::Engine::new(&canvas_element, Some(true), None, Some(true));
             let scene = babylon::Scene::new(&engine);
+            scene.set_clear_color(babylon::Vector4::new(0.0, 0.0, 0.0, 1.0));
 
             let concrete_floor = materials::load_concrete_floor(&scene);
             let concrete_wall = materials::load_concrete_wall(&scene);
@@ -165,44 +166,58 @@ impl Component for Preview3dPage {
             let front_wall = babylon::MeshBuilder::create_box(
                 "front_wall".to_string(),
                 babylon::CreateBoxOptions {
-                    width: Some(20.0),
+                    width: Some(75.0),
                     depth: Some(0.1),
-                    height: Some(10.0),
+                    height: Some(35.0),
                     ..Default::default()
                 },
                 Some(&scene),
             );
             front_wall.set_check_collisions(true);
             front_wall.set_material(&black_fabric);
-            front_wall.set_position(&babylon::Vector3::new(0.0, 3.0, -10.0));
+            front_wall.set_position(&babylon::Vector3::new(0.0, 15.0, -50.0));
+
+            let back_wall = babylon::MeshBuilder::create_box(
+                "back_wall".to_string(),
+                babylon::CreateBoxOptions {
+                    width: Some(75.0),
+                    depth: Some(0.1),
+                    height: Some(35.0),
+                    ..Default::default()
+                },
+                Some(&scene),
+            );
+            back_wall.set_check_collisions(true);
+            back_wall.set_material(&black_fabric);
+            back_wall.set_position(&babylon::Vector3::new(0.0, 15.0, 50.0));
 
             let left_wall = babylon::MeshBuilder::create_box(
                 "left_wall".to_string(),
                 babylon::CreateBoxOptions {
                     width: Some(0.1),
-                    depth: Some(20.0),
-                    height: Some(10.0),
+                    depth: Some(100.0),
+                    height: Some(35.0),
                     ..Default::default()
                 },
                 Some(&scene),
             );
             left_wall.set_check_collisions(true);
             left_wall.set_material(&concrete_wall);
-            left_wall.set_position(&babylon::Vector3::new(-10.0, 3.0, 0.0));
+            left_wall.set_position(&babylon::Vector3::new(-37.5, 15.0, 0.0));
 
             let right_wall = babylon::MeshBuilder::create_box(
                 "right_wall".to_string(),
                 babylon::CreateBoxOptions {
                     width: Some(0.1),
-                    depth: Some(20.0),
-                    height: Some(10.0),
+                    depth: Some(100.0),
+                    height: Some(35.0),
                     ..Default::default()
                 },
                 Some(&scene),
             );
             right_wall.set_check_collisions(true);
             right_wall.set_material(&concrete_wall);
-            right_wall.set_position(&babylon::Vector3::new(10.0, 3.0, 0.0));
+            right_wall.set_position(&babylon::Vector3::new(37.5, 15.0, 0.0));
 
             let scene1 = scene.clone();
             let run_loop_closure = Closure::new(move || {
