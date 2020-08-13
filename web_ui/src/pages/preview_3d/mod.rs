@@ -66,7 +66,7 @@ impl Component for Preview3dPage {
 
             let camera = babylon::UniversalCamera::new(
                 "Camera".to_string(),
-                babylon::Vector3::new(0.0, 0.0, 5.0),
+                babylon::Vector3::new(0.0, 2.0, 35.0),
                 &scene,
             );
             camera.attach_control(&canvas_element, Some(true));
@@ -78,6 +78,7 @@ impl Component for Preview3dPage {
             camera.set_apply_gravity(true);
             camera.set_ellipsoid(&babylon::Vector3::new(1.5, 1.5, 1.5));
             camera.set_speed(0.5);
+            camera.set_target(babylon::Vector3::new(0.0, 0.0, 0.0));
 
             // let light1 = babylon::HemisphericLight::new(
             //     "light1".to_string(),
@@ -97,7 +98,6 @@ impl Component for Preview3dPage {
                 3.0,
                 &scene,
             );
-            let light3: &babylon::Light = light3.as_ref();
             light3.set_intensity(10.0);
 
             let sphere = babylon::MeshBuilder::create_sphere(
