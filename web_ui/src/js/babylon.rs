@@ -216,6 +216,9 @@ extern "C" {
     #[wasm_bindgen(method, setter, js_name="useMetallnessFromMetallicTextureBlue", js_namespace = BABYLON)]
     pub fn set_use_metallness_from_metallic_texture_blue(this: &PBRMaterial, val: bool);
 
+    #[wasm_bindgen(method, setter, js_name="useAmbientOcclusionFromMetallicTextureRed", js_namespace = BABYLON)]
+    pub fn set_use_ambient_occlusion_from_metallic_texture_red(this: &PBRMaterial, val: bool);
+
     #[wasm_bindgen(method, setter, js_name="usePhysicalLightFalloff", js_namespace = BABYLON)]
     pub fn set_use_physical_light_falloff(this: &PBRMaterial, val: bool);
 

@@ -7,22 +7,20 @@ fn load_megascans_material(slug: &str, id: &str, scene: &babylon::Scene) -> baby
         format!("/assets/textures/{}_{}/{}_4K_Albedo.jpg", slug, id, id),
         &scene,
     ));
-    material.set_reflectivity_texture(&babylon::Texture::new(
-        format!("/assets/textures/{}_{}/{}_4K_Specular.jpg", slug, id, id),
-        &scene,
-    ));
-    material.set_micro_surface_texture(&babylon::Texture::new(
-        format!("/assets/textures/{}_{}/{}_4K_Gloss.jpg", slug, id, id),
+    material.set_metallic_texture(&babylon::Texture::new(
+        format!(
+            "/assets/textures/{}_{}/{}_4K_MetalRoughness.jpg",
+            slug, id, id
+        ),
         &scene,
     ));
     material.set_bump_texture(&babylon::Texture::new(
         format!("/assets/textures/{}_{}/{}_4K_Normal.jpg", slug, id, id),
         &scene,
     ));
-    material.set_ambient_texture(&babylon::Texture::new(
-        format!("/assets/textures/{}_{}/{}_4K_AO.jpg", slug, id, id),
-        &scene,
-    ));
+    material.set_use_ambient_occlusion_from_metallic_texture_red(true);
+    material.set_use_roughness_from_metallic_texture_green(true);
+    material.set_use_metallness_from_metallic_texture_blue(true);
     material.set_use_physical_light_falloff(false);
 
     material

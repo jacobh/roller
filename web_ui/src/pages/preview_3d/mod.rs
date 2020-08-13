@@ -55,7 +55,7 @@ impl Component for Preview3dPage {
             console_log!("{}", babylon::Engine::version());
 
             let canvas_element: web_sys::HtmlCanvasElement = self.canvas_ref.cast().unwrap();
-            let engine = babylon::Engine::new(&canvas_element, Some(true), None, None);
+            let engine = babylon::Engine::new(&canvas_element, Some(true), None, Some(true));
             let scene = babylon::Scene::new(&engine);
 
             let concrete_floor = materials::load_concrete_floor(&scene);
