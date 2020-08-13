@@ -192,13 +192,21 @@ extern "C" {
     /// Mesh
     ///
     #[derive(Debug)]
-    pub type Mesh;
-
+    pub type TransformNode;
+    
     #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
     pub fn position(this: &Mesh) -> Option<Vector3>;
 
     #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
     pub fn set_position(this: &Mesh, val: &Vector3);
+
+    #[wasm_bindgen(extends = TransformNode)]
+    #[derive(Debug)]
+    pub type AbstractMesh;
+
+    #[wasm_bindgen(extends = AbstractMesh)]
+    #[derive(Debug)]
+    pub type Mesh;
 
     #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
     pub fn material(this: &Mesh) -> Option<Material>;
@@ -225,9 +233,6 @@ extern "C" {
         options: CreateCylinderOptions,
         scene: Option<&Scene>,
     ) -> Mesh;
-
-    #[derive(Debug)]
-    pub type TransformNode;
 
     ///
     /// Texture
