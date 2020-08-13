@@ -151,8 +151,8 @@ impl Component for Preview3dPage {
             let floor = babylon::MeshBuilder::create_box(
                 "floor".to_string(),
                 babylon::CreateBoxOptions {
-                    width: Some(20.0),
-                    depth: Some(20.0),
+                    width: Some(75.0),
+                    depth: Some(100.0),
                     height: Some(0.1),
                     ..Default::default()
                 },
