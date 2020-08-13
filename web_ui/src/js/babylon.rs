@@ -65,6 +65,59 @@ extern "C" {
     #[wasm_bindgen(method, js_namespace = BABYLON)]
     pub fn render(this: &Scene, update_cameras: Option<bool>, ignore_animation: Option<bool>);
 
+    ///
+    /// Camera
+    ///
+    #[derive(Debug)]
+    pub type Camera;
+
+    #[wasm_bindgen(extends = Camera)]
+    #[derive(Debug)]
+    pub type TargetCamera;
+
+    #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
+    pub fn set_speed(this: &TargetCamera, val: f64);
+
+    #[wasm_bindgen(method, js_name="setTarget", js_namespace = BABYLON)]
+    pub fn set_target(this: &TargetCamera, val: Vector3);
+
+    #[wasm_bindgen(extends = TargetCamera)]
+    #[derive(Debug)]
+    pub type FreeCamera;
+
+    #[wasm_bindgen(method, setter, js_name="keysUp", js_namespace = BABYLON)]
+    pub fn set_keys_up(this: &FreeCamera, val: &[usize]);
+
+    #[wasm_bindgen(method, setter, js_name="keysDown", js_namespace = BABYLON)]
+    pub fn set_keys_down(this: &FreeCamera, val: &[usize]);
+
+    #[wasm_bindgen(method, setter, js_name="keysLeft", js_namespace = BABYLON)]
+    pub fn set_keys_left(this: &FreeCamera, val: &[usize]);
+
+    #[wasm_bindgen(method, setter, js_name="keysRight", js_namespace = BABYLON)]
+    pub fn set_keys_right(this: &FreeCamera, val: &[usize]);
+
+    #[wasm_bindgen(method, setter, js_name="checkCollisions", js_namespace = BABYLON)]
+    pub fn set_check_collisions(this: &FreeCamera, val: bool);
+
+    #[wasm_bindgen(method, setter, js_name="applyGravity", js_namespace = BABYLON)]
+    pub fn set_apply_gravity(this: &FreeCamera, val: bool);
+
+    #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
+    pub fn set_ellipsoid(this: &FreeCamera, val: &Vector3);
+
+    #[wasm_bindgen(method, js_name="attachControl", js_namespace = BABYLON)]
+    pub fn attach_control(
+        this: &FreeCamera,
+        element: &web_sys::HtmlElement,
+        no_prevent_default: Option<bool>,
+    );
+
+    #[wasm_bindgen(extends = FreeCamera)]
+    #[derive(Debug)]
+    pub type TouchCamera;
+
+    #[wasm_bindgen(extends = TargetCamera)]
     #[derive(Debug)]
     pub type ArcRotateCamera;
 
@@ -88,46 +141,16 @@ extern "C" {
         panning_mouse_button: Option<usize>,
     );
 
+    #[wasm_bindgen(extends = TouchCamera)]
     #[derive(Debug)]
     pub type UniversalCamera;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
     pub fn new(name: String, position: Vector3, scene: &Scene) -> UniversalCamera;
 
-    #[wasm_bindgen(method, js_name="setTarget", js_namespace = BABYLON)]
-    pub fn set_target(this: &UniversalCamera, val: Vector3);
-
-    #[wasm_bindgen(method, setter, js_name="keysUp", js_namespace = BABYLON)]
-    pub fn set_keys_up(this: &UniversalCamera, val: &[usize]);
-
-    #[wasm_bindgen(method, setter, js_name="keysDown", js_namespace = BABYLON)]
-    pub fn set_keys_down(this: &UniversalCamera, val: &[usize]);
-
-    #[wasm_bindgen(method, setter, js_name="keysLeft", js_namespace = BABYLON)]
-    pub fn set_keys_left(this: &UniversalCamera, val: &[usize]);
-
-    #[wasm_bindgen(method, setter, js_name="keysRight", js_namespace = BABYLON)]
-    pub fn set_keys_right(this: &UniversalCamera, val: &[usize]);
-
-    #[wasm_bindgen(method, setter, js_name="checkCollisions", js_namespace = BABYLON)]
-    pub fn set_check_collisions(this: &UniversalCamera, val: bool);
-
-    #[wasm_bindgen(method, setter, js_name="applyGravity", js_namespace = BABYLON)]
-    pub fn set_apply_gravity(this: &UniversalCamera, val: bool);
-
-    #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
-    pub fn set_ellipsoid(this: &UniversalCamera, val: &Vector3);
-
-    #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
-    pub fn set_speed(this: &UniversalCamera, val: f64);
-
-    #[wasm_bindgen(method, js_name="attachControl", js_namespace = BABYLON)]
-    pub fn attach_control(
-        this: &UniversalCamera,
-        element: &web_sys::HtmlElement,
-        no_prevent_default: Option<bool>,
-    );
-
+    ///
+    /// Light
+    ///
     #[derive(Debug)]
     pub type Light;
 
@@ -165,6 +188,9 @@ extern "C" {
         scene: &Scene,
     ) -> SpotLight;
 
+    ///
+    /// Mesh
+    ///
     #[derive(Debug)]
     pub type Mesh;
 
@@ -203,6 +229,9 @@ extern "C" {
     #[derive(Debug)]
     pub type TransformNode;
 
+    ///
+    /// Texture
+    ///
     #[derive(Debug)]
     pub type Texture;
 
@@ -215,6 +244,9 @@ extern "C" {
     #[wasm_bindgen(method, setter, js_name="getAlphaFromRGB", js_namespace = BABYLON)]
     pub fn set_get_alpha_from_rgb(this: &Texture, val: bool);
 
+    ///
+    /// Material
+    ///
     #[derive(Debug)]
     pub type Material;
 
