@@ -109,6 +109,15 @@ extern "C" {
     #[wasm_bindgen(method, setter, js_name="keysRight", js_namespace = BABYLON)]
     pub fn set_keys_right(this: &UniversalCamera, val: &[usize]);
 
+    #[wasm_bindgen(method, setter, js_name="checkCollisions", js_namespace = BABYLON)]
+    pub fn set_check_collisions(this: &UniversalCamera, val: bool);
+
+    #[wasm_bindgen(method, setter, js_name="applyGravity", js_namespace = BABYLON)]
+    pub fn set_apply_gravity(this: &UniversalCamera, val: bool);
+
+    #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
+    pub fn set_ellipsoid(this: &UniversalCamera, val: &Vector3);
+
     #[wasm_bindgen(method, js_name="attachControl", js_namespace = BABYLON)]
     pub fn attach_control(
         this: &UniversalCamera,
@@ -167,6 +176,9 @@ extern "C" {
 
     #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
     pub fn set_material(this: &Mesh, val: &Material);
+
+    #[wasm_bindgen(method, setter, js_name="checkCollisions", js_namespace = BABYLON)]
+    pub fn set_check_collisions(this: &Mesh, val: bool);
 
     #[derive(Debug)]
     pub type MeshBuilder;

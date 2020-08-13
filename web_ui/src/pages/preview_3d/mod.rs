@@ -74,6 +74,9 @@ impl Component for Preview3dPage {
             camera.set_keys_left(&[65]); // A
             camera.set_keys_down(&[83]); // S
             camera.set_keys_right(&[68]); // D
+            camera.set_check_collisions(true);
+            camera.set_apply_gravity(true);
+            camera.set_ellipsoid(&babylon::Vector3::new(1.5, 1.5, 1.5));
 
             // let light1 = babylon::HemisphericLight::new(
             //     "light1".to_string(),
@@ -104,6 +107,7 @@ impl Component for Preview3dPage {
                 },
                 Some(&scene),
             );
+            sphere.set_check_collisions(true);
             let box1 = babylon::MeshBuilder::create_box(
                 "box1".to_string(),
                 babylon::CreateBoxOptions {
@@ -113,6 +117,7 @@ impl Component for Preview3dPage {
                 Some(&scene),
             );
             box1.set_material(&concrete_floor);
+            box1.set_check_collisions(true);
             let box2 = babylon::MeshBuilder::create_box(
                 "box2".to_string(),
                 babylon::CreateBoxOptions {
@@ -122,6 +127,7 @@ impl Component for Preview3dPage {
                 Some(&scene),
             );
             box2.set_material(&black_fabric);
+            box2.set_check_collisions(true);
 
             box1.set_position(&babylon::Vector3::new(-5.0, 0.0, 0.0));
             box2.set_position(&babylon::Vector3::new(5.0, 0.0, 0.0));
@@ -151,6 +157,7 @@ impl Component for Preview3dPage {
                 },
                 Some(&scene),
             );
+            floor.set_check_collisions(true);
             floor.set_material(&wooden_floor);
             floor.set_position(&babylon::Vector3::new(0.0, -2.0, 0.0));
 
@@ -164,6 +171,7 @@ impl Component for Preview3dPage {
                 },
                 Some(&scene),
             );
+            front_wall.set_check_collisions(true);
             front_wall.set_material(&black_fabric);
             front_wall.set_position(&babylon::Vector3::new(0.0, 3.0, -10.0));
 
@@ -177,6 +185,7 @@ impl Component for Preview3dPage {
                 },
                 Some(&scene),
             );
+            left_wall.set_check_collisions(true);
             left_wall.set_material(&concrete_wall);
             left_wall.set_position(&babylon::Vector3::new(-10.0, 3.0, 0.0));
 
@@ -190,6 +199,7 @@ impl Component for Preview3dPage {
                 },
                 Some(&scene),
             );
+            right_wall.set_check_collisions(true);
             right_wall.set_material(&concrete_wall);
             right_wall.set_position(&babylon::Vector3::new(10.0, 3.0, 0.0));
 
