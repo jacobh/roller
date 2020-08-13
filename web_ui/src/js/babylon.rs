@@ -89,6 +89,34 @@ extern "C" {
     );
 
     #[derive(Debug)]
+    pub type UniversalCamera;
+
+    #[wasm_bindgen(constructor, js_namespace = BABYLON)]
+    pub fn new(name: String, position: Vector3, scene: &Scene) -> UniversalCamera;
+
+    #[wasm_bindgen(method, js_name="setTarget", js_namespace = BABYLON)]
+    pub fn set_target(this: &UniversalCamera, val: Vector3);
+
+    #[wasm_bindgen(method, setter, js_name="keysUp", js_namespace = BABYLON)]
+    pub fn set_keys_up(this: &UniversalCamera, val: &[usize]);
+
+    #[wasm_bindgen(method, setter, js_name="keysDown", js_namespace = BABYLON)]
+    pub fn set_keys_down(this: &UniversalCamera, val: &[usize]);
+
+    #[wasm_bindgen(method, setter, js_name="keysLeft", js_namespace = BABYLON)]
+    pub fn set_keys_left(this: &UniversalCamera, val: &[usize]);
+
+    #[wasm_bindgen(method, setter, js_name="keysRight", js_namespace = BABYLON)]
+    pub fn set_keys_right(this: &UniversalCamera, val: &[usize]);
+
+    #[wasm_bindgen(method, js_name="attachControl", js_namespace = BABYLON)]
+    pub fn attach_control(
+        this: &UniversalCamera,
+        element: &web_sys::HtmlElement,
+        no_prevent_default: Option<bool>,
+    );
+
+    #[derive(Debug)]
     pub type Light;
 
     #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
