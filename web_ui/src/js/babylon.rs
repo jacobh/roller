@@ -36,6 +36,12 @@ extern "C" {
     fn z(this: &Vector4) -> f64;
 
     #[derive(Debug)]
+    pub type Color3;
+
+    #[wasm_bindgen(constructor, js_namespace = BABYLON)]
+    pub fn new(r: f64, g: f64, b: f64) -> Color3;
+
+    #[derive(Debug)]
     pub type EngineOptions;
 
     #[derive(Debug)]
@@ -295,6 +301,15 @@ extern "C" {
 
     #[wasm_bindgen(method, setter, js_name="opacityTexture", js_namespace = BABYLON)]
     pub fn set_opacity_texture(this: &StandardMaterial, val: &Texture);
+
+    #[wasm_bindgen(method, setter, js_name="emissiveColor", js_namespace = BABYLON)]
+    pub fn set_emissive_color(this: &StandardMaterial, val: &Color3);
+
+    #[wasm_bindgen(method, setter, js_name="emissiveTexture", js_namespace = BABYLON)]
+    pub fn set_emissive_texture(this: &StandardMaterial, val: &Texture);
+
+    #[wasm_bindgen(method, setter, js_name="disableLighting", js_namespace = BABYLON)]
+    pub fn set_disable_lighting(this: &StandardMaterial, val: bool);
 
     #[wasm_bindgen(extends = Material)]
     #[derive(Debug)]

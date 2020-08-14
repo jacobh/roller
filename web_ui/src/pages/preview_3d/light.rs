@@ -8,7 +8,7 @@ pub fn create_light<'a>(args: CreateLightArgs<'a>) {
     let cone = babylon::MeshBuilder::create_cylinder(
         "light_cone".to_string(),
         babylon::CreateCylinderOptions {
-            height: Some(20.0),
+            height: Some(30.0),
             diameterTop: Some(0.5),
             diameterBottom: Some(10.0),
             tessellation: Some(96.0),

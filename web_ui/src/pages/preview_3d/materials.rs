@@ -60,15 +60,17 @@ pub fn load_black_fabric(scene: &babylon::Scene) -> babylon::PBRMaterial {
 
 pub fn load_lightbeam_falloff(scene: &babylon::Scene) -> babylon::StandardMaterial {
     let lightbeam_falloff =
-        babylon::StandardMaterial::new("lightbeam_falloff1".to_string(), &scene);
+        babylon::StandardMaterial::new("lightbeam_falloff".to_string(), &scene);
     lightbeam_falloff.set_opacity_texture(&{
         let texture = babylon::Texture::new(
-            "/assets/textures/lightbeam_falloff1.jpg".to_string(),
+            "/assets/textures/lightbeam_falloff.png".to_string(),
             &scene,
         );
         texture.set_get_alpha_from_rgb(true);
         texture
     });
+    lightbeam_falloff.set_disable_lighting(true);
+    lightbeam_falloff.set_emissive_color(&babylon::Color3::new(1.0, 1.0, 1.0));
 
     lightbeam_falloff
 }
