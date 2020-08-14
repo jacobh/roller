@@ -13,7 +13,7 @@ pub fn create_light<'a>(args: CreateLightArgs<'a>) {
             diameterBottom: Some(10.0),
             tessellation: Some(96.0),
             subdivisions: Some(4.0),
-            enclose: false,
+            enclose: Some(false),
             ..Default::default()
         },
         Some(&args.scene),
