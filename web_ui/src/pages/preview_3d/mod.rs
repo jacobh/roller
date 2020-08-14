@@ -172,13 +172,15 @@ impl Component for Preview3dPage {
             });
 
             for light_position in light_positions {
+                let x = light_position.x as f64;
+                let y = light_position.y as f64;
                 light::create_light(light::CreateLightArgs {
                     scene: &scene,
                     lightbeam_falloff: &lightbeam_falloff,
                     origin_position: Vector::new(
-                        light_position.x as f64,
+                        x * 2.0 - 50.0,
                         15.0,
-                        light_position.y as f64,
+                        y * 2.0 - 50.0,
                     ),
                 });
             }
