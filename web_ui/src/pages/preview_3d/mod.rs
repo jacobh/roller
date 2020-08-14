@@ -6,6 +6,7 @@ use roller_protocol::fixture::{FixtureId, FixtureParams, FixtureState};
 
 use crate::{console_log, js::babylon, yewtil::neq_assign::NeqAssign};
 
+mod light;
 mod materials;
 mod room;
 
@@ -135,21 +136,6 @@ impl Component for Preview3dPage {
             box1.set_position(&babylon::Vector3::new(-5.0, 0.0, 0.0));
             box2.set_position(&babylon::Vector3::new(5.0, 0.0, 0.0));
 
-            let cone = babylon::MeshBuilder::create_cylinder(
-                "cone1".to_string(),
-                babylon::CreateCylinderOptions {
-                    height: Some(3.0),
-                    diameterTop: Some(0.5),
-                    diameterBottom: Some(3.0),
-                    tessellation: Some(96.0),
-                    subdivisions: Some(4.0),
-                    ..Default::default()
-                },
-                Some(&scene),
-            );
-            cone.set_position(&babylon::Vector3::new(5.0, 1.0, 5.0));
-            cone.set_material(&lightbeam_falloff);
-
             room::create_room(room::CreateRoomArgs {
                 scene: &scene,
                 front_wall_material: &black_fabric,
@@ -160,6 +146,11 @@ impl Component for Preview3dPage {
                 width: 75.0,
                 depth: 100.0,
                 height: 30.0,
+            });
+
+            light::create_light(light::CreateLightArgs {
+                scene: &scene,
+                lightbeam_falloff: &lightbeam_falloff,
             });
 
             let scene1 = scene.clone();
