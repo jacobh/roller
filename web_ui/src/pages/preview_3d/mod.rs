@@ -7,6 +7,7 @@ use roller_protocol::fixture::{FixtureId, FixtureParams, FixtureState};
 use crate::{console_log, js::babylon, yewtil::neq_assign::NeqAssign};
 
 mod materials;
+mod room;
 
 #[derive(Debug, Properties, Clone, PartialEq)]
 pub struct PurePreview3dProps {
@@ -149,75 +150,17 @@ impl Component for Preview3dPage {
             cone.set_position(&babylon::Vector3::new(5.0, 1.0, 5.0));
             cone.set_material(&lightbeam_falloff);
 
-            let floor = babylon::MeshBuilder::create_box(
-                "floor".to_string(),
-                babylon::CreateBoxOptions {
-                    width: Some(75.0),
-                    depth: Some(100.0),
-                    height: Some(0.1),
-                    ..Default::default()
-                },
-                Some(&scene),
-            );
-            floor.set_check_collisions(true);
-            floor.set_material(&wooden_floor);
-            floor.set_position(&babylon::Vector3::new(0.0, -2.0, 0.0));
-
-            let front_wall = babylon::MeshBuilder::create_box(
-                "front_wall".to_string(),
-                babylon::CreateBoxOptions {
-                    width: Some(75.0),
-                    depth: Some(0.1),
-                    height: Some(35.0),
-                    ..Default::default()
-                },
-                Some(&scene),
-            );
-            front_wall.set_check_collisions(true);
-            front_wall.set_material(&black_fabric);
-            front_wall.set_position(&babylon::Vector3::new(0.0, 15.0, -50.0));
-
-            let back_wall = babylon::MeshBuilder::create_box(
-                "back_wall".to_string(),
-                babylon::CreateBoxOptions {
-                    width: Some(75.0),
-                    depth: Some(0.1),
-                    height: Some(35.0),
-                    ..Default::default()
-                },
-                Some(&scene),
-            );
-            back_wall.set_check_collisions(true);
-            back_wall.set_material(&black_fabric);
-            back_wall.set_position(&babylon::Vector3::new(0.0, 15.0, 50.0));
-
-            let left_wall = babylon::MeshBuilder::create_box(
-                "left_wall".to_string(),
-                babylon::CreateBoxOptions {
-                    width: Some(0.1),
-                    depth: Some(100.0),
-                    height: Some(35.0),
-                    ..Default::default()
-                },
-                Some(&scene),
-            );
-            left_wall.set_check_collisions(true);
-            left_wall.set_material(&concrete_wall);
-            left_wall.set_position(&babylon::Vector3::new(-37.5, 15.0, 0.0));
-
-            let right_wall = babylon::MeshBuilder::create_box(
-                "right_wall".to_string(),
-                babylon::CreateBoxOptions {
-                    width: Some(0.1),
-                    depth: Some(100.0),
-                    height: Some(35.0),
-                    ..Default::default()
-                },
-                Some(&scene),
-            );
-            right_wall.set_check_collisions(true);
-            right_wall.set_material(&concrete_wall);
-            right_wall.set_position(&babylon::Vector3::new(37.5, 15.0, 0.0));
+            room::create_room(room::CreateRoomArgs {
+                scene: &scene,
+                front_wall_material: &black_fabric,
+                back_wall_material: &black_fabric,
+                left_wall_material: &concrete_wall,
+                right_wall_material: &concrete_wall,
+                floor_material: &wooden_floor,
+                // width: 75,
+                // depth: 100.0,
+                // height: 0.1,
+            });
 
             let scene1 = scene.clone();
             let run_loop_closure = Closure::new(move || {

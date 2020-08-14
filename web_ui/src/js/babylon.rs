@@ -196,7 +196,7 @@ extern "C" {
     ///
     #[derive(Debug)]
     pub type TransformNode;
-    
+
     #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
     pub fn position(this: &Mesh) -> Option<Vector3>;
 
