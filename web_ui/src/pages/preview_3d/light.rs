@@ -1,8 +1,9 @@
-use crate::js::babylon;
+use crate::{js::babylon, pages::preview_3d::Vector};
 
 pub struct CreateLightArgs<'a> {
     pub scene: &'a babylon::Scene,
     pub lightbeam_falloff: &'a babylon::Material,
+    pub origin_position: Vector,
 }
 pub fn create_light<'a>(args: CreateLightArgs<'a>) {
     let cone = babylon::MeshBuilder::create_cylinder(
@@ -18,6 +19,6 @@ pub fn create_light<'a>(args: CreateLightArgs<'a>) {
         },
         Some(&args.scene),
     );
-    cone.set_position(&babylon::Vector3::new(10.0, 15.0, -35.0));
+    cone.set_position(&babylon::Vector3::from(args.origin_position));
     cone.set_material(&args.lightbeam_falloff);
 }

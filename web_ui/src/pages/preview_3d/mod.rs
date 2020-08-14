@@ -10,6 +10,22 @@ mod light;
 mod materials;
 mod room;
 
+pub struct Vector {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+impl Vector {
+    pub fn new(x: f64, y: f64, z: f64) -> Vector {
+        Vector { x, y, z }
+    }
+}
+impl From<Vector> for babylon::Vector3 {
+    fn from(vector: Vector) -> babylon::Vector3 {
+        babylon::Vector3::new(vector.x, vector.y, vector.z)
+    }
+}
+
 #[derive(Debug, Properties, Clone, PartialEq)]
 pub struct PurePreview3dProps {
     pub fixture_states: HashMap<FixtureId, (FixtureParams, Option<FixtureState>)>,
@@ -151,6 +167,7 @@ impl Component for Preview3dPage {
             light::create_light(light::CreateLightArgs {
                 scene: &scene,
                 lightbeam_falloff: &lightbeam_falloff,
+                origin_position: Vector::new(10.0, 15.0, -35.0),
             });
 
             let scene1 = scene.clone();
