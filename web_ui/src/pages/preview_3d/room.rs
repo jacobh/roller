@@ -10,14 +10,17 @@ struct CreateFaceArgs<'a> {
     width: f64,
     depth: f64,
     height: f64,
+    tile_size: f64,
 }
 fn create_face<'a>(args: CreateFaceArgs<'a>) -> babylon::Mesh {
-    let face = babylon::MeshBuilder::create_box(
+    let face = babylon::MeshBuilder::create_tiled_box(
         args.name.to_string(),
-        babylon::CreateBoxOptions {
+        babylon::CreateTiledBoxOptions {
             width: Some(args.width),
-            depth: Some(args.depth),
+            depth: args.depth,
             height: Some(args.height),
+            tileHeight: Some(args.tile_size),
+            tileWidth: Some(args.tile_size),
             ..Default::default()
         },
         Some(args.scene),
@@ -50,6 +53,7 @@ pub fn create_room<'a>(args: CreateRoomArgs<'a>) {
         width: args.width,
         depth: args.depth,
         height: 0.1,
+        tile_size: 20.0,
     });
     floor.set_position(&babylon::Vector3::new(0.0, -2.0, 0.0));
 
@@ -60,6 +64,7 @@ pub fn create_room<'a>(args: CreateRoomArgs<'a>) {
         width: args.width,
         depth: 0.1,
         height: args.height,
+        tile_size: 2.5,
     });
     front_wall.set_position(&babylon::Vector3::new(
         0.0,
@@ -74,6 +79,7 @@ pub fn create_room<'a>(args: CreateRoomArgs<'a>) {
         width: args.width,
         depth: 0.1,
         height: args.height,
+        tile_size: 2.5,
     });
     back_wall.set_position(&babylon::Vector3::new(
         0.0,
@@ -88,6 +94,7 @@ pub fn create_room<'a>(args: CreateRoomArgs<'a>) {
         width: 0.1,
         depth: args.depth,
         height: args.height,
+        tile_size: 25.0,
     });
     left_wall.set_position(&babylon::Vector3::new(
         -(args.width / 2.0),
@@ -102,6 +109,7 @@ pub fn create_room<'a>(args: CreateRoomArgs<'a>) {
         width: 0.1,
         depth: args.depth,
         height: args.height,
+        tile_size: 25.0,
     });
     right_wall.set_position(&babylon::Vector3::new(
         args.width / 2.0,
