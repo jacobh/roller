@@ -350,6 +350,9 @@ extern "C" {
 
     #[wasm_bindgen(method, setter, js_name="microSurfaceTexture", js_namespace = BABYLON)]
     pub fn set_micro_surface_texture(this: &PBRMaterial, val: &Texture);
+
+    #[wasm_bindgen(method, setter, js_name="maxSimultaneousLights", js_namespace = BABYLON)]
+    pub fn set_max_simultaneous_lights(this: &PBRMaterial, val: usize);
 }
 
 #[wasm_bindgen]

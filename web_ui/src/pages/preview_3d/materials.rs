@@ -38,6 +38,7 @@ fn load_megascans_material(
     material.set_use_roughness_from_metallic_texture_green(true);
     material.set_use_metallness_from_metallic_texture_blue(true);
     material.set_use_physical_light_falloff(false);
+    material.set_max_simultaneous_lights(64);
 
     material
 }

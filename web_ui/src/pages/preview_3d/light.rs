@@ -23,6 +23,16 @@ pub fn create_light<'a>(args: CreateLightArgs<'a>) {
         },
         Some(&args.scene),
     );
-    cone.set_position(&babylon::Vector3::from(args.origin_position));
+    cone.set_position(&babylon::Vector3::from(&args.origin_position));
     cone.set_material(&args.lightbeam_falloff);
+
+    let spot_light = babylon::SpotLight::new(
+        "spot_light".to_string(),
+        babylon::Vector3::new(args.origin_position.x, args.origin_position.y + 25.0, args.origin_position.z),
+        babylon::Vector3::new(0.0, -1.0, 0.0),
+        beam_angle,
+        1.0,
+        &args.scene,
+    );
+    spot_light.set_intensity(8.0);
 }

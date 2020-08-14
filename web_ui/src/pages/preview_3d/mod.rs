@@ -25,6 +25,11 @@ impl From<Vector> for babylon::Vector3 {
         babylon::Vector3::new(vector.x, vector.y, vector.z)
     }
 }
+impl From<&Vector> for babylon::Vector3 {
+    fn from(vector: &Vector) -> babylon::Vector3 {
+        babylon::Vector3::new(vector.x, vector.y, vector.z)
+    }
+}
 
 #[derive(Debug, Properties, Clone, PartialEq)]
 pub struct PurePreview3dProps {
@@ -106,25 +111,17 @@ impl Component for Preview3dPage {
             camera.set_speed(0.5);
             camera.set_target(babylon::Vector3::new(0.0, 0.0, 0.0));
 
-            // let light1 = babylon::HemisphericLight::new(
-            //     "light1".to_string(),
-            //     babylon::Vector3::new(1.0, 50.0, 0.0),
+            let light1 = babylon::HemisphericLight::new(
+                "light1".to_string(),
+                babylon::Vector3::new(1.0, 50.0, 0.0),
+                &scene,
+            );
+            light1.set_intensity(0.1);
+            // let light2 = babylon::PointLight::new(
+            //     "light2".to_string(),
+            //     babylon::Vector3::new(0.0, 15.0, -5.0),
             //     &scene,
             // );
-            let light2 = babylon::PointLight::new(
-                "light2".to_string(),
-                babylon::Vector3::new(0.0, 15.0, -5.0),
-                &scene,
-            );
-            let light3 = babylon::SpotLight::new(
-                "light3".to_string(),
-                babylon::Vector3::new(0.0, 15.0, -5.0),
-                babylon::Vector3::new(0.0, -1.0, 0.0),
-                std::f64::consts::PI / 3.0,
-                3.0,
-                &scene,
-            );
-            light3.set_intensity(10.0);
 
             let sphere = babylon::MeshBuilder::create_sphere(
                 "sphere".to_string(),
