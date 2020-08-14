@@ -157,9 +157,9 @@ impl Component for Preview3dPage {
                 left_wall_material: &concrete_wall,
                 right_wall_material: &concrete_wall,
                 floor_material: &wooden_floor,
-                // width: 75,
-                // depth: 100.0,
-                // height: 0.1,
+                width: 75.0,
+                depth: 100.0,
+                height: 30.0,
             });
 
             let scene1 = scene.clone();
