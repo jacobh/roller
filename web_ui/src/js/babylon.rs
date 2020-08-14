@@ -246,6 +246,12 @@ extern "C" {
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
     pub fn new(image_path: String, scene: &Scene) -> Texture;
 
+    #[wasm_bindgen(method, setter, js_name="uScale", js_namespace = BABYLON)]
+    pub fn set_u_scale(this: &Texture, val: f64);
+
+    #[wasm_bindgen(method, setter, js_name="vScale", js_namespace = BABYLON)]
+    pub fn set_v_scale(this: &Texture, val: f64);
+
     #[wasm_bindgen(method, getter, js_name="getAlphaFromRGB", js_namespace = BABYLON)]
     pub fn get_alpha_from_rgb(this: &Texture) -> bool;
 

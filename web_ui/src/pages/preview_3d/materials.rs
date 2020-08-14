@@ -1,21 +1,37 @@
 use crate::js::babylon;
 
-fn load_megascans_material(slug: &str, id: &str, scene: &babylon::Scene) -> babylon::PBRMaterial {
+fn load_texture(name: String, scale: f64, scene: &babylon::Scene) -> babylon::Texture {
+    let texture = babylon::Texture::new(name, &scene);
+    texture.set_u_scale(scale);
+    texture.set_v_scale(scale);
+
+    texture
+}
+
+fn load_megascans_material(
+    slug: &str,
+    id: &str,
+    scale: f64,
+    scene: &babylon::Scene,
+) -> babylon::PBRMaterial {
     let material = babylon::PBRMaterial::new(format!("{}_{}", slug, id), &scene);
 
-    material.set_albedo_texture(&babylon::Texture::new(
+    material.set_albedo_texture(&load_texture(
         format!("/assets/textures/{}_{}/{}_4K_Albedo.jpg", slug, id, id),
+        scale,
         &scene,
     ));
-    material.set_metallic_texture(&babylon::Texture::new(
+    material.set_metallic_texture(&load_texture(
         format!(
             "/assets/textures/{}_{}/{}_4K_MetalRoughness.jpg",
             slug, id, id
         ),
+        scale,
         &scene,
     ));
-    material.set_bump_texture(&babylon::Texture::new(
+    material.set_bump_texture(&load_texture(
         format!("/assets/textures/{}_{}/{}_4K_Normal.jpg", slug, id, id),
+        scale,
         &scene,
     ));
     material.set_use_ambient_occlusion_from_metallic_texture_red(true);
@@ -27,19 +43,19 @@ fn load_megascans_material(slug: &str, id: &str, scene: &babylon::Scene) -> baby
 }
 
 pub fn load_concrete_floor(scene: &babylon::Scene) -> babylon::PBRMaterial {
-    load_megascans_material("concrete_rough", "uhroebug", scene)
+    load_megascans_material("concrete_rough", "uhroebug", 1.0, scene)
 }
 
 pub fn load_concrete_wall(scene: &babylon::Scene) -> babylon::PBRMaterial {
-    load_megascans_material("concrete_rough", "ugxkfj0dy", scene)
+    load_megascans_material("concrete_rough", "ugxkfj0dy", 1.0, scene)
 }
 
 pub fn load_wooden_floor(scene: &babylon::Scene) -> babylon::PBRMaterial {
-    load_megascans_material("wood_board", "ugcwcevaw", scene)
+    load_megascans_material("wood_board", "ugcwcevaw", 1.0, scene)
 }
 
 pub fn load_black_fabric(scene: &babylon::Scene) -> babylon::PBRMaterial {
-    load_megascans_material("fabric_plain", "pgjeuxp0", scene)
+    load_megascans_material("fabric_plain", "pgjeuxp0", 1.0, scene)
 }
 
 pub fn load_lightbeam_falloff(scene: &babylon::Scene) -> babylon::StandardMaterial {
