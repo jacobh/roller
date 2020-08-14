@@ -72,6 +72,13 @@ impl Component for Preview3dPage {
         if first_render {
             console_log!("{}", babylon::Engine::version());
 
+            let light_positions: Vec<_> = self
+                .props
+                .fixture_states
+                .values()
+                .filter_map(|(fixture_params, _)| fixture_params.location.as_ref())
+                .collect();
+
             let canvas_element: web_sys::HtmlCanvasElement = self.canvas_ref.cast().unwrap();
             let engine = babylon::Engine::new(&canvas_element, Some(true), None, Some(true));
             let scene = babylon::Scene::new(&engine);
@@ -164,11 +171,17 @@ impl Component for Preview3dPage {
                 height: 30.0,
             });
 
-            light::create_light(light::CreateLightArgs {
-                scene: &scene,
-                lightbeam_falloff: &lightbeam_falloff,
-                origin_position: Vector::new(10.0, 15.0, -35.0),
-            });
+            for light_position in light_positions {
+                light::create_light(light::CreateLightArgs {
+                    scene: &scene,
+                    lightbeam_falloff: &lightbeam_falloff,
+                    origin_position: Vector::new(
+                        light_position.x as f64,
+                        15.0,
+                        light_position.y as f64,
+                    ),
+                });
+            }
 
             let scene1 = scene.clone();
             let run_loop_closure = Closure::new(move || {
