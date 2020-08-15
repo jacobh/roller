@@ -74,6 +74,18 @@ extern "C" {
     #[wasm_bindgen(method, setter, js_name="clearColor", js_namespace = BABYLON)]
     pub fn set_clear_color(this: &Scene, color: Vector4);
 
+    #[wasm_bindgen(method, setter, js_name="fogMode", js_namespace = BABYLON)]
+    pub fn set_fog_mode(this: &Scene, val: usize);
+
+    #[wasm_bindgen(method, setter, js_name="fogColor", js_namespace = BABYLON)]
+    pub fn set_fog_color(this: &Scene, val: Color3);
+
+    #[wasm_bindgen(method, setter, js_name="fogDensity", js_namespace = BABYLON)]
+    pub fn set_fog_density(this: &Scene, val: f64);
+
+    #[wasm_bindgen(static_method_of = Scene, getter, js_name="FOGMODE_EXP", js_namespace = BABYLON)]
+    pub fn get_fog_mode_exp() -> usize;
+
     ///
     /// Camera
     ///

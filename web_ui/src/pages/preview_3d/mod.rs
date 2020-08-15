@@ -122,6 +122,9 @@ impl Component for Preview3dPage {
             let engine = babylon::Engine::new(&canvas_element, Some(true), None, Some(true));
             let scene = babylon::Scene::new(&engine);
             scene.set_clear_color(babylon::Vector4::new(0.0, 0.0, 0.0, 1.0));
+            scene.set_fog_mode(babylon::Scene::get_fog_mode_exp());
+            scene.set_fog_color(babylon::Color3::new(0.1, 0.1, 0.1));
+            scene.set_fog_density(0.005);
 
             let concrete_floor = materials::load_concrete_floor(&scene);
             let concrete_wall = materials::load_concrete_wall(&scene);
