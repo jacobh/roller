@@ -247,27 +247,33 @@ impl Component for App {
                         on_action={fader_button_callback_fn.clone()}
                     />
                 </div>
-                <Page active={self.active_page.is_buttons()}>
-                    <ButtonsPage
-                        button_states={self.button_states.clone()}
-                        on_button_action={button_callback_fn}
-                    />
-                </Page>
-                <Page active={self.active_page.is_faders()}>
-                    <FadersPage
-                        fader_states={self.fader_states.clone()}
-                        on_fader_update={
-                            callback_fn(move |(fader_id, value)| {
-                                link.send_message(AppMsg::FaderValueUpdated(fader_id, value))
-                            })
+                <Page active={true}>
+                {
+                    match self.active_page {
+                        PageType::Buttons => html! {
+                            <ButtonsPage
+                                button_states={self.button_states.clone()}
+                                on_button_action={button_callback_fn}
+                            />
+                        },
+                        PageType::Faders => html! {
+                            <FadersPage
+                                fader_states={self.fader_states.clone()}
+                                on_fader_update={
+                                    callback_fn(move |(fader_id, value)| {
+                                        link.send_message(AppMsg::FaderValueUpdated(fader_id, value))
+                                    })
+                                }
+                            />
+                        },
+                        PageType::Preview2d => html! {
+                            <Preview2dPage fixture_states={self.fixture_states.clone()} />
+                        },
+                        PageType::Preview3d => html! {
+                            <Preview3dPage fixture_states={self.fixture_states.clone()} />
                         }
-                    />
-                </Page>
-                <Page active={self.active_page.is_preview_2d()}>
-                    <Preview2dPage fixture_states={self.fixture_states.clone()} />
-                </Page>
-                <Page active={self.active_page.is_preview_3d()}>
-                    <Preview3dPage fixture_states={self.fixture_states.clone()} />
+                    }
+                }
                 </Page>
             </div>
         }
