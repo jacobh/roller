@@ -3,7 +3,7 @@ use itertools::Itertools;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
 
-use roller_protocol::fixture::{FixtureId, FixtureParams, FixtureState, FixtureLocation};
+use roller_protocol::fixture::{FixtureId, FixtureLocation, FixtureParams, FixtureState};
 
 use crate::{console_log, js::babylon, yewtil::neq_assign::NeqAssign};
 
@@ -72,7 +72,21 @@ impl Component for Preview3dPage {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        self.props.neq_assign(props)
+        let changed = self.props.neq_assign(props);
+
+        for (id, (params, state)) in self.props.fixture_states.iter() {
+            if let Some(state) = state {
+                let light = self
+                    .canvas_state
+                    .as_mut()
+                    .and_then(|canvas_state| canvas_state.lights.get_mut(id));
+
+                if let Some(light) = light {
+                    light.set_dimmer(state.dimmer);
+                }
+            }
+        }
+        false
     }
 
     fn rendered(&mut self, first_render: bool) {
@@ -83,10 +97,12 @@ impl Component for Preview3dPage {
                 .props
                 .fixture_states
                 .iter()
-                .filter_map(|(id, (fixture_params, _))| match fixture_params.location.as_ref() {
-                    Some(location) => Some((*id, location.clone())),
-                    None => None
-                })
+                .filter_map(
+                    |(id, (fixture_params, _))| match fixture_params.location.as_ref() {
+                        Some(location) => Some((*id, location.clone())),
+                        None => None,
+                    },
+                )
                 .unique_by(|(_, loc)| loc.clone())
                 .collect();
 
@@ -198,7 +214,7 @@ impl Component for Preview3dPage {
                 engine,
                 scene,
                 run_loop_closure,
-                lights
+                lights,
             });
 
             console_log!("{:?}", self.canvas_state);

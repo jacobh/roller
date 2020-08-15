@@ -1,9 +1,21 @@
-use crate::{js::babylon, pages::preview_3d::Vector};
+use crate::{console_log, js::babylon, pages::preview_3d::Vector};
+
+const SPOT_LIGHT_MAX_INTENSITY: f64 = 8.0;
 
 #[derive(Debug, Clone)]
 pub struct Light {
     cone_mesh: babylon::Mesh,
     spot_light: babylon::SpotLight,
+    dimmer: f64,
+}
+impl Light {
+    pub fn set_dimmer(&mut self, dimmer: f64) {
+        if self.dimmer != dimmer {
+            self.dimmer = dimmer;
+            self.spot_light
+                .set_intensity(SPOT_LIGHT_MAX_INTENSITY * dimmer);
+        }
+    }
 }
 
 pub struct CreateLightArgs<'a> {
@@ -45,10 +57,11 @@ pub fn create_light<'a>(args: CreateLightArgs<'a>) -> Light {
         1.0,
         &args.scene,
     );
-    spot_light.set_intensity(8.0);
+    spot_light.set_intensity(SPOT_LIGHT_MAX_INTENSITY);
 
     Light {
         spot_light,
         cone_mesh,
+        dimmer: 1.0,
     }
 }
