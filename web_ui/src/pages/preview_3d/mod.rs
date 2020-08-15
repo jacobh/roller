@@ -1,4 +1,5 @@
 use im_rc::HashMap;
+use itertools::Itertools;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
 
@@ -82,6 +83,7 @@ impl Component for Preview3dPage {
                 .fixture_states
                 .values()
                 .filter_map(|(fixture_params, _)| fixture_params.location.as_ref())
+                .unique()
                 .collect();
 
             let canvas_element: web_sys::HtmlCanvasElement = self.canvas_ref.cast().unwrap();
@@ -174,11 +176,7 @@ impl Component for Preview3dPage {
                 light::create_light(light::CreateLightArgs {
                     scene: &scene,
                     lightbeam_falloff: &lightbeam_falloff,
-                    origin_position: Vector::new(
-                        x * 2.0 - 50.0,
-                        15.0,
-                        y * 2.0 - 50.0,
-                    ),
+                    origin_position: Vector::new(x * 2.0 - 50.0, 15.0, y * 2.0 - 50.0),
                 });
             }
 

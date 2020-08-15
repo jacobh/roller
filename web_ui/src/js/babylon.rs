@@ -226,6 +226,9 @@ extern "C" {
     #[wasm_bindgen(method, setter, js_name="checkCollisions", js_namespace = BABYLON)]
     pub fn set_check_collisions(this: &Mesh, val: bool);
 
+    #[wasm_bindgen(getter, static_method_of=Mesh, js_name="DOUBLESIDE", js_namespace = BABYLON)]
+    pub fn doubleside() -> usize;
+
     #[derive(Debug)]
     pub type MeshBuilder;
 
@@ -283,6 +286,9 @@ extern "C" {
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
     pub fn new(name: String, scene: &Scene) -> StandardMaterial;
+
+    #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
+    pub fn set_alpha(this: &StandardMaterial, val: f64);
 
     #[wasm_bindgen(method, getter, js_name="diffuseTexture", js_namespace = BABYLON)]
     pub fn diffuse_texture(this: &StandardMaterial) -> Option<Texture>;
@@ -366,7 +372,7 @@ pub struct CreateSphereOptions {
     pub diameterZ: Option<f64>,
     pub frontUVs: Option<bool>, // TODO should be `Vector4`
     pub segments: Option<f64>,
-    pub sideOrientation: Option<f64>,
+    pub sideOrientation: Option<usize>,
     pub slice: Option<f64>,
     pub updatable: Option<bool>,
 }
@@ -381,7 +387,7 @@ pub struct CreateBoxOptions {
     pub faceUV: Option<bool>,     // Vector4[]
     pub frontUVs: Option<bool>,   // Vector4
     pub height: Option<f64>,
-    pub sideOrientation: Option<f64>,
+    pub sideOrientation: Option<usize>,
     pub size: Option<f64>,
     pub topBaseAt: Option<f64>,
     pub updatable: Option<bool>,
@@ -399,7 +405,7 @@ pub struct CreateTiledBoxOptions {
     pub faceUV: Option<bool>,     // Vector4[]
     pub height: Option<f64>,
     pub pattern: Option<f64>,
-    pub sideOrientation: Option<f64>,
+    pub sideOrientation: Option<usize>,
     pub size: Option<f64>,
     pub tileHeight: Option<f64>,
     pub tileSize: Option<f64>,
@@ -423,7 +429,7 @@ pub struct CreateCylinderOptions {
     pub frontUVs: Option<bool>,   // Vector4
     pub hasRings: Option<bool>,
     pub height: Option<f64>,
-    pub sideOrientation: Option<f64>,
+    pub sideOrientation: Option<usize>,
     pub subdivisions: Option<f64>,
     pub tessellation: Option<f64>,
     pub updatable: Option<bool>,

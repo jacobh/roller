@@ -69,6 +69,7 @@ pub fn load_lightbeam_falloff(scene: &babylon::Scene) -> babylon::StandardMateri
     });
     lightbeam_falloff.set_disable_lighting(true);
     lightbeam_falloff.set_emissive_color(&babylon::Color3::new(1.0, 1.0, 1.0));
+    lightbeam_falloff.set_alpha(0.5);
 
     lightbeam_falloff
 }

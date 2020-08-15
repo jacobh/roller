@@ -19,6 +19,7 @@ pub fn create_light<'a>(args: CreateLightArgs<'a>) {
             tessellation: Some(96.0),
             subdivisions: Some(4.0),
             enclose: Some(false),
+            sideOrientation: Some(babylon::Mesh::doubleside()),
             ..Default::default()
         },
         Some(&args.scene),
@@ -28,7 +29,11 @@ pub fn create_light<'a>(args: CreateLightArgs<'a>) {
 
     let spot_light = babylon::SpotLight::new(
         "spot_light".to_string(),
-        babylon::Vector3::new(args.origin_position.x, args.origin_position.y + 25.0, args.origin_position.z),
+        babylon::Vector3::new(
+            args.origin_position.x,
+            args.origin_position.y + 25.5,
+            args.origin_position.z,
+        ),
         babylon::Vector3::new(0.0, -1.0, 0.0),
         beam_angle,
         1.0,
