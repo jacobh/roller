@@ -108,17 +108,19 @@ async fn main() -> Result<(), async_std::io::Error> {
     let control_mapping = control::default_control_mapping();
     let mut state = EngineState::new(&control_mapping);
 
-    let mut ola_client = ola_client::OlaClient::connect(&args.ola_host)
-        .await
-        .expect(&format!("Ola server at {} is not running", &args.ola_host));
+    let mut ola_client: Option<ola_client::OlaClient> =
+        ola_client::OlaClient::connect(&args.ola_host).await.ok();
 
     let (dmx_sender, mut dmx_receiver) = async_std::sync::channel::<(i32, [u8; 512])>(10);
     async_std::task::spawn(async move {
         while let Some((universe, dmx_data)) = dmx_receiver.next().await {
-            ola_client
-                .send_dmx_data(universe, dmx_data.to_vec())
-                .await
-                .unwrap();
+            // If the ola server is running we will have a client here, otherwise we'll just ignore the incoming data
+            if let Some(ola_client) = ola_client.as_mut() {
+                ola_client
+                    .send_dmx_data(universe, dmx_data.to_vec())
+                    .await
+                    .unwrap();
+            }
         }
     });
 
