@@ -359,6 +359,9 @@ extern "C" {
 
     #[wasm_bindgen(method, setter, js_name="maxSimultaneousLights", js_namespace = BABYLON)]
     pub fn set_max_simultaneous_lights(this: &PBRMaterial, val: usize);
+
+    #[wasm_bindgen(method, setter, js_name="disableBumpMap", js_namespace = BABYLON)]
+    pub fn set_disable_bump_map(this: &PBRMaterial, val: bool);
 }
 
 #[wasm_bindgen]

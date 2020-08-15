@@ -59,6 +59,13 @@ pub fn load_black_fabric(scene: &babylon::Scene) -> babylon::PBRMaterial {
     load_megascans_material("fabric_plain", "pgjeuxp0", 1.0, scene)
 }
 
+pub fn load_black_galaxy_marble(scene: &babylon::Scene) -> babylon::PBRMaterial {
+    let material = load_megascans_material("marble_polished", "ue4ncjmv", 1.0, scene);
+    material.set_disable_bump_map(true);
+
+    material
+}
+
 pub fn load_lightbeam_falloff(scene: &babylon::Scene) -> babylon::StandardMaterial {
     let lightbeam_falloff = babylon::StandardMaterial::new("lightbeam_falloff".to_string(), &scene);
     lightbeam_falloff.set_opacity_texture(&{

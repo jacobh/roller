@@ -93,9 +93,10 @@ impl Component for Preview3dPage {
 
             let concrete_floor = materials::load_concrete_floor(&scene);
             let concrete_wall = materials::load_concrete_wall(&scene);
-            let wooden_floor = materials::load_wooden_floor(&scene);
+            // let wooden_floor = materials::load_wooden_floor(&scene);
             let lightbeam_falloff = materials::load_lightbeam_falloff(&scene);
             let black_fabric = materials::load_black_fabric(&scene);
+            let galaxy_marble = materials::load_black_galaxy_marble(&scene);
 
             let camera = babylon::UniversalCamera::new(
                 "Camera".to_string(),
@@ -164,7 +165,7 @@ impl Component for Preview3dPage {
                 back_wall_material: &black_fabric,
                 left_wall_material: &concrete_wall,
                 right_wall_material: &concrete_wall,
-                floor_material: &wooden_floor,
+                floor_material: &galaxy_marble,
                 width: 75.0,
                 depth: 100.0,
                 height: 30.0,
