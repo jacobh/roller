@@ -85,12 +85,19 @@ impl Component for Preview3dPage {
             .sum();
 
         if let Some(canvas_state) = self.canvas_state.as_mut() {
-            canvas_state.hemispheric_light.set_intensity(0.05 + 0.025 * total_dimmer);
+            canvas_state
+                .hemispheric_light
+                .set_intensity(0.05 + total_dimmer / 40.0);
+            canvas_state.scene.set_fog_color(babylon::Color3::new(
+                total_dimmer / 50.0,
+                total_dimmer / 50.0,
+                total_dimmer / 50.0,
+            ));
 
             for (id, (params, state)) in self.props.fixture_states.iter() {
                 if let Some(state) = state {
                     let light = canvas_state.lights.get_mut(id);
-    
+
                     if let Some(light) = light {
                         light.set_dimmer(state.dimmer);
                     }
@@ -124,7 +131,7 @@ impl Component for Preview3dPage {
             scene.set_clear_color(babylon::Vector4::new(0.0, 0.0, 0.0, 1.0));
             scene.set_fog_mode(babylon::Scene::get_fog_mode_exp());
             scene.set_fog_color(babylon::Color3::new(0.1, 0.1, 0.1));
-            scene.set_fog_density(0.005);
+            scene.set_fog_density(0.0025);
 
             let concrete_floor = materials::load_concrete_floor(&scene);
             let concrete_wall = materials::load_concrete_wall(&scene);
