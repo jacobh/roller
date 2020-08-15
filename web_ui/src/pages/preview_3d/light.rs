@@ -1,9 +1,10 @@
-use crate::{console_log, js::babylon, pages::preview_3d::Vector};
+use crate::{console_log, js::babylon, pages::preview_3d::{materials::load_lightbeam_falloff, Vector}};
 
 const SPOT_LIGHT_MAX_INTENSITY: f64 = 8.0;
 
 #[derive(Debug, Clone)]
 pub struct Light {
+    cone_material: babylon::StandardMaterial,
     cone_mesh: babylon::Mesh,
     spot_light: babylon::SpotLight,
     dimmer: f64,
@@ -14,13 +15,13 @@ impl Light {
             self.dimmer = dimmer;
             self.spot_light
                 .set_intensity(SPOT_LIGHT_MAX_INTENSITY * dimmer);
+            self.cone_material.set_alpha(dimmer);
         }
     }
 }
 
 pub struct CreateLightArgs<'a> {
     pub scene: &'a babylon::Scene,
-    pub lightbeam_falloff: &'a babylon::Material,
     pub origin_position: Vector,
 }
 pub fn create_light<'a>(args: CreateLightArgs<'a>) -> Light {
@@ -28,6 +29,7 @@ pub fn create_light<'a>(args: CreateLightArgs<'a>) -> Light {
     let cone_length = 50.0;
     let base_length = f64::tan(beam_angle / 2.0) * cone_length * 2.0;
 
+    let cone_material = load_lightbeam_falloff(args.scene);
     let cone_mesh = babylon::MeshBuilder::create_cylinder(
         "light_cone".to_string(),
         babylon::CreateCylinderOptions {
@@ -43,7 +45,7 @@ pub fn create_light<'a>(args: CreateLightArgs<'a>) -> Light {
         Some(&args.scene),
     );
     cone_mesh.set_position(&babylon::Vector3::from(&args.origin_position));
-    cone_mesh.set_material(&args.lightbeam_falloff);
+    cone_mesh.set_material(&cone_material);
 
     let spot_light = babylon::SpotLight::new(
         "spot_light".to_string(),
@@ -61,6 +63,7 @@ pub fn create_light<'a>(args: CreateLightArgs<'a>) -> Light {
 
     Light {
         spot_light,
+        cone_material,
         cone_mesh,
         dimmer: 1.0,
     }

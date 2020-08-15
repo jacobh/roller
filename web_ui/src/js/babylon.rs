@@ -218,7 +218,7 @@ extern "C" {
     pub type Mesh;
 
     #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
-    pub fn material(this: &Mesh) -> Option<Material>;
+    pub fn get_material(this: &Mesh) -> Option<Material>;
 
     #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
     pub fn set_material(this: &Mesh, val: &Material);
@@ -280,15 +280,15 @@ extern "C" {
     #[derive(Debug, Clone)]
     pub type Material;
 
+    #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
+    pub fn set_alpha(this: &Material, val: f64);
+    
     #[wasm_bindgen(extends = Material)]
     #[derive(Debug, Clone)]
     pub type StandardMaterial;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
     pub fn new(name: String, scene: &Scene) -> StandardMaterial;
-
-    #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
-    pub fn set_alpha(this: &StandardMaterial, val: f64);
 
     #[wasm_bindgen(method, getter, js_name="diffuseTexture", js_namespace = BABYLON)]
     pub fn diffuse_texture(this: &StandardMaterial) -> Option<Texture>;

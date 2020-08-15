@@ -114,7 +114,6 @@ impl Component for Preview3dPage {
             let concrete_floor = materials::load_concrete_floor(&scene);
             let concrete_wall = materials::load_concrete_wall(&scene);
             // let wooden_floor = materials::load_wooden_floor(&scene);
-            let lightbeam_falloff = materials::load_lightbeam_falloff(&scene);
             let black_fabric = materials::load_black_fabric(&scene);
             let galaxy_marble = materials::load_black_galaxy_marble(&scene);
 
@@ -197,7 +196,6 @@ impl Component for Preview3dPage {
                 let y = location.y as f64;
                 let light = light::create_light(light::CreateLightArgs {
                     scene: &scene,
-                    lightbeam_falloff: &lightbeam_falloff,
                     origin_position: Vector::new(x * 2.0 - 50.0, 15.0, y * 2.0 - 50.0),
                 });
                 lights.insert(id, light);
