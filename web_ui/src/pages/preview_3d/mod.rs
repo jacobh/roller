@@ -75,18 +75,29 @@ impl Component for Preview3dPage {
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         let changed = self.props.neq_assign(props);
 
-        for (id, (params, state)) in self.props.fixture_states.iter() {
-            if let Some(state) = state {
-                let light = self
-                    .canvas_state
-                    .as_mut()
-                    .and_then(|canvas_state| canvas_state.lights.get_mut(id));
+        // very crudely light the entire room by adding up all the dimmer values
+        let total_dimmer: f64 = self
+            .props
+            .fixture_states
+            .values()
+            .filter_map(|(_, state)| state.as_ref())
+            .map(|state| state.dimmer)
+            .sum();
 
-                if let Some(light) = light {
-                    light.set_dimmer(state.dimmer);
+        if let Some(canvas_state) = self.canvas_state.as_mut() {
+            canvas_state.hemispheric_light.set_intensity(0.05 + 0.025 * total_dimmer);
+
+            for (id, (params, state)) in self.props.fixture_states.iter() {
+                if let Some(state) = state {
+                    let light = canvas_state.lights.get_mut(id);
+    
+                    if let Some(light) = light {
+                        light.set_dimmer(state.dimmer);
+                    }
                 }
             }
         }
+
         false
     }
 
@@ -214,7 +225,7 @@ impl Component for Preview3dPage {
                 scene,
                 run_loop_closure,
                 lights,
-                hemispheric_light
+                hemispheric_light,
             });
 
             console_log!("{:?}", self.canvas_state);

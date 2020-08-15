@@ -1,4 +1,8 @@
-use crate::{console_log, js::babylon, pages::preview_3d::{materials::load_lightbeam_falloff, Vector}};
+use crate::{
+    console_log,
+    js::babylon,
+    pages::preview_3d::{materials::load_lightbeam_falloff, Vector},
+};
 
 const SPOT_LIGHT_MAX_INTENSITY: f64 = 8.0;
 

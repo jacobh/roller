@@ -282,7 +282,7 @@ extern "C" {
 
     #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
     pub fn set_alpha(this: &Material, val: f64);
-    
+
     #[wasm_bindgen(extends = Material)]
     #[derive(Debug, Clone)]
     pub type StandardMaterial;
