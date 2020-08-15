@@ -3,7 +3,7 @@ use itertools::Itertools;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
 
-use roller_protocol::fixture::{FixtureId, FixtureParams, FixtureState};
+use roller_protocol::fixture::{FixtureId, FixtureParams, FixtureState, FixtureLocation};
 
 use crate::{console_log, js::babylon, yewtil::neq_assign::NeqAssign};
 
@@ -43,6 +43,7 @@ struct CanvasState {
     engine: babylon::Engine,
     scene: babylon::Scene,
     run_loop_closure: Closure<dyn FnMut()>,
+    lights: HashMap<FixtureId, light::Light>,
 }
 
 #[derive(Debug)]
@@ -78,12 +79,15 @@ impl Component for Preview3dPage {
         if first_render {
             console_log!("{}", babylon::Engine::version());
 
-            let light_positions: Vec<_> = self
+            let positioned_fixtures: Vec<(FixtureId, FixtureLocation)> = self
                 .props
                 .fixture_states
-                .values()
-                .filter_map(|(fixture_params, _)| fixture_params.location.as_ref())
-                .unique()
+                .iter()
+                .filter_map(|(id, (fixture_params, _))| match fixture_params.location.as_ref() {
+                    Some(location) => Some((*id, location.clone())),
+                    None => None
+                })
+                .unique_by(|(_, loc)| loc.clone())
                 .collect();
 
             let canvas_element: web_sys::HtmlCanvasElement = self.canvas_ref.cast().unwrap();
@@ -171,14 +175,16 @@ impl Component for Preview3dPage {
                 height: 30.0,
             });
 
-            for light_position in light_positions {
-                let x = light_position.x as f64;
-                let y = light_position.y as f64;
-                light::create_light(light::CreateLightArgs {
+            let mut lights = HashMap::new();
+            for (id, location) in positioned_fixtures {
+                let x = location.x as f64;
+                let y = location.y as f64;
+                let light = light::create_light(light::CreateLightArgs {
                     scene: &scene,
                     lightbeam_falloff: &lightbeam_falloff,
                     origin_position: Vector::new(x * 2.0 - 50.0, 15.0, y * 2.0 - 50.0),
                 });
+                lights.insert(id, light);
             }
 
             let scene1 = scene.clone();
@@ -192,6 +198,7 @@ impl Component for Preview3dPage {
                 engine,
                 scene,
                 run_loop_closure,
+                lights
             });
 
             console_log!("{:?}", self.canvas_state);

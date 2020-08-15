@@ -1,6 +1,6 @@
 use crate::{js::babylon, pages::preview_3d::Vector};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Light {
     cone_mesh: babylon::Mesh,
     spot_light: babylon::SpotLight,

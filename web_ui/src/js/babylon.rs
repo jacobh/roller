@@ -2,7 +2,7 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 extern "C" {
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type Vector3;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
@@ -17,7 +17,7 @@ extern "C" {
     #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
     fn z(this: &Vector3) -> f64;
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type Vector4;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
@@ -35,16 +35,16 @@ extern "C" {
     #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
     fn z(this: &Vector4) -> f64;
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type Color3;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
     pub fn new(r: f64, g: f64, b: f64) -> Color3;
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type EngineOptions;
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type Engine;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
@@ -77,11 +77,11 @@ extern "C" {
     ///
     /// Camera
     ///
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type Camera;
 
     #[wasm_bindgen(extends = Camera)]
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type TargetCamera;
 
     #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
@@ -91,7 +91,7 @@ extern "C" {
     pub fn set_target(this: &TargetCamera, val: Vector3);
 
     #[wasm_bindgen(extends = TargetCamera)]
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type FreeCamera;
 
     #[wasm_bindgen(method, setter, js_name="keysUp", js_namespace = BABYLON)]
@@ -123,11 +123,11 @@ extern "C" {
     );
 
     #[wasm_bindgen(extends = FreeCamera)]
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type TouchCamera;
 
     #[wasm_bindgen(extends = TargetCamera)]
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type ArcRotateCamera;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
@@ -151,7 +151,7 @@ extern "C" {
     );
 
     #[wasm_bindgen(extends = TouchCamera)]
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type UniversalCamera;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
@@ -160,7 +160,7 @@ extern "C" {
     ///
     /// Light
     ///
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type Light;
 
     #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
@@ -170,21 +170,21 @@ extern "C" {
     pub fn set_intensity(this: &Light, val: f64);
 
     #[wasm_bindgen(extends = Light)]
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type HemisphericLight;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
     pub fn new(name: String, direction: Vector3, scene: &Scene) -> HemisphericLight;
 
     #[wasm_bindgen(extends = Light)]
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type PointLight;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
     pub fn new(name: String, position: Vector3, scene: &Scene) -> PointLight;
 
     #[wasm_bindgen(extends = Light)]
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type SpotLight;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
@@ -200,7 +200,7 @@ extern "C" {
     ///
     /// Mesh
     ///
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type TransformNode;
 
     #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
@@ -210,11 +210,11 @@ extern "C" {
     pub fn set_position(this: &Mesh, val: &Vector3);
 
     #[wasm_bindgen(extends = TransformNode)]
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type AbstractMesh;
 
     #[wasm_bindgen(extends = AbstractMesh)]
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type Mesh;
 
     #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
@@ -229,7 +229,7 @@ extern "C" {
     #[wasm_bindgen(getter, static_method_of=Mesh, js_name="DOUBLESIDE", js_namespace = BABYLON)]
     pub fn doubleside() -> usize;
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type MeshBuilder;
 
     #[wasm_bindgen(static_method_of = MeshBuilder, js_name="CreateSphere", js_namespace = BABYLON)]
@@ -256,7 +256,7 @@ extern "C" {
     ///
     /// Texture
     ///
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type Texture;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
@@ -277,11 +277,11 @@ extern "C" {
     ///
     /// Material
     ///
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type Material;
 
     #[wasm_bindgen(extends = Material)]
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type StandardMaterial;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
@@ -318,7 +318,7 @@ extern "C" {
     pub fn set_disable_lighting(this: &StandardMaterial, val: bool);
 
     #[wasm_bindgen(extends = Material)]
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     pub type PBRMaterial;
 
     #[wasm_bindgen(constructor, js_namespace = BABYLON)]
