@@ -44,6 +44,7 @@ struct CanvasState {
     scene: babylon::Scene,
     run_loop_closure: Closure<dyn FnMut()>,
     lights: HashMap<FixtureId, light::Light>,
+    hemispheric_light: babylon::HemisphericLight,
 }
 
 #[derive(Debug)]
@@ -133,12 +134,12 @@ impl Component for Preview3dPage {
             camera.set_speed(0.5);
             camera.set_target(babylon::Vector3::new(0.0, 0.0, 0.0));
 
-            let light1 = babylon::HemisphericLight::new(
-                "light1".to_string(),
+            let hemispheric_light = babylon::HemisphericLight::new(
+                "hemispheric_light".to_string(),
                 babylon::Vector3::new(1.0, 50.0, 0.0),
                 &scene,
             );
-            light1.set_intensity(0.1);
+            hemispheric_light.set_intensity(0.1);
             // let light2 = babylon::PointLight::new(
             //     "light2".to_string(),
             //     babylon::Vector3::new(0.0, 15.0, -5.0),
@@ -213,6 +214,7 @@ impl Component for Preview3dPage {
                 scene,
                 run_loop_closure,
                 lights,
+                hemispheric_light
             });
 
             console_log!("{:?}", self.canvas_state);
