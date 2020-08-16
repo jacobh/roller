@@ -1,5 +1,7 @@
+use roller_protocol::clock::Beats;
+
 use crate::{
-    clock::{Beats, ClockOffset, ClockSnapshot},
+    clock::{ClockOffset, ClockSnapshot},
     effect::{EffectDirection, Step, Steps, Waveform},
 };
 
