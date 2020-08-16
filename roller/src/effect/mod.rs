@@ -1,4 +1,3 @@
-use crate::color::Hsl64;
 use palette::Mix;
 use serde::{Deserialize, Serialize};
 
@@ -14,7 +13,10 @@ pub use pixel::{PixelEffect, PixelModulator, PixelRangeSet};
 pub use position::{PositionEffect, PositionModulator};
 pub use waveform::Waveform;
 
-use roller_protocol::clock::{Beats, ClockSnapshot};
+use roller_protocol::{
+    clock::{Beats, ClockSnapshot},
+    color::Hsl64,
+};
 
 // Utilities
 pub fn intensity(dimmer: f64, intensity: f64) -> f64 {

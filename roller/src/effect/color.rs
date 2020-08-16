@@ -1,12 +1,12 @@
 use ordered_float::OrderedFloat;
 use palette::{Hue, Mix};
 
-use roller_protocol::clock::{offset::ClockOffset, Beats, ClockSnapshot};
-
-use crate::{
+use roller_protocol::{
+    clock::{offset::ClockOffset, Beats, ClockSnapshot},
     color::{Color, Hsl64},
-    effect::{Step, Steps, Waveform},
 };
+
+use crate::effect::{Step, Steps, Waveform};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ColorEffect {

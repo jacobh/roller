@@ -5,13 +5,13 @@ use std::time::Instant;
 
 use roller_protocol::{
     clock::Rate,
+    color::Color,
     control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent},
     fixture::FixtureGroupId,
     position::BasePosition,
 };
 
 use crate::{
-    color::Color,
     control::{control_mapping::ControlMapping, NoteState},
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
     lighting_engine::{ControlEvent, ControlMode, SceneId},

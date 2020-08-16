@@ -4,13 +4,13 @@ use std::time::Instant;
 
 use roller_protocol::{
     clock::{offset::offsetted_for_fixture, Clock, ClockEvent, Rate},
+    color::Color,
     control::InputEvent,
     fixture::{Fixture, FixtureGroupId},
     position::BasePosition,
 };
 
 use crate::{
-    color::Color,
     control::{
         button::{ButtonGroup, ButtonMapping, ButtonRef, MetaButtonAction},
         control_mapping::ControlMapping,

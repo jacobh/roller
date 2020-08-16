@@ -10,7 +10,6 @@ use roller_protocol::{
 };
 
 mod clock;
-mod color;
 mod control;
 mod effect;
 mod fixture;

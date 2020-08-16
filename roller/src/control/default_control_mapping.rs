@@ -3,6 +3,7 @@ use roller_protocol::{
         offset::{ClockOffset, ClockOffsetMode},
         Beats, Rate,
     },
+    color::Color,
     control::{ButtonCoordinate, ButtonGridLocation, FaderId},
     effect::EffectDirection,
     fixture::FixtureGroupId,
@@ -10,7 +11,6 @@ use roller_protocol::{
 };
 
 use crate::{
-    color::Color,
     control::{
         button::{
             ButtonAction, ButtonGroup, ButtonMapping, ButtonType, MetaButtonAction,
