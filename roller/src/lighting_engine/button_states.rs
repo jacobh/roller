@@ -1,10 +1,11 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 
-use roller_protocol::{control::ButtonCoordinate, fixture::FixtureGroupId, position::BasePosition};
+use roller_protocol::{
+    clock::Rate, control::ButtonCoordinate, fixture::FixtureGroupId, position::BasePosition,
+};
 
 use crate::{
-    clock::Rate,
     color::Color,
     control::{
         button::{

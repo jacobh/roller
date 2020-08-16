@@ -1,14 +1,13 @@
 use async_std::prelude::*;
-use derive_more::{From, Into};
 use itertools::Itertools;
-use ordered_float::OrderedFloat;
 use rand::{seq::SliceRandom, thread_rng};
 use std::borrow::Cow;
-use std::iter::Sum;
-use std::ops::{Add, Mul, Sub};
 use std::time::{Duration, Instant};
 
-use roller_protocol::fixture::Fixture;
+use roller_protocol::{
+    clock::{Beats, Rate},
+    fixture::Fixture,
+};
 
 use crate::effect::EffectDirection;
 
@@ -20,80 +19,6 @@ fn duration_as_secs(duration: Duration) -> f64 {
 pub enum ClockEvent {
     BpmChanged(f64),
     Tap(Instant),
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, From, Into)]
-pub struct Beats(OrderedFloat<f64>);
-impl Beats {
-    pub fn new(x: impl Into<OrderedFloat<f64>>) -> Beats {
-        Beats(x.into())
-    }
-    pub fn is_zero(&self) -> bool {
-        self.0.into_inner() == 0.0
-    }
-}
-
-impl Add for Beats {
-    type Output = Beats;
-    fn add(self, other: Beats) -> Beats {
-        Beats::new(self.0.into_inner() + other.0.into_inner())
-    }
-}
-
-impl Sub for Beats {
-    type Output = Beats;
-    fn sub(self, other: Beats) -> Beats {
-        Beats::new(self.0.into_inner() - other.0.into_inner())
-    }
-}
-
-impl Mul<f64> for Beats {
-    type Output = Beats;
-    fn mul(self, other: f64) -> Beats {
-        Beats::new(self.0.into_inner() * other)
-    }
-}
-
-impl Sum<Beats> for Beats {
-    fn sum<I>(iter: I) -> Beats
-    where
-        I: Iterator<Item = Beats>,
-    {
-        iter.fold(Beats::new(0.0), Add::add)
-    }
-}
-
-impl From<Beats> for f64 {
-    fn from(beats: Beats) -> f64 {
-        beats.0.into()
-    }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, From, Into)]
-pub struct Rate(OrderedFloat<f64>);
-impl Rate {
-    pub fn new(x: impl Into<OrderedFloat<f64>>) -> Rate {
-        Rate(x.into())
-    }
-    pub fn is_one(&self) -> bool {
-        self.0.into_inner() == 1.0
-    }
-}
-impl Default for Rate {
-    fn default() -> Rate {
-        Rate::new(1.0)
-    }
-}
-impl From<Rate> for f64 {
-    fn from(rate: Rate) -> f64 {
-        rate.0.into_inner()
-    }
-}
-impl Mul for Rate {
-    type Output = Rate;
-    fn mul(self, other: Rate) -> Rate {
-        Rate::new(self.0.into_inner() * other.0.into_inner())
-    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

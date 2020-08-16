@@ -1,11 +1,12 @@
 use roller_protocol::{
+    clock::{Beats, Rate},
     control::{ButtonCoordinate, ButtonGridLocation, FaderId},
     fixture::FixtureGroupId,
     position::BasePositionMode,
 };
 
 use crate::{
-    clock::{Beats, ClockOffset, ClockOffsetMode, Rate},
+    clock::{ClockOffset, ClockOffsetMode},
     color::Color,
     control::{
         button::{

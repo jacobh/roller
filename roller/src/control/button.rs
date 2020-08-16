@@ -4,13 +4,13 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
 use roller_protocol::{
+    clock::Rate,
     control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent},
     fixture::FixtureGroupId,
     position::BasePosition,
 };
 
 use crate::{
-    clock::Rate,
     color::Color,
     control::{control_mapping::ControlMapping, NoteState},
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
