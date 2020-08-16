@@ -3,6 +3,11 @@ use ordered_float::OrderedFloat;
 use std::iter::Sum;
 use std::ops::{Add, Mul, Sub};
 
+pub mod offset;
+pub mod snapshot;
+
+pub use snapshot::ClockSnapshot;
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, From, Into)]
 pub struct Beats(OrderedFloat<f64>);
 impl Beats {

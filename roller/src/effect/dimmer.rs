@@ -1,11 +1,8 @@
 use ordered_float::OrderedFloat;
 
-use roller_protocol::clock::Beats;
+use roller_protocol::clock::{offset::ClockOffset, Beats, ClockSnapshot};
 
-use crate::{
-    clock::{ClockOffset, ClockSnapshot},
-    effect::{Step, Steps, Waveform},
-};
+use crate::effect::{Step, Steps, Waveform};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DimmerEffect {

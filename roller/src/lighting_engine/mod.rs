@@ -3,14 +3,14 @@ use rustc_hash::FxHashMap;
 use std::time::Instant;
 
 use roller_protocol::{
-    clock::Rate,
+    clock::{offset::offsetted_for_fixture, Rate},
     control::InputEvent,
     fixture::{Fixture, FixtureGroupId},
     position::BasePosition,
 };
 
 use crate::{
-    clock::{offsetted_for_fixture, Clock, ClockEvent},
+    clock::{Clock, ClockEvent},
     color::Color,
     control::{
         button::{ButtonGroup, ButtonMapping, ButtonRef, MetaButtonAction},

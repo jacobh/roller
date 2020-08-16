@@ -1,9 +1,9 @@
-use roller_protocol::clock::Beats;
-
-use crate::{
-    clock::{ClockOffset, ClockSnapshot},
-    effect::{EffectDirection, Step, Steps, Waveform},
+use roller_protocol::{
+    clock::{offset::ClockOffset, Beats, ClockSnapshot},
+    effect::EffectDirection,
 };
+
+use crate::effect::{Step, Steps, Waveform};
 
 fn percent_contained(a: (f64, f64), b: (f64, f64)) -> f64 {
     let b_range = b.1 - b.0;

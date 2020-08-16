@@ -1,12 +1,15 @@
 use roller_protocol::{
-    clock::{Beats, Rate},
+    clock::{
+        offset::{ClockOffset, ClockOffsetMode},
+        Beats, Rate,
+    },
     control::{ButtonCoordinate, ButtonGridLocation, FaderId},
+    effect::EffectDirection,
     fixture::FixtureGroupId,
     position::BasePositionMode,
 };
 
 use crate::{
-    clock::{ClockOffset, ClockOffsetMode},
     color::Color,
     control::{
         button::{
@@ -17,8 +20,8 @@ use crate::{
         fader::{FaderControlMapping, FaderCurve, FaderType},
     },
     effect::{
-        ColorEffect, ColorModulation, ColorModulator, DimmerEffect, DimmerModulator,
-        EffectDirection, PixelEffect, PixelModulator, PositionEffect, PositionModulator, Waveform,
+        ColorEffect, ColorModulation, ColorModulator, DimmerEffect, DimmerModulator, PixelEffect,
+        PixelModulator, PositionEffect, PositionModulator, Waveform,
     },
     lighting_engine::SceneId,
 };

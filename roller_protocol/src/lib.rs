@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 pub mod clock;
 pub mod control;
+pub mod effect;
 pub mod fixture;
 pub mod position;
 mod utils;
