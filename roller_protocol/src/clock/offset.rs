@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use itertools::Itertools;
-// use rand::{seq::SliceRandom, thread_rng};
+use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
     clock::{Beats, ClockSnapshot},
@@ -26,14 +26,13 @@ pub struct ClockOffset {
 }
 impl ClockOffset {
     pub fn new(mode: ClockOffsetMode, offset: Beats) -> ClockOffset {
-        // TODO randomness disabled
         // create a seed array of the numbers 0 - 31
-        // let mut rng = thread_rng();
+        let mut rng = thread_rng();
         let mut seed = [0u8; 32];
         for (i, x) in seed.iter_mut().enumerate() {
             *x = i as u8;
         }
-        // seed.shuffle(&mut rng);
+        seed.shuffle(&mut rng);
 
         ClockOffset { mode, offset, seed }
     }
