@@ -6,7 +6,7 @@ use roller_protocol::{
     fixture::{Fixture, FixtureEffectType, FixtureGroupId, FixtureLocation},
 };
 
-use crate::clock::{self};
+use crate::clock::midi_clock_events;
 
 #[derive(Debug, Clone, Deserialize)]
 struct ProjectFixture {
@@ -82,7 +82,7 @@ impl Project {
     pub fn midi_clock_events(&self) -> Option<impl Stream<Item = ClockEvent>> {
         self.midi_clocks
             .iter()
-            .flat_map(|clock_name| clock::midi_clock_events(&clock_name).ok())
+            .flat_map(|clock_name| midi_clock_events(&clock_name).ok())
             .nth(0)
     }
 }
