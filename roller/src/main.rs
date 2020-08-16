@@ -127,7 +127,7 @@ async fn main() -> Result<(), async_std::io::Error> {
     enum Event {
         Tick,
         Input(InputEvent),
-        Clock(clock::ClockEvent),
+        Clock(roller_protocol::clock::ClockEvent),
     }
 
     let mut current_button_states = pad_states(
