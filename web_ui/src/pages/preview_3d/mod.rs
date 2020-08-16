@@ -145,10 +145,10 @@ impl Component for Preview3dPage {
                 &scene,
             );
             camera.attach_control(&canvas_element, Some(true));
-            camera.set_keys_up(&[87]); // W
-            camera.set_keys_left(&[65]); // A
-            camera.set_keys_down(&[83]); // S
-            camera.set_keys_right(&[68]); // D
+            camera.set_keys_up(vec![87]); // W
+            camera.set_keys_left(vec![65]); // A
+            camera.set_keys_down(vec![83]); // S
+            camera.set_keys_right(vec![68]); // D
             camera.set_check_collisions(true);
             camera.set_apply_gravity(true);
             camera.set_ellipsoid(&babylon::Vector3::new(1.5, 1.5, 1.5));

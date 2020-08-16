@@ -107,16 +107,16 @@ extern "C" {
     pub type FreeCamera;
 
     #[wasm_bindgen(method, setter, js_name="keysUp", js_namespace = BABYLON)]
-    pub fn set_keys_up(this: &FreeCamera, val: &[usize]);
+    pub fn set_keys_up(this: &FreeCamera, val: Vec<usize>);
 
     #[wasm_bindgen(method, setter, js_name="keysDown", js_namespace = BABYLON)]
-    pub fn set_keys_down(this: &FreeCamera, val: &[usize]);
+    pub fn set_keys_down(this: &FreeCamera, val: Vec<usize>);
 
     #[wasm_bindgen(method, setter, js_name="keysLeft", js_namespace = BABYLON)]
-    pub fn set_keys_left(this: &FreeCamera, val: &[usize]);
+    pub fn set_keys_left(this: &FreeCamera, val: Vec<usize>);
 
     #[wasm_bindgen(method, setter, js_name="keysRight", js_namespace = BABYLON)]
-    pub fn set_keys_right(this: &FreeCamera, val: &[usize]);
+    pub fn set_keys_right(this: &FreeCamera, val: Vec<usize>);
 
     #[wasm_bindgen(method, setter, js_name="checkCollisions", js_namespace = BABYLON)]
     pub fn set_check_collisions(this: &FreeCamera, val: bool);
