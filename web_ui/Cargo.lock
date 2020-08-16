@@ -599,8 +599,10 @@ name = "roller_protocol"
 version = "0.1.0"
 dependencies = [
  "derive_more",
+ "itertools",
  "ordered-float",
  "palette",
+ "rand",
  "rustc-hash",
  "serde",
  "thiserror",

@@ -5,7 +5,7 @@ authors = ["Jacob Haslehurst <jacob@haslehurst.net>"]
 edition = "2018"
 
 [features]
-wasm = ["uuid/wasm-bindgen"]
+wasm = ["uuid/wasm-bindgen", "rand/wasm-bindgen"]
 
 [dependencies]
 thiserror = "1.0"
@@ -16,3 +16,4 @@ palette = "*"
 ordered-float = { version = "*", features = ["serde"] }
 uuid = { version = "*", features = ["serde", "v4"] }
 itertools = "*"
+rand = "*"
