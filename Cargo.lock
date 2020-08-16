@@ -1459,6 +1459,7 @@ name = "roller_protocol"
 version = "0.1.0"
 dependencies = [
  "derive_more 0.99.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "itertools 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "ordered-float 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "palette 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-hash 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",

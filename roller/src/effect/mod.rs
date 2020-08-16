@@ -14,17 +14,7 @@ pub use pixel::{PixelEffect, PixelModulator, PixelRangeSet};
 pub use position::{PositionEffect, PositionModulator};
 pub use waveform::Waveform;
 
-use roller_protocol::clock::Beats;
-
-use crate::clock::ClockSnapshot;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum EffectDirection {
-    BottomToTop,
-    ToCenter,
-    FromCenter,
-    LeftToRight,
-}
+use roller_protocol::clock::{Beats, ClockSnapshot};
 
 // Utilities
 pub fn intensity(dimmer: f64, intensity: f64) -> f64 {

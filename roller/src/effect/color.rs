@@ -1,10 +1,9 @@
 use ordered_float::OrderedFloat;
 use palette::{Hue, Mix};
 
-use roller_protocol::clock::Beats;
+use roller_protocol::clock::{offset::ClockOffset, Beats, ClockSnapshot};
 
 use crate::{
-    clock::{ClockOffset, ClockSnapshot},
     color::{Color, Hsl64},
     effect::{Step, Steps, Waveform},
 };

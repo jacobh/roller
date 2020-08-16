@@ -15,3 +15,4 @@ rustc-hash = "*"
 palette = "*"
 ordered-float = { version = "*", features = ["serde"] }
 uuid = { version = "*", features = ["serde", "v4"] }
+itertools = "*"

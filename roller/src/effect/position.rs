@@ -1,11 +1,11 @@
 use ordered_float::OrderedFloat;
 
-use roller_protocol::{clock::Beats, position::Position};
-
-use crate::{
-    clock::{ClockOffset, ClockSnapshot},
-    effect::Waveform,
+use roller_protocol::{
+    clock::{offset::ClockOffset, Beats, ClockSnapshot},
+    position::Position,
 };
+
+use crate::effect::Waveform;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PositionEffect {
