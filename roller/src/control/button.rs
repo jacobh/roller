@@ -7,13 +7,13 @@ use roller_protocol::{
     clock::Rate,
     color::Color,
     control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent},
+    effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
     fixture::FixtureGroupId,
     position::BasePosition,
 };
 
 use crate::{
     control::{control_mapping::ControlMapping, NoteState},
-    effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
     lighting_engine::{ControlEvent, ControlMode, SceneId},
     utils::shift_remove_vec,
 };

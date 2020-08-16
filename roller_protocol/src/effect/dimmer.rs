@@ -1,6 +1,6 @@
 use ordered_float::OrderedFloat;
 
-use roller_protocol::clock::{offset::ClockOffset, Beats, ClockSnapshot};
+use crate::clock::{offset::ClockOffset, Beats, ClockSnapshot};
 
 use crate::effect::{Step, Steps, Waveform};
 

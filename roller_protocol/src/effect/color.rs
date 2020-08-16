@@ -1,7 +1,7 @@
 use ordered_float::OrderedFloat;
 use palette::{Hue, Mix};
 
-use roller_protocol::{
+use crate::{
     clock::{offset::ClockOffset, Beats, ClockSnapshot},
     color::{Color, Hsl64},
 };

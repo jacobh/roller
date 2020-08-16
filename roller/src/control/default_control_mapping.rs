@@ -6,6 +6,10 @@ use roller_protocol::{
     color::Color,
     control::{ButtonCoordinate, ButtonGridLocation, FaderId},
     effect::EffectDirection,
+    effect::{
+        ColorEffect, ColorModulation, ColorModulator, DimmerEffect, DimmerModulator, PixelEffect,
+        PixelModulator, PositionEffect, PositionModulator, Waveform,
+    },
     fixture::FixtureGroupId,
     position::BasePositionMode,
 };
@@ -18,10 +22,6 @@ use crate::{
         },
         control_mapping::ControlMapping,
         fader::{FaderControlMapping, FaderCurve, FaderType},
-    },
-    effect::{
-        ColorEffect, ColorModulation, ColorModulator, DimmerEffect, DimmerModulator, PixelEffect,
-        PixelModulator, PositionEffect, PositionModulator, Waveform,
     },
     lighting_engine::SceneId,
 };

@@ -6,6 +6,7 @@ use roller_protocol::{
     clock::{offset::offsetted_for_fixture, Clock, ClockEvent, Rate},
     color::Color,
     control::InputEvent,
+    effect::{self, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet, PositionEffect},
     fixture::{Fixture, FixtureGroupId},
     position::BasePosition,
 };
@@ -16,7 +17,6 @@ use crate::{
         control_mapping::ControlMapping,
         NoteState,
     },
-    effect::{self, ColorEffect, DimmerEffect, PixelEffect, PixelRangeSet, PositionEffect},
     utils::FxIndexMap,
 };
 

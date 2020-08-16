@@ -2,7 +2,11 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use std::time::Instant;
 
 use roller_protocol::{
-    clock::Rate, color::Color, control::ButtonCoordinate, fixture::FixtureGroupId,
+    clock::Rate,
+    color::Color,
+    control::ButtonCoordinate,
+    effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
+    fixture::FixtureGroupId,
     position::BasePosition,
 };
 
@@ -13,7 +17,6 @@ use crate::{
         },
         NoteState,
     },
-    effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
     lighting_engine::FixtureGroupValue,
     utils::{shift_remove_vec, FxIndexMap},
 };

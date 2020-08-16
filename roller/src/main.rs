@@ -11,7 +11,6 @@ use roller_protocol::{
 
 mod clock;
 mod control;
-mod effect;
 mod fixture;
 mod lighting_engine;
 mod project;
