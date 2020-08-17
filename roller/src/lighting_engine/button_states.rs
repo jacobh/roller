@@ -7,8 +7,8 @@ use roller_protocol::{
     control::{ButtonCoordinate, NoteState},
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
     fixture::FixtureGroupId,
-    position::BasePosition,
     lighting_engine::FixtureGroupValue,
+    position::BasePosition,
 };
 
 use crate::{

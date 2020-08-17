@@ -1,14 +1,16 @@
+use rustc_hash::FxHashMap;
+
 use roller_protocol::{
     clock::{offset::offsetted_for_fixture, ClockSnapshot},
     color::Color,
     effect::{self, PixelRangeSet},
-    fixture::Fixture,
+    fixture::{Fixture, FixtureGroupId},
+    lighting_engine::FixtureGroupValue,
 };
 
-use crate::lighting_engine::SceneState;
-
 pub struct FixtureStateRenderContext<'a> {
-    pub scene: &'a SceneState,
+    pub base_values: FixtureGroupValue<'a>,
+    pub fixture_group_values: FxHashMap<FixtureGroupId, FixtureGroupValue<'a>>,
     pub clock_snapshot: ClockSnapshot,
     pub master_dimmer: f64,
 }
@@ -17,12 +19,11 @@ pub fn render_fixture_states<'a>(
     fixtures: &'a mut Vec<Fixture>,
 ) {
     let FixtureStateRenderContext {
-        scene,
         master_dimmer,
         clock_snapshot,
+        base_values,
+        fixture_group_values,
     } = ctx;
-
-    let (base_values, fixture_group_values) = scene.fixture_group_values();
 
     let fixture_values = fixtures
         .iter()

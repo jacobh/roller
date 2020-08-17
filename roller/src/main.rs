@@ -45,11 +45,13 @@ async fn run_tick<'a>(
     >,
     web_fixture_state_updates_send: &async_std::sync::Sender<Vec<(FixtureId, FixtureState)>>,
 ) {
+    let (base_values, fixture_group_values) = state.active_scene_state().fixture_group_values();
     render_fixture_states(
         FixtureStateRenderContext {
+            base_values,
+            fixture_group_values,
             clock_snapshot: state.clock.snapshot(),
             master_dimmer: state.master_dimmer,
-            scene: state.active_scene_state(),
         },
         fixtures,
     );

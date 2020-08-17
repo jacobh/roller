@@ -9,12 +9,10 @@ use roller_protocol::{
     lighting_engine::FixtureGroupValue,
 };
 
-use crate::{
-    control::{
-        button::{ButtonGroup, ButtonMapping, ButtonRef, MetaButtonAction},
-        control_mapping::ControlMapping,
-        fader::fader_mapping_control_event,
-    },
+use crate::control::{
+    button::{ButtonGroup, ButtonMapping, ButtonRef, MetaButtonAction},
+    control_mapping::ControlMapping,
+    fader::fader_mapping_control_event,
 };
 
 mod button_states;
