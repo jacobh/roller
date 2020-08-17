@@ -5,9 +5,9 @@ use std::time::Instant;
 use roller_protocol::{
     clock::{Clock, ClockEvent, Rate},
     color::Color,
-    control::{NoteState,InputEvent},
+    control::{InputEvent, NoteState},
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
-    fixture::{FixtureGroupId},
+    fixture::FixtureGroupId,
     position::BasePosition,
 };
 
@@ -15,7 +15,7 @@ use crate::{
     control::{
         button::{ButtonGroup, ButtonMapping, ButtonRef, MetaButtonAction},
         control_mapping::ControlMapping,
-        fader::fader_mapping_control_event
+        fader::fader_mapping_control_event,
     },
     utils::FxIndexMap,
 };

@@ -2,6 +2,8 @@ use derive_more::{From, Into};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+pub mod fader;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum NoteState {
     On,

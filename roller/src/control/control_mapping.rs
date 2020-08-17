@@ -1,11 +1,10 @@
 use rustc_hash::FxHashMap;
 
-use roller_protocol::control::{ButtonCoordinate, ButtonGridLocation, FaderId};
-
-use crate::control::{
-    button::{ButtonGroup, ButtonMapping, ButtonRef, MetaButtonMapping},
-    fader::FaderControlMapping,
+use roller_protocol::control::{
+    fader::FaderControlMapping, ButtonCoordinate, ButtonGridLocation, FaderId,
 };
+
+use crate::control::button::{ButtonGroup, ButtonMapping, ButtonRef, MetaButtonMapping};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ControlMapping {

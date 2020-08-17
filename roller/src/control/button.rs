@@ -13,7 +13,7 @@ use roller_protocol::{
 };
 
 use crate::{
-    control::{control_mapping::ControlMapping},
+    control::control_mapping::ControlMapping,
     lighting_engine::{ControlEvent, ControlMode, SceneId},
     utils::shift_remove_vec,
 };
