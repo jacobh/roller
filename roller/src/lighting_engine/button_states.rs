@@ -8,13 +8,13 @@ use roller_protocol::{
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
     fixture::FixtureGroupId,
     position::BasePosition,
+    lighting_engine::FixtureGroupValue,
 };
 
 use crate::{
     control::button::{
         ButtonAction, ButtonGroup, ButtonGroupId, ButtonMapping, ButtonType, GroupToggleState,
     },
-    lighting_engine::FixtureGroupValue,
     utils::{shift_remove_vec, FxIndexMap},
 };
 

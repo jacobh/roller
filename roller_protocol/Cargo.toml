@@ -17,3 +17,4 @@ ordered-float = { version = "*", features = ["serde"] }
 uuid = { version = "*", features = ["serde", "v4"] }
 itertools = "*"
 rand = "*"
+indexmap = "*"

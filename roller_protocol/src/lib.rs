@@ -5,6 +5,7 @@ pub mod color;
 pub mod control;
 pub mod effect;
 pub mod fixture;
+pub mod lighting_engine;
 pub mod position;
 mod utils;
 

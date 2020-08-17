@@ -599,6 +599,7 @@ name = "roller_protocol"
 version = "0.1.0"
 dependencies = [
  "derive_more",
+ "indexmap",
  "itertools",
  "ordered-float",
  "palette",
