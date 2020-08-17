@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use itertools::Itertools;
 use rand::{seq::SliceRandom, thread_rng};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     clock::{Beats, ClockSnapshot},

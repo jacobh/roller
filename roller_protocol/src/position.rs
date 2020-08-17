@@ -58,7 +58,9 @@ impl Default for BasePositionMode {
     }
 }
 
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Default, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize,
+)]
 pub struct BasePosition {
     pub position: Position,
     pub mode: BasePositionMode,

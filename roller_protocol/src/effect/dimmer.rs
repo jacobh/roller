@@ -1,5 +1,5 @@
 use ordered_float::OrderedFloat;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::clock::{offset::ClockOffset, Beats, ClockSnapshot};
 

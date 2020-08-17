@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[derive(Default)]
-pub struct FixtureGroupValue<'a> {
+pub struct FixtureGroupValue {
     pub dimmer: f64,
     pub dimmer_effect_intensity: Option<f64>,
     pub color_effect_intensity: Option<f64>,
@@ -15,13 +15,13 @@ pub struct FixtureGroupValue<'a> {
     pub global_color: Option<Color>,
     pub secondary_color: Option<Color>,
     pub base_position: Option<BasePosition>,
-    pub active_dimmer_effects: FxIndexMap<&'a DimmerEffect, Rate>,
-    pub active_color_effects: FxIndexMap<&'a ColorEffect, Rate>,
-    pub active_pixel_effects: FxIndexMap<&'a PixelEffect, Rate>,
-    pub active_position_effects: FxIndexMap<&'a PositionEffect, Rate>,
+    pub active_dimmer_effects: FxIndexMap<DimmerEffect, Rate>,
+    pub active_color_effects: FxIndexMap<ColorEffect, Rate>,
+    pub active_pixel_effects: FxIndexMap<PixelEffect, Rate>,
+    pub active_position_effects: FxIndexMap<PositionEffect, Rate>,
 }
-impl<'a> FixtureGroupValue<'a> {
-    pub fn merge(mut self, other: &FixtureGroupValue<'a>) -> FixtureGroupValue<'a> {
+impl FixtureGroupValue {
+    pub fn merge(mut self, other: &FixtureGroupValue) -> FixtureGroupValue {
         self.clock_rate = self.clock_rate * other.clock_rate;
         if self.global_color == None {
             self.global_color = other.global_color;
@@ -39,13 +39,13 @@ impl<'a> FixtureGroupValue<'a> {
             self.color_effect_intensity = other.color_effect_intensity;
         }
         self.active_dimmer_effects
-            .extend(other.active_dimmer_effects.iter());
+            .extend(other.active_dimmer_effects.clone().into_iter());
         self.active_color_effects
-            .extend(other.active_color_effects.iter());
+            .extend(other.active_color_effects.clone().into_iter());
         self.active_pixel_effects
-            .extend(other.active_pixel_effects.iter());
+            .extend(other.active_pixel_effects.clone().into_iter());
         self.active_position_effects
-            .extend(other.active_position_effects.iter());
+            .extend(other.active_position_effects.clone().into_iter());
 
         self
     }

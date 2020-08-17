@@ -64,8 +64,8 @@ impl SceneState {
     pub fn fixture_group_values(
         &self,
     ) -> (
-        FixtureGroupValue<'_>,
-        FxHashMap<FixtureGroupId, FixtureGroupValue<'_>>,
+        FixtureGroupValue,
+        FxHashMap<FixtureGroupId, FixtureGroupValue>,
     ) {
         let mut base_values = self.base.fixture_group_value();
 
@@ -97,7 +97,7 @@ pub struct FixtureGroupState {
     pub button_states: ButtonStates,
 }
 impl FixtureGroupState {
-    pub fn fixture_group_value(&self) -> FixtureGroupValue<'_> {
+    pub fn fixture_group_value(&self) -> FixtureGroupValue {
         let buttons = &self.button_states;
 
         FixtureGroupValue {
@@ -107,10 +107,26 @@ impl FixtureGroupState {
             clock_rate: self.clock_rate,
             global_color: buttons.global_color(),
             secondary_color: buttons.secondary_color(),
-            active_dimmer_effects: buttons.active_dimmer_effects(),
-            active_color_effects: buttons.active_color_effects(),
-            active_pixel_effects: buttons.active_pixel_effects(),
-            active_position_effects: buttons.active_position_effects(),
+            active_dimmer_effects: buttons
+                .active_dimmer_effects()
+                .into_iter()
+                .map(|(k, v)| (k.clone(), v))
+                .collect(),
+            active_color_effects: buttons
+                .active_color_effects()
+                .into_iter()
+                .map(|(k, v)| (k.clone(), v))
+                .collect(),
+            active_pixel_effects: buttons
+                .active_pixel_effects()
+                .into_iter()
+                .map(|(k, v)| (k.clone(), v))
+                .collect(),
+            active_position_effects: buttons
+                .active_position_effects()
+                .into_iter()
+                .map(|(k, v)| (k.clone(), v))
+                .collect(),
             base_position: buttons.base_position(),
         }
     }

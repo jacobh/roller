@@ -24,7 +24,7 @@ pub use button_states::{
 
 // This is just for the case where no buttons have been activated yet
 lazy_static::lazy_static! {
-    static ref DEFAULT_FIXTURE_GROUP_VALUE: FixtureGroupValue<'static> = FixtureGroupValue::default();
+    static ref DEFAULT_FIXTURE_GROUP_VALUE: FixtureGroupValue = FixtureGroupValue::default();
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor)]

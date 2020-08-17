@@ -1,6 +1,6 @@
 use ordered_float::OrderedFloat;
 use palette::{Hue, Mix};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::{
     clock::{offset::ClockOffset, Beats, ClockSnapshot},

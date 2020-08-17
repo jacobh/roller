@@ -1,5 +1,5 @@
+use serde::{Deserialize, Serialize};
 use std::f64::consts::PI;
-use serde::{Serialize, Deserialize};
 
 use crate::effect::sigmoid;
 

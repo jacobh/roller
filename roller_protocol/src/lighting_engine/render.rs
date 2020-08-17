@@ -9,15 +9,12 @@ use crate::{
 };
 
 pub struct FixtureStateRenderContext<'a> {
-    pub base_values: FixtureGroupValue<'a>,
-    pub fixture_group_values: FxHashMap<FixtureGroupId, FixtureGroupValue<'a>>,
+    pub base_values: &'a FixtureGroupValue,
+    pub fixture_group_values: &'a FxHashMap<FixtureGroupId, FixtureGroupValue>,
     pub clock_snapshot: ClockSnapshot,
     pub master_dimmer: f64,
 }
-pub fn render_fixture_states<'a>(
-    ctx: FixtureStateRenderContext<'a>,
-    fixtures: &'a mut Vec<Fixture>,
-) {
+pub fn render_fixture_states<'a>(ctx: FixtureStateRenderContext<'a>, fixtures: &mut Vec<Fixture>) {
     let FixtureStateRenderContext {
         master_dimmer,
         clock_snapshot,
