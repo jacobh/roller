@@ -1,7 +1,18 @@
+use derive_more::{From, Into};
 use ordered_float::OrderedFloat;
 use serde::{Deserialize, Serialize};
 
-use crate::{control::FaderId, effect::sigmoid, fixture::FixtureGroupId};
+use crate::{effect::sigmoid, fixture::FixtureGroupId};
+
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, From, Into, PartialOrd, Ord,
+)]
+pub struct FaderId(usize);
+impl FaderId {
+    pub fn new(x: usize) -> FaderId {
+        FaderId(x)
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum FaderType {

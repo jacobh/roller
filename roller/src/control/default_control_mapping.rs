@@ -5,8 +5,8 @@ use roller_protocol::{
     },
     color::Color,
     control::{
-        fader::{FaderControlMapping, FaderCurve, FaderType},
-        ButtonCoordinate, ButtonGridLocation, FaderId,
+        fader::{FaderControlMapping, FaderCurve, FaderId, FaderType},
+        ButtonCoordinate, ButtonGridLocation,
     },
     effect::EffectDirection,
     effect::{
