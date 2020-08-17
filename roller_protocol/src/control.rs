@@ -2,6 +2,12 @@ use derive_more::{From, Into};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum NoteState {
+    On,
+    Off,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum InputEvent {
     ButtonPressed(ButtonGridLocation, ButtonCoordinate),

@@ -4,7 +4,7 @@ use std::time::Instant;
 use roller_protocol::{
     clock::Rate,
     color::Color,
-    control::ButtonCoordinate,
+    control::{NoteState, ButtonCoordinate},
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
     fixture::FixtureGroupId,
     position::BasePosition,
@@ -15,7 +15,6 @@ use crate::{
         button::{
             ButtonAction, ButtonGroup, ButtonGroupId, ButtonMapping, ButtonType, GroupToggleState,
         },
-        NoteState,
     },
     lighting_engine::FixtureGroupValue,
     utils::{shift_remove_vec, FxIndexMap},

@@ -6,14 +6,14 @@ use std::time::Instant;
 use roller_protocol::{
     clock::Rate,
     color::Color,
-    control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent},
+    control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent, NoteState},
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
     fixture::FixtureGroupId,
     position::BasePosition,
 };
 
 use crate::{
-    control::{control_mapping::ControlMapping, NoteState},
+    control::{control_mapping::ControlMapping},
     lighting_engine::{ControlEvent, ControlMode, SceneId},
     utils::shift_remove_vec,
 };
