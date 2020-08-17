@@ -4,10 +4,7 @@ use roller_protocol::{
         Beats, Rate,
     },
     color::Color,
-    control::{
-        fader::{FaderControlMapping, FaderCurve, FaderType},
-        ButtonCoordinate, ButtonGridLocation, FaderId,
-    },
+    control::{ButtonCoordinate, ButtonGridLocation, FaderId},
     effect::EffectDirection,
     effect::{
         ColorEffect, ColorModulation, ColorModulator, DimmerEffect, DimmerModulator, PixelEffect,
@@ -24,6 +21,7 @@ use crate::{
             MetaButtonMapping,
         },
         control_mapping::ControlMapping,
+        fader::{FaderControlMapping, FaderCurve, FaderType},
     },
     lighting_engine::SceneId,
 };
