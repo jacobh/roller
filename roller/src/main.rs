@@ -17,7 +17,10 @@ mod project;
 mod utils;
 
 use crate::control::button::{pad_states, ButtonRef};
-use crate::lighting_engine::EngineState;
+use crate::lighting_engine::{
+    render::{render_fixture_states, FixtureStateRenderContext},
+    EngineState,
+};
 
 #[global_allocator]
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
@@ -42,7 +45,14 @@ async fn run_tick<'a>(
     >,
     web_fixture_state_updates_send: &async_std::sync::Sender<Vec<(FixtureId, FixtureState)>>,
 ) {
-    state.update_fixtures(fixtures);
+    render_fixture_states(
+        FixtureStateRenderContext {
+            clock_snapshot: state.clock.snapshot(),
+            master_dimmer: state.master_dimmer,
+            scene: state.active_scene_state(),
+        },
+        fixtures,
+    );
     for (universe, dmx_data) in fold_fixture_dmx_data(fixtures.iter()).into_iter() {
         dmx_sender.send((universe as i32, dmx_data)).await;
     }
