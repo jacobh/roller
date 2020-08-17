@@ -47,7 +47,7 @@ impl From<(f64, f64)> for Position {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum BasePositionMode {
     Default,
     MirrorPan,
@@ -58,7 +58,7 @@ impl Default for BasePositionMode {
     }
 }
 
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct BasePosition {
     pub position: Position,
     pub mode: BasePositionMode,

@@ -1,7 +1,9 @@
-use crate::effect::sigmoid;
 use std::f64::consts::PI;
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+use crate::effect::sigmoid;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[allow(dead_code)]
 pub enum Waveform {
     SawUp,

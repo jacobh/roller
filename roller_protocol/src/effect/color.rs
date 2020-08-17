@@ -1,5 +1,6 @@
 use ordered_float::OrderedFloat;
 use palette::{Hue, Mix};
+use serde::{Serialize, Deserialize};
 
 use crate::{
     clock::{offset::ClockOffset, Beats, ClockSnapshot},
@@ -8,7 +9,7 @@ use crate::{
 
 use crate::effect::{Step, Steps, Waveform};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ColorEffect {
     steps: Steps<ColorModulator>,
     pub clock_offset: Option<ClockOffset>,
@@ -37,7 +38,7 @@ impl From<ColorModulator> for ColorEffect {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ColorModulation {
     HueShift(OrderedFloat<f64>),
     ToSecondaryColor,
@@ -45,7 +46,7 @@ pub enum ColorModulation {
     NoOp,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ColorModulator {
     modulation: ColorModulation,
     waveform: Waveform,

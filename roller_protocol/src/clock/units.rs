@@ -1,9 +1,10 @@
 use derive_more::{From, Into};
 use ordered_float::OrderedFloat;
+use serde::{Serialize, Deserialize};
 use std::iter::Sum;
 use std::ops::{Add, Mul, Sub};
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, From, Into)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, From, Into, Serialize, Deserialize)]
 pub struct Beats(OrderedFloat<f64>);
 impl Beats {
     pub fn new(x: impl Into<OrderedFloat<f64>>) -> Beats {
@@ -50,7 +51,7 @@ impl From<Beats> for f64 {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, From, Into)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, From, Into, Serialize, Deserialize)]
 pub struct Rate(OrderedFloat<f64>);
 impl Rate {
     pub fn new(x: impl Into<OrderedFloat<f64>>) -> Rate {

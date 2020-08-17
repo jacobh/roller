@@ -1,3 +1,5 @@
+use serde::{Serialize, Deserialize};
+
 use crate::{
     clock::{offset::ClockOffset, Beats, ClockSnapshot},
     effect::{EffectDirection, Step, Steps, Waveform},
@@ -71,7 +73,7 @@ impl PixelRangeSet {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PixelEffect {
     steps: Steps<PixelModulator>,
     pub clock_offset: Option<ClockOffset>,
@@ -95,7 +97,7 @@ impl From<PixelModulator> for PixelEffect {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct PixelModulator {
     waveform: Waveform,
     meter_length: Beats,

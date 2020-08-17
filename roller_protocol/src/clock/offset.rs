@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use itertools::Itertools;
 use rand::{seq::SliceRandom, thread_rng};
+use serde::{Serialize, Deserialize};
 
 use crate::{
     clock::{Beats, ClockSnapshot},
@@ -9,7 +10,7 @@ use crate::{
     fixture::Fixture,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[allow(dead_code)]
 pub enum ClockOffsetMode {
     GroupId,
@@ -18,7 +19,7 @@ pub enum ClockOffsetMode {
     Location(EffectDirection),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ClockOffset {
     mode: ClockOffsetMode,
     offset: Beats,

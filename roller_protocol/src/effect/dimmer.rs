@@ -1,10 +1,11 @@
 use ordered_float::OrderedFloat;
+use serde::{Serialize, Deserialize};
 
 use crate::clock::{offset::ClockOffset, Beats, ClockSnapshot};
 
 use crate::effect::{Step, Steps, Waveform};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct DimmerEffect {
     steps: Steps<DimmerModulator>,
     pub clock_offset: Option<ClockOffset>,
@@ -28,7 +29,7 @@ impl From<DimmerModulator> for DimmerEffect {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct DimmerScale {
     min: OrderedFloat<f64>,
     max: OrderedFloat<f64>,
@@ -58,7 +59,7 @@ impl From<f64> for DimmerScale {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct DimmerModulator {
     waveform: Waveform,
     meter_length: Beats,
