@@ -16,7 +16,6 @@ use crate::control::{
 };
 
 mod button_states;
-pub mod render;
 
 pub use button_states::{
     ButtonGroupInfo, ButtonInfo, ButtonStateMap, ButtonStateValue, ButtonStates, FixtureGroupState,

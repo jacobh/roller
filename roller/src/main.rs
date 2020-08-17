@@ -7,6 +7,7 @@ use std::time::Duration;
 use roller_protocol::{
     control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent},
     fixture::{fold_fixture_dmx_data, Fixture, FixtureId, FixtureState},
+    lighting_engine::render::{render_fixture_states, FixtureStateRenderContext},
 };
 
 mod clock;
@@ -17,10 +18,7 @@ mod project;
 mod utils;
 
 use crate::control::button::{pad_states, ButtonRef};
-use crate::lighting_engine::{
-    render::{render_fixture_states, FixtureStateRenderContext},
-    EngineState,
-};
+use crate::lighting_engine::EngineState;
 
 #[global_allocator]
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;

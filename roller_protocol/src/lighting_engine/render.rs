@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use roller_protocol::{
+use crate::{
     clock::{offset::offsetted_for_fixture, ClockSnapshot},
     color::Color,
     effect::{self, PixelRangeSet},
