@@ -6,7 +6,7 @@ use rustc_hash::FxHashMap;
 use std::time::{Duration, Instant};
 
 use roller_protocol::control::{
-    fader::FaderId, ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent,
+    ButtonCoordinate, ButtonGridLocation, ButtonState, FaderId, InputEvent,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
