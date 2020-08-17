@@ -1,4 +1,5 @@
 use ordered_float::OrderedFloat;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     clock::{offset::ClockOffset, Beats, ClockSnapshot},
@@ -6,7 +7,7 @@ use crate::{
     position::Position,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct PositionEffect {
     pan: Option<PositionModulator>,
     tilt: Option<PositionModulator>,
@@ -36,7 +37,7 @@ impl PositionEffect {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize, Serialize)]
 pub struct PositionModulator {
     waveform: Waveform,
     meter_length: Beats,

@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{
     clock::Rate,
     color::Color,
@@ -6,7 +8,7 @@ use crate::{
     utils::FxIndexMap,
 };
 
-#[derive(Default)]
+#[derive(Default, Deserialize, Serialize)]
 pub struct FixtureGroupValue {
     pub dimmer: f64,
     pub dimmer_effect_intensity: Option<f64>,
