@@ -12,14 +12,14 @@ pub enum FaderType {
     DimmerEffectIntensity,
     ColorEffectIntensity,
 }
-impl FaderType {
-    fn control_event(&self, value: f64) -> ControlEvent {
-        match *self {
-            FaderType::MasterDimmer => ControlEvent::UpdateMasterDimmer(value),
-            FaderType::GroupDimmer(group_id) => ControlEvent::UpdateGroupDimmer(group_id, value),
-            FaderType::DimmerEffectIntensity => ControlEvent::UpdateDimmerEffectIntensity(value),
-            FaderType::ColorEffectIntensity => ControlEvent::UpdateColorEffectIntensity(value),
-        }
+
+
+fn fader_type_control_event(fader_type: &FaderType, value: f64) -> ControlEvent {
+    match *fader_type {
+        FaderType::MasterDimmer => ControlEvent::UpdateMasterDimmer(value),
+        FaderType::GroupDimmer(group_id) => ControlEvent::UpdateGroupDimmer(group_id, value),
+        FaderType::DimmerEffectIntensity => ControlEvent::UpdateDimmerEffectIntensity(value),
+        FaderType::ColorEffectIntensity => ControlEvent::UpdateColorEffectIntensity(value),
     }
 }
 
@@ -29,10 +29,9 @@ pub struct FaderControlMapping {
     pub fader_type: FaderType,
     pub fader_curve: FaderCurve,
 }
-impl FaderControlMapping {
-    pub fn control_event(&self, value: f64) -> ControlEvent {
-        self.fader_type.control_event(self.fader_curve.apply(value))
-    }
+
+pub fn fader_mapping_control_event(fader: &FaderControlMapping, value: f64) -> ControlEvent {
+    fader_type_control_event(&fader.fader_type, fader.fader_curve.apply(value))
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]

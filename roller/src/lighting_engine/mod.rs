@@ -15,6 +15,7 @@ use crate::{
     control::{
         button::{ButtonGroup, ButtonMapping, ButtonRef, MetaButtonAction},
         control_mapping::ControlMapping,
+        fader::fader_mapping_control_event
     },
     utils::FxIndexMap,
 };
@@ -162,7 +163,7 @@ impl<'a> EngineState<'a> {
                 .control_mapping
                 .faders
                 .get(&fader_id)
-                .map(|fader| fader.control_event(value)),
+                .map(|fader| fader_mapping_control_event(fader, value)),
             InputEvent::ButtonPressed(location, coordinate) => self
                 .control_mapping
                 .find_button(location, coordinate)
