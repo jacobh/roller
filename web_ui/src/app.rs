@@ -15,7 +15,7 @@ use crate::{
     utils::callback_fn,
 };
 use roller_protocol::{
-    control::{ButtonCoordinate, ButtonGridLocation, ButtonState, FaderId, InputEvent},
+    control::{ButtonCoordinate, ButtonGridLocation, ButtonState, fader::FaderId, InputEvent},
     fixture::{FixtureId, FixtureParams, FixtureState},
     ClientMessage, ServerMessage,
 };

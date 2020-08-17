@@ -1,7 +1,7 @@
 use im_rc::OrdMap;
 use yew::prelude::*;
 
-use roller_protocol::control::FaderId;
+use roller_protocol::control::fader::FaderId;
 
 use crate::{
     pure::{Pure, PureComponent},
