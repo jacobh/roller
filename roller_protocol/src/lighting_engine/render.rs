@@ -1,8 +1,8 @@
 use crate::{
     clock::{offset::offsetted_for_fixture, ClockSnapshot},
     color::Color,
-    effect::{self, PixelRangeSet},
-    fixture::{Fixture, FixtureGroupId, FixtureParams, FixtureState},
+    effect,
+    fixture::{FixtureGroupId, FixtureParams, FixtureState},
     lighting_engine::FixtureGroupState,
 };
 
@@ -23,135 +23,124 @@ pub fn render_fixture_states<'a>(
         fixture_group_states,
     } = ctx;
 
-    let fixture_states = fixture_params.iter().map(|fixture| {
-        let values = fixture
-            .group_id
-            .and_then(|group_id| {
-                fixture_group_states
+    fixture_params
+        .iter()
+        .map(|params| {
+            let mut state = FixtureState::new(&params.profile);
+
+            let group_state = params
+                .group_id
+                .and_then(|group_id| {
+                    fixture_group_states
+                        .iter()
+                        .find(|(id, _)| &group_id == *id)
+                        .map(|(_, state)| *state)
+                })
+                .unwrap_or(base_state);
+
+            let clock_snapshot = clock_snapshot.with_rate(group_state.clock_rate);
+
+            let effect_dimmer = if params.dimmer_effects_enabled() {
+                group_state
+                    .active_dimmer_effects
                     .iter()
-                    .find(|(id, _)| &group_id == *id)
-                    .map(|(_, state)| *state)
-            })
-            .unwrap_or(base_state);
+                    .fold(1.0, |dimmer, (effect, rate)| {
+                        dimmer
+                            * effect::compress(
+                                effect.dimmer(&offsetted_for_fixture(
+                                    effect.clock_offset.as_ref(),
+                                    &clock_snapshot.with_rate(*rate),
+                                    &params,
+                                    &fixture_params,
+                                )),
+                                group_state.dimmer_effect_intensity(),
+                            )
+                    })
+            } else {
+                1.0
+            };
 
-        let clock_snapshot = clock_snapshot.with_rate(values.clock_rate);
+            let base_color = group_state.global_color().to_hsl();
+            let secondary_color = group_state.secondary_color.map(Color::to_hsl);
 
-        let effect_dimmer = if fixture.dimmer_effects_enabled() {
-            values
-                .active_dimmer_effects
-                .iter()
-                .fold(1.0, |dimmer, (effect, rate)| {
-                    dimmer
-                        * effect::compress(
-                            effect.dimmer(&offsetted_for_fixture(
+            let color = if params.color_effects_enabled() {
+                effect::color_intensity(
+                    base_color,
+                    group_state.active_color_effects.iter().fold(
+                        base_color,
+                        |color, (effect, rate)| {
+                            effect.color(
+                                color,
+                                secondary_color,
+                                &offsetted_for_fixture(
+                                    effect.clock_offset.as_ref(),
+                                    &clock_snapshot.with_rate(*rate),
+                                    &params,
+                                    &fixture_params,
+                                ),
+                            )
+                        },
+                    ),
+                    group_state.color_effect_intensity(),
+                )
+            } else {
+                base_color
+            };
+            state.set_color(color);
+
+            if params.pixel_effects_enabled() {
+                // TODO only using first active pixel effect
+                let pixel_range =
+                    group_state
+                        .active_pixel_effects
+                        .iter()
+                        .nth(0)
+                        .map(|(effect, rate)| {
+                            effect.pixel_range_set(&offsetted_for_fixture(
                                 effect.clock_offset.as_ref(),
                                 &clock_snapshot.with_rate(*rate),
-                                &fixture,
+                                &params,
                                 &fixture_params,
-                            )),
-                            values.dimmer_effect_intensity(),
+                            ))
+                        });
+
+                if params.profile.beam_count() > 1 {
+                    if let Some(pixel_range) = pixel_range {
+                        state.set_beam_dimmers(
+                            &pixel_range.pixel_dimmers(params.profile.beam_count()),
                         )
-                })
-        } else {
-            1.0
-        };
+                    } else {
+                        // If there's no active pixel effect, reset pixels
+                        state.set_all_beam_dimmers(1.0);
+                    }
+                }
+            }
 
-        let base_color = values.global_color().to_hsl();
-        let secondary_color = values.secondary_color.map(Color::to_hsl);
-
-        let color = if fixture.color_effects_enabled() {
-            effect::color_intensity(
-                base_color,
-                values
-                    .active_color_effects
-                    .iter()
-                    .fold(base_color, |color, (effect, rate)| {
-                        effect.color(
-                            color,
-                            secondary_color,
-                            &offsetted_for_fixture(
-                                effect.clock_offset.as_ref(),
-                                &clock_snapshot.with_rate(*rate),
-                                &fixture,
-                                &fixture_params,
-                            ),
-                        )
-                    }),
-                values.color_effect_intensity(),
-            )
-        } else {
-            base_color
-        };
-
-        let pixel_range_set: Option<PixelRangeSet> = if fixture.pixel_effects_enabled() {
-            // TODO only using first active pixel effect
-            values
-                .active_pixel_effects
-                .iter()
-                .nth(0)
-                .map(|(effect, rate)| {
-                    effect.pixel_range_set(&offsetted_for_fixture(
-                        effect.clock_offset.as_ref(),
-                        &clock_snapshot.with_rate(*rate),
-                        &fixture,
-                        &fixture_params,
-                    ))
-                })
-        } else {
-            None
-        };
-
-        let position = if fixture.position_effects_enabled() {
-            Some(
-                values
+            if params.position_effects_enabled() {
+                let position = group_state
                     .active_position_effects
                     .iter()
                     .map(|(effect, rate)| {
                         effect.position(&offsetted_for_fixture(
                             effect.clock_offset.as_ref(),
                             &clock_snapshot.with_rate(*rate),
-                            &fixture,
+                            &params,
                             &fixture_params,
                         ))
                     })
                     .fold(
-                        values
+                        group_state
                             .base_position()
-                            .for_fixture(&fixture, &fixture_params),
+                            .for_fixture(&params, &fixture_params),
                         |position1, position2| position1 + position2,
-                    ),
-            )
-        } else {
-            None
-        };
-
-        let group_dimmer = values.dimmer;
-
-        let dimmer = master_dimmer * group_dimmer * effect_dimmer;
-        (dimmer, color, pixel_range_set, position)
-    });
-
-    fixture_params
-        .iter()
-        .zip(fixture_states)
-        .map(|(params, (dimmer, color, pixel_range, position))| {
-            let mut state = FixtureState::new(&params.profile);
-
-            state.set_dimmer(dimmer);
-            state.set_color(color);
-
-            if params.profile.beam_count() > 1 {
-                if let Some(pixel_range) = pixel_range {
-                    state.set_beam_dimmers(&pixel_range.pixel_dimmers(params.profile.beam_count()))
-                } else {
-                    // If there's no active pixel effect, reset pixels
-                    state.set_all_beam_dimmers(1.0);
-                }
-            }
-
-            if let Some(position) = position {
+                    );
                 state.set_position(position);
             }
+
+            let group_dimmer = group_state.dimmer;
+
+            let dimmer = master_dimmer * group_dimmer * effect_dimmer;
+            state.set_dimmer(dimmer);
 
             (*params, state)
         })
