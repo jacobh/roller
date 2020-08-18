@@ -1,3 +1,4 @@
+use chrono::Utc;
 use derive_more::Constructor;
 use rustc_hash::FxHashMap;
 use std::time::Instant;
@@ -175,7 +176,7 @@ impl<'a> EngineState<'a> {
                     .update_button_state(&group, mapping.clone(), note_state, now);
             }
             (_, ControlEvent::TapTempo(now)) => {
-                self.clock.apply_event(ClockEvent::Tap(now));
+                self.clock.apply_event(ClockEvent::Tap(Utc::now()));
                 dbg!(self.clock.bpm());
             }
         }

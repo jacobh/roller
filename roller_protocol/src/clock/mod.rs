@@ -1,4 +1,4 @@
-use std::time::{Duration, Instant};
+use chrono::{DateTime, Duration, Utc};
 
 pub mod offset;
 pub mod snapshot;
@@ -8,24 +8,28 @@ pub use snapshot::ClockSnapshot;
 pub use units::{Beats, Rate};
 
 fn duration_as_secs(duration: Duration) -> f64 {
-    duration.as_micros() as f64 / 1_000_000.0
+    duration.num_microseconds().unwrap() as f64 / 1_000_000.0
+}
+
+fn duration_from_secs(secs: f64) -> Duration {
+    Duration::microseconds((secs * 1_000_000.0) as i64)
 }
 
 #[derive(Debug)]
 pub enum ClockEvent {
     BpmChanged(f64),
-    Tap(Instant),
+    Tap(DateTime<Utc>),
 }
 
 #[derive(Debug, Clone, PartialEq)]
 enum ClockState {
-    Manual { taps: Vec<Instant> },
+    Manual { taps: Vec<DateTime<Utc>> },
     Automatic,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Clock {
-    started_at: Instant,
+    started_at: DateTime<Utc>,
     bpm: f64,
     state: ClockState,
 }
@@ -33,7 +37,7 @@ impl Clock {
     pub fn new(bpm: f64) -> Clock {
         Clock {
             bpm,
-            started_at: Instant::now(),
+            started_at: Utc::now(),
             state: ClockState::Manual { taps: Vec::new() },
         }
     }
@@ -44,7 +48,7 @@ impl Clock {
                     ClockState::Manual { ref mut taps } => {
                         // If last tap was more than 1 second ago, clear the taps
                         if let Some(last_tap) = taps.last() {
-                            if (now - *last_tap) > Duration::from_secs(1) {
+                            if (now - *last_tap) > Duration::seconds(1) {
                                 dbg!(&taps);
                                 taps.clear();
                                 dbg!(&taps);
@@ -73,7 +77,7 @@ impl Clock {
                 let beat_secs = snapshot.secs_per_meter(Beats::new(1.0));
 
                 if snapshot.secs_elapsed() - (beat_secs * 48.0) >= 0.0 {
-                    self.started_at += Duration::from_secs_f64(beat_secs * 48.0);
+                    self.started_at = self.started_at + duration_from_secs(beat_secs * 48.0);
                 }
 
                 self.state = ClockState::Automatic;
@@ -81,14 +85,14 @@ impl Clock {
             }
         }
     }
-    pub fn started_at(&self) -> Instant {
+    pub fn started_at(&self) -> DateTime<Utc> {
         self.started_at
     }
     pub fn bpm(&self) -> f64 {
         self.bpm
     }
     pub fn secs_elapsed(&self) -> f64 {
-        duration_as_secs(Instant::now() - self.started_at())
+        duration_as_secs(Utc::now() - self.started_at())
     }
     pub fn snapshot(&self) -> ClockSnapshot {
         ClockSnapshot {
