@@ -39,7 +39,7 @@ struct CliArgs {
 
 async fn run_tick<'a>(
     state: &mut EngineState<'a>,
-    fixtures: &mut Vec<Fixture>,
+    fixtures: &Vec<FixtureParams>,
     dmx_sender: &async_std::sync::Sender<(i32, [u8; 512])>,
     midi_controller: Option<&control::midi::MidiController>,
     current_fixture_group_states: &mut (
@@ -58,31 +58,30 @@ async fn run_tick<'a>(
             clock_snapshot: state.clock.snapshot(),
             master_dimmer: state.master_dimmer,
         },
-        &fixtures
-            .iter()
-            .map(|fixture| &fixture.params)
-            .collect::<Vec<_>>(),
-    )
-    .into_iter()
-    .map(|(params, state)| (params.id.clone(), state))
-    .collect();
+        &fixtures.iter().collect::<Vec<_>>(),
+    );
 
-    // TODO this is a shim until fixtures is split apart
-    for (id, state) in new_fixture_states.clone().into_iter() {
-        for fixture in fixtures.iter_mut() {
-            if fixture.id() == &id {
-                fixture.state = state;
-                break;
-            }
-        }
-    }
+    let fixtures: Vec<_> = new_fixture_states
+        .clone()
+        .into_iter()
+        .map(|(params, state)| Fixture {
+            params: params.clone(),
+            state,
+        })
+        .collect();
+    let dmx_data = fold_fixture_dmx_data(fixtures.iter());
 
-    for (universe, dmx_data) in fold_fixture_dmx_data(fixtures.iter()).into_iter() {
+    for (universe, dmx_data) in dmx_data.into_iter() {
         dmx_sender.send((universe as i32, dmx_data)).await;
     }
 
     web_server_message_send
-        .send(ServerMessage::FixtureStatesUpdated(new_fixture_states))
+        .send(ServerMessage::FixtureStatesUpdated(
+            new_fixture_states
+                .into_iter()
+                .map(|(params, state)| (params.id, state))
+                .collect(),
+        ))
         .await;
 
     // find any fixture group states that have updated since last tick
@@ -153,7 +152,8 @@ async fn main() -> Result<(), async_std::io::Error> {
     let args = CliArgs::parse();
 
     let project = project::Project::load(args.config).await?;
-    let mut fixtures = project.fixtures().await?;
+    let fixtures = project.fixtures().await?;
+    let fixture_params: Vec<_> = fixtures.into_iter().map(|fixture| fixture.params).collect();
 
     let midi_controller = match project.midi_controller.as_ref() {
         Some(midi_controller_name) => {
@@ -249,10 +249,10 @@ async fn main() -> Result<(), async_std::io::Error> {
                 )
             })
             .collect(),
-        fixtures
+        fixture_params
             .clone()
             .into_iter()
-            .map(|fixture| (*fixture.id(), fixture.params))
+            .map(|params| (params.id, params))
             .collect(),
         web_server_message_recv,
         web_input_events_send,
@@ -263,7 +263,7 @@ async fn main() -> Result<(), async_std::io::Error> {
             Event::Tick => {
                 run_tick(
                     &mut state,
-                    &mut fixtures,
+                    &fixture_params,
                     &dmx_sender,
                     midi_controller.as_ref(),
                     &mut current_fixture_group_states,
