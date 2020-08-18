@@ -15,6 +15,7 @@ use crate::{
     utils::callback_fn,
 };
 use roller_protocol::{
+    clock::Clock,
     control::{ButtonCoordinate, ButtonGridLocation, ButtonState, FaderId, InputEvent},
     fixture::{FixtureGroupId, FixtureId, FixtureParams, FixtureState},
     lighting_engine::FixtureGroupState,
@@ -60,6 +61,7 @@ pub struct App {
     base_fixture_group_state: FixtureGroupState,
     fixture_group_states: HashMap<FixtureGroupId, FixtureGroupState>,
     active_page: PageType,
+    clock: Clock,
 }
 
 impl App {
@@ -141,6 +143,7 @@ impl Component for App {
             base_fixture_group_state: FixtureGroupState::default(),
             fixture_group_states: HashMap::new(),
             active_page: PageType::Buttons,
+            clock: Clock::new(130.0),
         }
     }
 
