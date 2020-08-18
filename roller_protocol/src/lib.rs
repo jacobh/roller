@@ -10,7 +10,8 @@ pub mod position;
 mod utils;
 
 use control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent};
-use fixture::{FixtureId, FixtureParams, FixtureState};
+use fixture::{FixtureGroupId, FixtureId, FixtureParams, FixtureState};
+use lighting_engine::FixtureGroupState;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Message {
@@ -29,4 +30,5 @@ pub enum ServerMessage {
     ButtonLabelsUpdated(Vec<(ButtonGridLocation, ButtonCoordinate, String)>),
     FixtureParamsUpdated(Vec<(FixtureId, FixtureParams)>),
     FixtureStatesUpdated(Vec<(FixtureId, FixtureState)>),
+    FixtureGroupStatesUpdated(Vec<(Option<FixtureGroupId>, FixtureGroupState)>),
 }

@@ -16,7 +16,8 @@ use crate::{
 };
 use roller_protocol::{
     control::{ButtonCoordinate, ButtonGridLocation, ButtonState, FaderId, InputEvent},
-    fixture::{FixtureId, FixtureParams, FixtureState},
+    fixture::{FixtureGroupId, FixtureId, FixtureParams, FixtureState},
+    lighting_engine::FixtureGroupState,
     ClientMessage, ServerMessage,
 };
 
@@ -56,6 +57,8 @@ pub struct App {
     button_states: HashMap<ButtonGridLocation, Vector<Vector<(Option<String>, ButtonState)>>>,
     fader_states: OrdMap<FaderId, FaderValue>,
     fixture_states: HashMap<FixtureId, (FixtureParams, Option<FixtureState>)>,
+    base_fixture_group_state: FixtureGroupState,
+    fixture_group_states: HashMap<FixtureGroupId, FixtureGroupState>,
     active_page: PageType,
 }
 
@@ -135,6 +138,8 @@ impl Component for App {
             button_states,
             fader_states,
             fixture_states: HashMap::new(),
+            base_fixture_group_state: FixtureGroupState::default(),
+            fixture_group_states: HashMap::new(),
             active_page: PageType::Buttons,
         }
     }
@@ -186,6 +191,16 @@ impl Component for App {
                 for (fixture_id, fixture_state) in updates {
                     if let Some((_params, state)) = self.fixture_states.get_mut(&fixture_id) {
                         *state = Some(fixture_state)
+                    }
+                }
+            }
+            AppMsg::ServerMessage(ServerMessage::FixtureGroupStatesUpdated(updates)) => {
+                for (fixture_group_id, fixture_group_state) in updates {
+                    if let Some(fixture_group_id) = fixture_group_id {
+                        self.fixture_group_states
+                            .insert(fixture_group_id, fixture_group_state);
+                    } else {
+                        self.base_fixture_group_state = fixture_group_state;
                     }
                 }
             }

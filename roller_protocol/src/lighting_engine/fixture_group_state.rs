@@ -8,7 +8,7 @@ use crate::{
     utils::FxIndexMap,
 };
 
-#[derive(Default, Deserialize, Serialize)]
+#[derive(Default, Clone, Debug, Deserialize, Serialize)]
 pub struct FixtureGroupState {
     pub dimmer: f64,
     pub dimmer_effect_intensity: Option<f64>,
