@@ -120,7 +120,7 @@ pub fn render_fixture_states<'a>(ctx: FixtureStateRenderContext<'a>, fixtures: &
                             ))
                         })
                         .fold(
-                            values.base_position().for_fixture(&fixture, &fixtures),
+                            values.base_position().for_fixture(&fixture.params, &fixture_params.iter().collect::<Vec<_>>()),
                             |position1, position2| position1 + position2,
                         ),
                 )
