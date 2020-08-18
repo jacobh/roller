@@ -1,4 +1,5 @@
 use im_rc::{vector, HashMap, OrdMap, Vector};
+use std::rc::Rc;
 use yew::{
     format::Binary,
     prelude::*,
@@ -58,10 +59,10 @@ pub struct App {
     button_states: HashMap<ButtonGridLocation, Vector<Vector<(Option<String>, ButtonState)>>>,
     fader_states: OrdMap<FaderId, FaderValue>,
     fixture_states: HashMap<FixtureId, (FixtureParams, Option<FixtureState>)>,
-    base_fixture_group_state: FixtureGroupState,
+    base_fixture_group_state: Rc<FixtureGroupState>,
     fixture_group_states: HashMap<FixtureGroupId, FixtureGroupState>,
     active_page: PageType,
-    clock: Clock,
+    clock: Rc<Clock>,
 }
 
 impl App {
@@ -140,10 +141,10 @@ impl Component for App {
             button_states,
             fader_states,
             fixture_states: HashMap::new(),
-            base_fixture_group_state: FixtureGroupState::default(),
+            base_fixture_group_state: Rc::new(FixtureGroupState::default()),
             fixture_group_states: HashMap::new(),
             active_page: PageType::Buttons,
-            clock: Clock::new(130.0),
+            clock: Rc::new(Clock::new(130.0)),
         }
     }
 
@@ -203,7 +204,7 @@ impl Component for App {
                         self.fixture_group_states
                             .insert(fixture_group_id, fixture_group_state);
                     } else {
-                        self.base_fixture_group_state = fixture_group_state;
+                        self.base_fixture_group_state = Rc::new(fixture_group_state);
                     }
                 }
             }
@@ -288,7 +289,12 @@ impl Component for App {
                             <Preview2dPage fixture_states={self.fixture_states.clone()} />
                         },
                         PageType::Preview3d => html! {
-                            <Preview3dPage fixture_states={self.fixture_states.clone()} />
+                            <Preview3dPage
+                                fixture_states={self.fixture_states.clone()}
+                                clock={self.clock.clone()}
+                                base_fixture_group_state={self.base_fixture_group_state.clone()}
+                                fixture_group_states={self.fixture_group_states.clone()}
+                            />
                         }
                     }
                 }

@@ -1,9 +1,14 @@
 use im_rc::HashMap;
 use itertools::Itertools;
+use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use yew::prelude::*;
 
-use roller_protocol::fixture::{FixtureId, FixtureLocation, FixtureParams, FixtureState};
+use roller_protocol::{
+    clock::Clock,
+    fixture::{FixtureGroupId, FixtureId, FixtureLocation, FixtureParams, FixtureState},
+    lighting_engine::FixtureGroupState,
+};
 
 use crate::{console_log, js::babylon, yewtil::neq_assign::NeqAssign};
 
@@ -35,6 +40,9 @@ impl From<&Vector> for babylon::Vector3 {
 #[derive(Debug, Properties, Clone, PartialEq)]
 pub struct PurePreview3dProps {
     pub fixture_states: HashMap<FixtureId, (FixtureParams, Option<FixtureState>)>,
+    pub clock: Rc<Clock>,
+    pub base_fixture_group_state: Rc<FixtureGroupState>,
+    pub fixture_group_states: HashMap<FixtureGroupId, FixtureGroupState>,
 }
 
 #[derive(Debug)]
