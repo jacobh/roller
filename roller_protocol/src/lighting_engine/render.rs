@@ -1,5 +1,3 @@
-use rustc_hash::FxHashMap;
-
 use crate::{
     clock::{offset::offsetted_for_fixture, ClockSnapshot},
     color::Color,
@@ -9,27 +7,32 @@ use crate::{
 };
 
 pub struct FixtureStateRenderContext<'a> {
-    pub base_values: &'a FixtureGroupState,
-    pub fixture_group_values: &'a FxHashMap<FixtureGroupId, FixtureGroupState>,
+    pub base_state: &'a FixtureGroupState,
+    pub fixture_group_states: &'a [(&'a FixtureGroupId, &'a FixtureGroupState)],
     pub clock_snapshot: ClockSnapshot,
     pub master_dimmer: f64,
 }
-pub fn render_fixture_states<'a>(ctx: FixtureStateRenderContext<'a>, fixtures: &mut Vec<Fixture>) {
+pub fn render_fixture_states<'a>(ctx: FixtureStateRenderContext<'a>, fixtures: &mut [Fixture]) {
     let FixtureStateRenderContext {
         master_dimmer,
         clock_snapshot,
-        base_values,
-        fixture_group_values,
+        base_state,
+        fixture_group_states,
     } = ctx;
 
-    let fixture_values = fixtures
+    let fixture_states = fixtures
         .iter()
         .map(|fixture| {
-            let values = if let Some(group_id) = fixture.params.group_id {
-                fixture_group_values.get(&group_id).unwrap_or(&base_values)
-            } else {
-                &base_values
-            };
+            let values = fixture
+                .params
+                .group_id
+                .and_then(|group_id| {
+                    fixture_group_states
+                        .iter()
+                        .find(|(id, _)| &group_id == *id)
+                        .map(|(_, state)| *state)
+                })
+                .unwrap_or(base_state);
 
             let clock_snapshot = clock_snapshot.with_rate(values.clock_rate);
 
@@ -127,7 +130,7 @@ pub fn render_fixture_states<'a>(ctx: FixtureStateRenderContext<'a>, fixtures: &
         })
         .collect::<Vec<_>>();
 
-    for (fixture, (dimmer, color, pixel_range, position)) in fixtures.iter_mut().zip(fixture_values)
+    for (fixture, (dimmer, color, pixel_range, position)) in fixtures.iter_mut().zip(fixture_states)
     {
         fixture.state.set_dimmer(dimmer);
         fixture.state.set_color(color);

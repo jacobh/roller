@@ -41,13 +41,13 @@ async fn run_tick<'a>(
     current_button_states: &mut rustc_hash::FxHashMap<ButtonRef<'a>, ButtonState>,
     web_server_message_send: &async_std::sync::Sender<ServerMessage>,
 ) {
-    let (ref base_values, ref fixture_group_values) =
+    let (ref base_state, ref fixture_group_states) =
         state.active_scene_state().fixture_group_values();
 
     render_fixture_states(
         FixtureStateRenderContext {
-            base_values,
-            fixture_group_values,
+            base_state,
+            fixture_group_states: &fixture_group_states.iter().collect::<Vec<_>>(),
             clock_snapshot: state.clock.snapshot(),
             master_dimmer: state.master_dimmer,
         },
