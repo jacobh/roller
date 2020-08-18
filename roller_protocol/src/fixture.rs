@@ -204,6 +204,7 @@ impl FixtureBeamState {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FixtureParams {
+    pub id: FixtureId,
     pub profile: FixtureProfile,
     pub universe: usize,
     pub start_channel: usize,
@@ -303,7 +304,6 @@ impl FixtureState {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Fixture {
-    pub id: FixtureId,
     pub params: FixtureParams,
     pub state: FixtureState,
 }
@@ -317,9 +317,9 @@ impl Fixture {
         enabled_effects: Vec<FixtureEffectType>,
     ) -> Fixture {
         Fixture {
-            id: FixtureId::new(),
             state: FixtureState::new(&profile),
             params: FixtureParams {
+                id: FixtureId::new(),
                 profile,
                 universe,
                 start_channel,
@@ -328,6 +328,9 @@ impl Fixture {
                 enabled_effects,
             },
         }
+    }
+    pub fn id(&self) -> &FixtureId {
+        &self.params.id
     }
     pub fn relative_dmx(&self) -> Vec<u8> {
         let mut dmx: Vec<u8> = vec![0; self.params.profile.channel_count];

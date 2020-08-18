@@ -68,7 +68,7 @@ async fn run_tick<'a>(
         .send(ServerMessage::FixtureStatesUpdated(
             fixtures
                 .iter()
-                .map(|fixture| (fixture.id, fixture.state.clone()))
+                .map(|fixture| (*fixture.id(), fixture.state.clone()))
                 .collect(),
         ))
         .await;
@@ -240,7 +240,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         fixtures
             .clone()
             .into_iter()
-            .map(|fixture| (fixture.id, fixture.params))
+            .map(|fixture| (*fixture.id(), fixture.params))
             .collect(),
         web_server_message_recv,
         web_input_events_send,
