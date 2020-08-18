@@ -20,29 +20,29 @@ use crate::{
 
 // This is just for the case where no buttons have been activated yet
 lazy_static::lazy_static! {
-    pub static ref EMPTY_FIXTURE_GROUP_STATE: FixtureGroupState = FixtureGroupState::default();
-    pub static ref EMPTY_SCENE_STATE: SceneState = SceneState::default();
+    pub static ref EMPTY_FIXTURE_GROUP_STATE: FixtureGroupControlState = FixtureGroupControlState::default();
+    pub static ref EMPTY_SCENE_STATE: SceneControlState = SceneControlState::default();
 }
 
 pub type ButtonStateMap = FxIndexMap<(ButtonMapping, NoteState), ButtonStateValue>;
 pub type ButtonStateValue = (Instant, Rate);
 
 #[derive(Default)]
-pub struct SceneState {
+pub struct SceneControlState {
     // contains base effect states, for all fixtures
-    pub base: FixtureGroupState,
+    pub base: FixtureGroupControlState,
     // Contains states for effects enabled for specific groups. These take
     // precedence over any effects set in the `default` state
-    pub fixture_groups: FxHashMap<FixtureGroupId, FixtureGroupState>,
+    pub fixture_groups: FxHashMap<FixtureGroupId, FixtureGroupControlState>,
 
     pub dimmer_effect_intensity: f64,
     pub color_effect_intensity: f64,
 }
-impl SceneState {
+impl SceneControlState {
     pub fn fixture_group_state(
         &self,
         fixture_group_id: Option<FixtureGroupId>,
-    ) -> &FixtureGroupState {
+    ) -> &FixtureGroupControlState {
         if let Some(group_id) = fixture_group_id {
             self.fixture_groups
                 .get(&group_id)
@@ -54,7 +54,7 @@ impl SceneState {
     pub fn fixture_group_state_mut(
         &mut self,
         fixture_group_id: Option<FixtureGroupId>,
-    ) -> &mut FixtureGroupState {
+    ) -> &mut FixtureGroupControlState {
         if let Some(group_id) = fixture_group_id {
             self.fixture_groups.entry(group_id).or_default()
         } else {
@@ -91,12 +91,12 @@ impl SceneState {
 }
 
 #[derive(Debug)]
-pub struct FixtureGroupState {
+pub struct FixtureGroupControlState {
     pub dimmer: f64,
     pub clock_rate: Rate,
     pub button_states: ButtonStates,
 }
-impl FixtureGroupState {
+impl FixtureGroupControlState {
     pub fn fixture_group_value(&self) -> FixtureGroupValue {
         let buttons = &self.button_states;
 
@@ -131,9 +131,9 @@ impl FixtureGroupState {
         }
     }
 }
-impl Default for FixtureGroupState {
-    fn default() -> FixtureGroupState {
-        FixtureGroupState {
+impl Default for FixtureGroupControlState {
+    fn default() -> FixtureGroupControlState {
+        FixtureGroupControlState {
             dimmer: 1.0,
             clock_rate: Rate::default(),
             button_states: ButtonStates::default(),

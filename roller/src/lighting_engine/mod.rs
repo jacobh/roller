@@ -17,8 +17,8 @@ use crate::control::{
 mod button_states;
 
 pub use button_states::{
-    ButtonGroupInfo, ButtonInfo, ButtonStateMap, ButtonStateValue, ButtonStates, FixtureGroupState,
-    SceneState, EMPTY_SCENE_STATE,
+    ButtonGroupInfo, ButtonInfo, ButtonStateMap, ButtonStateValue, ButtonStates,
+    FixtureGroupControlState, SceneControlState, EMPTY_SCENE_STATE,
 };
 
 // This is just for the case where no buttons have been activated yet
@@ -56,7 +56,7 @@ pub struct EngineState<'a> {
     pub control_mode: ControlMode,
     pub active_scene_id: SceneId,
     pub active_fixture_group_control: Option<FixtureGroupId>,
-    pub scene_fixture_group_button_states: FxHashMap<SceneId, SceneState>,
+    pub scene_fixture_group_button_states: FxHashMap<SceneId, SceneControlState>,
 }
 impl<'a> EngineState<'a> {
     pub fn new(control_mapping: &'a ControlMapping) -> EngineState<'a> {
@@ -70,22 +70,22 @@ impl<'a> EngineState<'a> {
             scene_fixture_group_button_states: FxHashMap::default(),
         }
     }
-    pub fn active_scene_state(&self) -> &SceneState {
+    pub fn active_scene_state(&self) -> &SceneControlState {
         self.scene_fixture_group_button_states
             .get(&self.active_scene_id)
             .unwrap_or_else(|| &*EMPTY_SCENE_STATE)
     }
-    fn active_scene_state_mut(&mut self) -> &mut SceneState {
+    fn active_scene_state_mut(&mut self) -> &mut SceneControlState {
         self.scene_fixture_group_button_states
             .entry(self.active_scene_id)
             .or_default()
     }
-    pub fn control_fixture_group_state(&self) -> &FixtureGroupState {
+    pub fn control_fixture_group_state(&self) -> &FixtureGroupControlState {
         &self
             .active_scene_state()
             .fixture_group_state(self.active_fixture_group_control)
     }
-    fn control_fixture_group_state_mut(&mut self) -> &mut FixtureGroupState {
+    fn control_fixture_group_state_mut(&mut self) -> &mut FixtureGroupControlState {
         let active_fixture_group_control = self.active_fixture_group_control;
 
         self.active_scene_state_mut()
@@ -150,7 +150,7 @@ impl<'a> EngineState<'a> {
             }
             (ControlMode::Shift, ControlEvent::SelectScene(scene_id)) => {
                 self.scene_fixture_group_button_states
-                    .insert(scene_id, SceneState::default());
+                    .insert(scene_id, SceneControlState::default());
             }
             (ControlMode::Normal, ControlEvent::SelectFixtureGroupControl(group_id)) => {
                 if Some(group_id) == self.active_fixture_group_control {
@@ -162,7 +162,7 @@ impl<'a> EngineState<'a> {
             (ControlMode::Shift, ControlEvent::SelectFixtureGroupControl(group_id)) => {
                 self.active_scene_state_mut()
                     .fixture_groups
-                    .insert(group_id, FixtureGroupState::default());
+                    .insert(group_id, FixtureGroupControlState::default());
             }
             (_, ControlEvent::UpdateGroupDimmer(group_id, dimmer)) => {
                 self.active_scene_state_mut()
