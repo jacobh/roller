@@ -5,12 +5,12 @@ use crate::{
     color::Color,
     effect::{self, PixelRangeSet},
     fixture::{Fixture, FixtureGroupId},
-    lighting_engine::FixtureGroupValue,
+    lighting_engine::FixtureGroupState,
 };
 
 pub struct FixtureStateRenderContext<'a> {
-    pub base_values: &'a FixtureGroupValue,
-    pub fixture_group_values: &'a FxHashMap<FixtureGroupId, FixtureGroupValue>,
+    pub base_values: &'a FixtureGroupState,
+    pub fixture_group_values: &'a FxHashMap<FixtureGroupId, FixtureGroupState>,
     pub clock_snapshot: ClockSnapshot,
     pub master_dimmer: f64,
 }

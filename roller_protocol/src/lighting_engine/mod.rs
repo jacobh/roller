@@ -1,4 +1,4 @@
-mod fixture_group_value;
+mod fixture_group_state;
 pub mod render;
 
-pub use fixture_group_value::FixtureGroupValue;
+pub use fixture_group_state::FixtureGroupState;

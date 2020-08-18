@@ -7,7 +7,7 @@ use roller_protocol::{
     control::{ButtonCoordinate, NoteState},
     effect::{ColorEffect, DimmerEffect, PixelEffect, PositionEffect},
     fixture::FixtureGroupId,
-    lighting_engine::FixtureGroupValue,
+    lighting_engine::FixtureGroupState,
     position::BasePosition,
 };
 
@@ -64,8 +64,8 @@ impl SceneControlState {
     pub fn fixture_group_values(
         &self,
     ) -> (
-        FixtureGroupValue,
-        FxHashMap<FixtureGroupId, FixtureGroupValue>,
+        FixtureGroupState,
+        FxHashMap<FixtureGroupId, FixtureGroupState>,
     ) {
         let mut base_values = self.base.fixture_group_value();
 
@@ -97,10 +97,10 @@ pub struct FixtureGroupControlState {
     pub button_states: ButtonStates,
 }
 impl FixtureGroupControlState {
-    pub fn fixture_group_value(&self) -> FixtureGroupValue {
+    pub fn fixture_group_value(&self) -> FixtureGroupState {
         let buttons = &self.button_states;
 
-        FixtureGroupValue {
+        FixtureGroupState {
             dimmer: self.dimmer,
             dimmer_effect_intensity: None,
             color_effect_intensity: None,

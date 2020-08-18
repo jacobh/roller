@@ -6,7 +6,7 @@ use roller_protocol::{
     clock::{Clock, ClockEvent, Rate},
     control::{InputEvent, NoteState},
     fixture::FixtureGroupId,
-    lighting_engine::FixtureGroupValue,
+    lighting_engine::FixtureGroupState,
 };
 
 use crate::control::{
@@ -23,7 +23,7 @@ pub use button_states::{
 
 // This is just for the case where no buttons have been activated yet
 lazy_static::lazy_static! {
-    static ref DEFAULT_FIXTURE_GROUP_VALUE: FixtureGroupValue = FixtureGroupValue::default();
+    static ref DEFAULT_FIXTURE_GROUP_VALUE: FixtureGroupState = FixtureGroupState::default();
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Constructor)]

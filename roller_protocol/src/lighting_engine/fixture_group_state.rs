@@ -9,7 +9,7 @@ use crate::{
 };
 
 #[derive(Default, Deserialize, Serialize)]
-pub struct FixtureGroupValue {
+pub struct FixtureGroupState {
     pub dimmer: f64,
     pub dimmer_effect_intensity: Option<f64>,
     pub color_effect_intensity: Option<f64>,
@@ -22,8 +22,8 @@ pub struct FixtureGroupValue {
     pub active_pixel_effects: FxIndexMap<PixelEffect, Rate>,
     pub active_position_effects: FxIndexMap<PositionEffect, Rate>,
 }
-impl FixtureGroupValue {
-    pub fn merge(mut self, other: &FixtureGroupValue) -> FixtureGroupValue {
+impl FixtureGroupState {
+    pub fn merge(mut self, other: &FixtureGroupState) -> FixtureGroupState {
         self.clock_rate = self.clock_rate * other.clock_rate;
         if self.global_color == None {
             self.global_color = other.global_color;
