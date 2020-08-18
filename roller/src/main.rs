@@ -1,13 +1,17 @@
 use clap::Clap;
 use futures::pin_mut;
 use futures::stream::{self, StreamExt};
+use rustc_hash::FxHashMap;
 use std::path::PathBuf;
 use std::time::Duration;
 
 use roller_protocol::{
     control::{ButtonState, InputEvent},
-    fixture::{fold_fixture_dmx_data, Fixture},
-    lighting_engine::render::{render_fixture_states, FixtureStateRenderContext},
+    fixture::{fold_fixture_dmx_data, Fixture, FixtureGroupId},
+    lighting_engine::{
+        render::{render_fixture_states, FixtureStateRenderContext},
+        FixtureGroupState,
+    },
     ServerMessage,
 };
 
@@ -38,15 +42,18 @@ async fn run_tick<'a>(
     fixtures: &mut Vec<Fixture>,
     dmx_sender: &async_std::sync::Sender<(i32, [u8; 512])>,
     midi_controller: Option<&control::midi::MidiController>,
+    current_fixture_group_states: &mut (
+        FixtureGroupState,
+        FxHashMap<FixtureGroupId, FixtureGroupState>,
+    ),
     current_button_states: &mut rustc_hash::FxHashMap<ButtonRef<'a>, ButtonState>,
     web_server_message_send: &async_std::sync::Sender<ServerMessage>,
 ) {
-    let (ref base_state, ref fixture_group_states) =
-        state.active_scene_state().fixture_group_values();
+    let (base_state, fixture_group_states) = state.active_scene_state().fixture_group_values();
 
     render_fixture_states(
         FixtureStateRenderContext {
-            base_state,
+            base_state: &base_state,
             fixture_group_states: &fixture_group_states.iter().collect::<Vec<_>>(),
             clock_snapshot: state.clock.snapshot(),
             master_dimmer: state.master_dimmer,
@@ -65,6 +72,31 @@ async fn run_tick<'a>(
                 .collect(),
         ))
         .await;
+
+    // find any fixture group states that have updated since last tick
+    let updated_fixture_group_states = {
+        let mut states = vec![];
+
+        if current_fixture_group_states.0 != base_state {
+            states.push((None, base_state.clone()));
+        };
+
+        for (id, new_state) in fixture_group_states.iter() {
+            if Some(new_state) != current_fixture_group_states.1.get(id) {
+                states.push((Some(*id), new_state.clone()));
+            }
+        }
+
+        states
+    };
+
+    if updated_fixture_group_states.len() > 0 {
+        web_server_message_send
+            .send(ServerMessage::FixtureGroupStatesUpdated(
+                updated_fixture_group_states,
+            ))
+            .await;
+    }
 
     let new_button_states = pad_states(
         &state.control_mapping,
@@ -94,11 +126,14 @@ async fn run_tick<'a>(
             .await;
     }
 
-    web_server_message_send
-        .send(ServerMessage::ButtonStatesUpdated(changed_button_states))
-        .await;
+    if changed_button_states.len() > 0 {
+        web_server_message_send
+            .send(ServerMessage::ButtonStatesUpdated(changed_button_states))
+            .await;
+    }
 
     *current_button_states = new_button_states;
+    *current_fixture_group_states = (base_state, fixture_group_states);
 }
 
 #[async_std::main]
@@ -140,6 +175,7 @@ async fn main() -> Result<(), async_std::io::Error> {
         Clock(roller_protocol::clock::ClockEvent),
     }
 
+    let mut current_fixture_group_states = (FixtureGroupState::default(), FxHashMap::default());
     let mut current_button_states = pad_states(
         &control_mapping,
         &state
@@ -218,6 +254,7 @@ async fn main() -> Result<(), async_std::io::Error> {
                     &mut fixtures,
                     &dmx_sender,
                     midi_controller.as_ref(),
+                    &mut current_fixture_group_states,
                     &mut current_button_states,
                     &web_server_message_send,
                 )
