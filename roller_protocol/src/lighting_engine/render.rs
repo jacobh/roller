@@ -2,7 +2,7 @@ use crate::{
     clock::{offset::offsetted_for_fixture, ClockSnapshot},
     color::Color,
     effect::{self, PixelRangeSet},
-    fixture::{Fixture, FixtureGroupId},
+    fixture::{Fixture, FixtureGroupId, FixtureParams},
     lighting_engine::FixtureGroupState,
 };
 
@@ -19,6 +19,11 @@ pub fn render_fixture_states<'a>(ctx: FixtureStateRenderContext<'a>, fixtures: &
         base_state,
         fixture_group_states,
     } = ctx;
+
+    let fixture_params: Vec<FixtureParams> = fixtures
+        .iter()
+        .map(|fixture| fixture.params.clone())
+        .collect::<Vec<_>>();
 
     let fixture_states = fixtures
         .iter()
@@ -46,8 +51,8 @@ pub fn render_fixture_states<'a>(ctx: FixtureStateRenderContext<'a>, fixtures: &
                                 effect.dimmer(&offsetted_for_fixture(
                                     effect.clock_offset.as_ref(),
                                     &clock_snapshot.with_rate(*rate),
-                                    &fixture,
-                                    &fixtures,
+                                    &fixture.params,
+                                    &fixture_params,
                                 )),
                                 values.dimmer_effect_intensity(),
                             )
@@ -72,8 +77,8 @@ pub fn render_fixture_states<'a>(ctx: FixtureStateRenderContext<'a>, fixtures: &
                                 &offsetted_for_fixture(
                                     effect.clock_offset.as_ref(),
                                     &clock_snapshot.with_rate(*rate),
-                                    &fixture,
-                                    &fixtures,
+                                    &fixture.params,
+                                    &fixture_params,
                                 ),
                             )
                         }),
@@ -93,8 +98,8 @@ pub fn render_fixture_states<'a>(ctx: FixtureStateRenderContext<'a>, fixtures: &
                         effect.pixel_range_set(&offsetted_for_fixture(
                             effect.clock_offset.as_ref(),
                             &clock_snapshot.with_rate(*rate),
-                            &fixture,
-                            &fixtures,
+                            &fixture.params,
+                            &fixture_params,
                         ))
                     })
             } else {
@@ -110,8 +115,8 @@ pub fn render_fixture_states<'a>(ctx: FixtureStateRenderContext<'a>, fixtures: &
                             effect.position(&offsetted_for_fixture(
                                 effect.clock_offset.as_ref(),
                                 &clock_snapshot.with_rate(*rate),
-                                &fixture,
-                                &fixtures,
+                                &fixture.params,
+                                &fixture_params,
                             ))
                         })
                         .fold(

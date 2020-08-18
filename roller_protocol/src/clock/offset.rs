@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     clock::{Beats, ClockSnapshot},
     effect::EffectDirection,
-    fixture::Fixture,
+    fixture::FixtureParams,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -37,12 +37,11 @@ impl ClockOffset {
 
         ClockOffset { mode, offset, seed }
     }
-    pub fn offset_for_fixture(&self, fixture: &Fixture, fixtures: &[Fixture]) -> Beats {
+    pub fn offset_for_fixture(&self, fixture: &FixtureParams, fixtures: &[FixtureParams]) -> Beats {
         match self.mode {
             ClockOffsetMode::GroupId => {
                 self.offset
                     * fixture
-                        .params
                         .group_id
                         .map(|group_id| usize::from(group_id) as f64 - 1.0)
                         .unwrap_or(0.0)
@@ -58,9 +57,9 @@ impl ClockOffset {
             ClockOffsetMode::Location(direction) => {
                 let fixture_locations = fixtures
                     .iter()
-                    .flat_map(|fixture| fixture.params.location.as_ref());
+                    .flat_map(|fixture| fixture.location.as_ref());
 
-                match (fixture.params.location.as_ref(), direction) {
+                match (fixture.location.as_ref(), direction) {
                     (Some(location), EffectDirection::LeftToRight) => {
                         let location_idx = fixture_locations
                             .map(|location| location.x)
@@ -119,8 +118,8 @@ impl ClockOffset {
     pub fn offsetted_for_fixture<'a>(
         &self,
         clock: &'a ClockSnapshot,
-        fixture: &Fixture,
-        fixtures: &[Fixture],
+        fixture: &FixtureParams,
+        fixtures: &[FixtureParams],
     ) -> Cow<'a, ClockSnapshot> {
         clock.shift(self.offset_for_fixture(fixture, fixtures))
     }
@@ -129,8 +128,8 @@ impl ClockOffset {
 pub fn offsetted_for_fixture<'a>(
     clock_offset: Option<&ClockOffset>,
     clock: &'a ClockSnapshot,
-    fixture: &Fixture,
-    fixtures: &[Fixture],
+    fixture: &FixtureParams,
+    fixtures: &[FixtureParams],
 ) -> Cow<'a, ClockSnapshot> {
     match clock_offset {
         Some(clock_offset) => clock_offset.offsetted_for_fixture(clock, fixture, fixtures),
