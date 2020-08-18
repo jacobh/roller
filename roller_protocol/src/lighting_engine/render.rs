@@ -20,9 +20,9 @@ pub fn render_fixture_states<'a>(ctx: FixtureStateRenderContext<'a>, fixtures: &
         fixture_group_states,
     } = ctx;
 
-    let fixture_params: Vec<FixtureParams> = fixtures
+    let fixture_params: Vec<&FixtureParams> = fixtures
         .iter()
-        .map(|fixture| fixture.params.clone())
+        .map(|fixture| &fixture.params)
         .collect::<Vec<_>>();
 
     let fixture_states = fixtures
@@ -120,7 +120,9 @@ pub fn render_fixture_states<'a>(ctx: FixtureStateRenderContext<'a>, fixtures: &
                             ))
                         })
                         .fold(
-                            values.base_position().for_fixture(&fixture.params, &fixture_params.iter().collect::<Vec<_>>()),
+                            values
+                                .base_position()
+                                .for_fixture(&fixture.params, &fixture_params),
                             |position1, position2| position1 + position2,
                         ),
                 )

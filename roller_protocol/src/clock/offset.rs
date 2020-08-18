@@ -37,7 +37,11 @@ impl ClockOffset {
 
         ClockOffset { mode, offset, seed }
     }
-    pub fn offset_for_fixture(&self, fixture: &FixtureParams, fixtures: &[FixtureParams]) -> Beats {
+    pub fn offset_for_fixture(
+        &self,
+        fixture: &FixtureParams,
+        fixtures: &[&FixtureParams],
+    ) -> Beats {
         match self.mode {
             ClockOffsetMode::GroupId => {
                 self.offset
@@ -47,11 +51,11 @@ impl ClockOffset {
                         .unwrap_or(0.0)
             }
             ClockOffsetMode::FixtureIndex => {
-                let fixture_idx = fixtures.iter().position(|x| x == fixture).unwrap();
+                let fixture_idx = fixtures.iter().position(|x| x == &fixture).unwrap();
                 self.offset * fixture_idx as f64
             }
             ClockOffsetMode::Random => {
-                let fixture_idx = fixtures.iter().position(|x| x == fixture).unwrap();
+                let fixture_idx = fixtures.iter().position(|x| x == &fixture).unwrap();
                 self.offset * self.seed[fixture_idx % 32] as f64
             }
             ClockOffsetMode::Location(direction) => {
@@ -119,7 +123,7 @@ impl ClockOffset {
         &self,
         clock: &'a ClockSnapshot,
         fixture: &FixtureParams,
-        fixtures: &[FixtureParams],
+        fixtures: &[&FixtureParams],
     ) -> Cow<'a, ClockSnapshot> {
         clock.shift(self.offset_for_fixture(fixture, fixtures))
     }
@@ -129,7 +133,7 @@ pub fn offsetted_for_fixture<'a>(
     clock_offset: Option<&ClockOffset>,
     clock: &'a ClockSnapshot,
     fixture: &FixtureParams,
-    fixtures: &[FixtureParams],
+    fixtures: &[&FixtureParams],
 ) -> Cow<'a, ClockSnapshot> {
     match clock_offset {
         Some(clock_offset) => clock_offset.offsetted_for_fixture(clock, fixture, fixtures),
