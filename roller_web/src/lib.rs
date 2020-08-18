@@ -10,7 +10,7 @@ use warp::{
 
 use roller_protocol::{
     control::{ButtonCoordinate, ButtonGridLocation, ButtonState, InputEvent},
-    fixture::{FixtureId, FixtureParams, FixtureState},
+    fixture::{FixtureId, FixtureParams},
     ClientMessage, ServerMessage,
 };
 
@@ -94,8 +94,7 @@ async fn browser_session(
 pub fn serve_frontend(
     initial_button_states: FxHashMap<(ButtonGridLocation, ButtonCoordinate), (String, ButtonState)>,
     fixture_params: FxHashMap<FixtureId, FixtureParams>,
-    mut pad_state_update_recv: Receiver<Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>>,
-    mut fixture_state_updates_recv: Receiver<Vec<(FixtureId, FixtureState)>>,
+    mut server_message_recv: Receiver<ServerMessage>,
     event_sender: Sender<InputEvent>,
 ) {
     let initial_button_states = Arc::new(Mutex::new(initial_button_states));
@@ -105,27 +104,20 @@ pub fn serve_frontend(
     let initial_button_states2 = initial_button_states.clone();
     let (mut server_message_sender, _) = server_message_channel.clone().split();
     async_std::task::spawn(async move {
-        while let Some(coord_states) = pad_state_update_recv.next().await {
-            let mut states = initial_button_states2.lock().await;
-            for (loc, coord, state) in coord_states.iter() {
-                states
-                    .entry((loc.clone(), coord.clone()))
-                    .and_modify(|(_label, prev_state)| *prev_state = *state)
-                    .or_insert_with(|| (String::new(), *state));
+        while let Some(server_message) = server_message_recv.next().await {
+            match &server_message {
+                ServerMessage::ButtonStatesUpdated(coord_states) => {
+                    let mut states = initial_button_states2.lock().await;
+                    for (loc, coord, state) in coord_states.iter() {
+                        states
+                            .entry((loc.clone(), coord.clone()))
+                            .and_modify(|(_label, prev_state)| *prev_state = *state)
+                            .or_insert_with(|| (String::new(), *state));
+                    }
+                }
+                _ => {}
             }
-
-            let message = ServerMessage::ButtonStatesUpdated(coord_states);
-            server_message_sender.send(message).await.unwrap();
-        }
-    });
-
-    // broadcast fixture states
-    let (mut server_message_sender, _) = server_message_channel.clone().split();
-    async_std::task::spawn(async move {
-        while let Some(updates) = fixture_state_updates_recv.next().await {
-            let _result = server_message_sender
-                .send(ServerMessage::FixtureStatesUpdated(updates))
-                .await;
+            server_message_sender.send(server_message).await.unwrap();
         }
     });
 
