@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use roller_protocol::{
     control::{ButtonState, InputEvent},
-    fixture::{fold_fixture_dmx_data, Fixture, FixtureGroupId},
+    fixture::{fold_fixture_dmx_data, Fixture, FixtureGroupId, FixtureParams, FixtureState},
     lighting_engine::{
         render::{render_fixture_states, FixtureStateRenderContext},
         FixtureGroupState,
@@ -51,26 +51,38 @@ async fn run_tick<'a>(
 ) {
     let (base_state, fixture_group_states) = state.active_scene_state().fixture_group_values();
 
-    render_fixture_states(
+    let new_fixture_states: Vec<_> = render_fixture_states(
         FixtureStateRenderContext {
             base_state: &base_state,
             fixture_group_states: &fixture_group_states.iter().collect::<Vec<_>>(),
             clock_snapshot: state.clock.snapshot(),
             master_dimmer: state.master_dimmer,
         },
-        fixtures,
-    );
+        &fixtures
+            .iter()
+            .map(|fixture| &fixture.params)
+            .collect::<Vec<_>>(),
+    )
+    .into_iter()
+    .map(|(params, state)| (params.id.clone(), state))
+    .collect();
+
+    // TODO this is a shim until fixtures is split apart
+    for (id, state) in new_fixture_states.clone().into_iter() {
+        for fixture in fixtures.iter_mut() {
+            if fixture.id() == &id {
+                fixture.state = state;
+                break;
+            }
+        }
+    }
+
     for (universe, dmx_data) in fold_fixture_dmx_data(fixtures.iter()).into_iter() {
         dmx_sender.send((universe as i32, dmx_data)).await;
     }
 
     web_server_message_send
-        .send(ServerMessage::FixtureStatesUpdated(
-            fixtures
-                .iter()
-                .map(|fixture| (*fixture.id(), fixture.state.clone()))
-                .collect(),
-        ))
+        .send(ServerMessage::FixtureStatesUpdated(new_fixture_states))
         .await;
 
     // find any fixture group states that have updated since last tick
