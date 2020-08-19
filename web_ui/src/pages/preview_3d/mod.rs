@@ -60,6 +60,7 @@ pub struct Preview3dPage {
     props: PurePreview3dProps,
     canvas_ref: NodeRef,
     canvas_state: Option<CanvasState>,
+    tick: Option<gloo::timers::callback::Interval>,
 }
 
 impl Component for Preview3dPage {
@@ -72,6 +73,7 @@ impl Component for Preview3dPage {
         Preview3dPage {
             props,
             canvas_ref,
+            tick: None,
             canvas_state: None,
         }
     }
@@ -245,6 +247,10 @@ impl Component for Preview3dPage {
                 lights,
                 hemispheric_light,
             });
+
+            self.tick = Some(gloo::timers::callback::Interval::new(1_000, || {
+                console_log!("hello...");
+            }));
 
             console_log!("{:?}", self.canvas_state);
         }
