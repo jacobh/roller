@@ -58,7 +58,7 @@ pub struct App {
     websocket: WebSocketTask,
     button_states: HashMap<ButtonGridLocation, Vector<Vector<(Option<String>, ButtonState)>>>,
     fader_states: OrdMap<FaderId, FaderValue>,
-    fixture_states: HashMap<FixtureId, (FixtureParams, Option<FixtureState>)>,
+    fixture_params: HashMap<FixtureId, FixtureParams>,
     base_fixture_group_state: Rc<FixtureGroupState>,
     fixture_group_states: HashMap<FixtureGroupId, FixtureGroupState>,
     active_page: PageType,
@@ -140,7 +140,7 @@ impl Component for App {
             websocket,
             button_states,
             fader_states,
-            fixture_states: HashMap::new(),
+            fixture_params: HashMap::new(),
             base_fixture_group_state: Rc::new(FixtureGroupState::default()),
             fixture_group_states: HashMap::new(),
             active_page: PageType::Buttons,
@@ -182,21 +182,12 @@ impl Component for App {
                 }
             }
             AppMsg::ServerMessage(ServerMessage::FixtureParamsUpdated(updates)) => {
-                for (fixture_id, fixture_params1) in updates {
-                    let fixture_params2 = fixture_params1.clone();
-
-                    self.fixture_states
-                        .entry(fixture_id)
-                        .or_insert((fixture_params1, None))
-                        .0 = fixture_params2;
+                for (fixture_id, fixture_params) in updates {
+                    self.fixture_params.insert(fixture_id, fixture_params);
                 }
             }
             AppMsg::ServerMessage(ServerMessage::FixtureStatesUpdated(updates)) => {
-                for (fixture_id, fixture_state) in updates {
-                    if let Some((_params, state)) = self.fixture_states.get_mut(&fixture_id) {
-                        *state = Some(fixture_state)
-                    }
-                }
+                // TODO remove
             }
             AppMsg::ServerMessage(ServerMessage::FixtureGroupStatesUpdated(updates)) => {
                 for (fixture_group_id, fixture_group_state) in updates {
@@ -286,11 +277,13 @@ impl Component for App {
                             />
                         },
                         PageType::Preview2d => html! {
-                            <Preview2dPage fixture_states={self.fixture_states.clone()} />
+                            <div></div>
+                            // TODO
+                            // <Preview2dPage fixture_states={self.fixture_states.clone()} />
                         },
                         PageType::Preview3d => html! {
                             <Preview3dPage
-                                fixture_states={self.fixture_states.clone()}
+                                fixture_params={self.fixture_params.clone()}
                                 clock={self.clock.clone()}
                                 base_fixture_group_state={self.base_fixture_group_state.clone()}
                                 fixture_group_states={self.fixture_group_states.clone()}

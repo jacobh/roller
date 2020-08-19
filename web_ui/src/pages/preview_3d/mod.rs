@@ -42,7 +42,7 @@ impl From<&Vector> for babylon::Vector3 {
 
 #[derive(Debug, Properties, Clone, PartialEq)]
 pub struct Preview3dProps {
-    pub fixture_states: HashMap<FixtureId, (FixtureParams, Option<FixtureState>)>,
+    pub fixture_params: HashMap<FixtureId, FixtureParams>,
     pub clock: Rc<Clock>,
     pub base_fixture_group_state: Rc<FixtureGroupState>,
     pub fixture_group_states: HashMap<FixtureGroupId, FixtureGroupState>,
@@ -100,12 +100,8 @@ impl Component for Preview3dPage {
                     let fixture_group_states: Vec<(&FixtureGroupId, &FixtureGroupState)> =
                         self.props.fixture_group_states.iter().collect();
 
-                    let fixture_params: Vec<&FixtureParams> = self
-                        .props
-                        .fixture_states
-                        .values()
-                        .map(|(params, _)| params)
-                        .collect();
+                    let fixture_params: Vec<&FixtureParams> =
+                        self.props.fixture_params.values().collect();
 
                     let fixture_states = render_fixture_states(
                         FixtureStateRenderContext {
@@ -138,14 +134,12 @@ impl Component for Preview3dPage {
 
             let positioned_fixtures: Vec<(FixtureId, FixtureLocation)> = self
                 .props
-                .fixture_states
+                .fixture_params
                 .iter()
-                .filter_map(
-                    |(id, (fixture_params, _))| match fixture_params.location.as_ref() {
-                        Some(location) => Some((*id, location.clone())),
-                        None => None,
-                    },
-                )
+                .filter_map(|(id, params)| match params.location.as_ref() {
+                    Some(location) => Some((*id, location.clone())),
+                    None => None,
+                })
                 .unique_by(|(_, loc)| loc.clone())
                 .collect();
 
