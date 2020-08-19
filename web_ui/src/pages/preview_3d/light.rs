@@ -12,6 +12,7 @@ pub struct Light {
     cone_mesh: babylon::Mesh,
     spot_light: babylon::SpotLight,
     dimmer: f64,
+    color: (f64, f64, f64),
 }
 impl Light {
     pub fn set_dimmer(&mut self, dimmer: f64) {
@@ -20,6 +21,13 @@ impl Light {
             self.spot_light
                 .set_intensity(SPOT_LIGHT_MAX_INTENSITY * dimmer);
             self.cone_material.set_alpha(dimmer);
+        }
+    }
+    pub fn set_color(&mut self, color: (f64, f64, f64)) {
+        if self.color != color {
+            self.color = color;
+            self.cone_material
+                .set_emissive_color(&babylon::Color3::new(color.0, color.1, color.2));
         }
     }
 }
@@ -70,5 +78,6 @@ pub fn create_light<'a>(args: CreateLightArgs<'a>) -> Light {
         cone_material,
         cone_mesh,
         dimmer: 1.0,
+        color: (1.0, 1.0, 1.0),
     }
 }

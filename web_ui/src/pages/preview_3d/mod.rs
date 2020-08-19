@@ -293,6 +293,11 @@ fn apply_fixture_states_to_canvas(
 
         if let Some(light) = light {
             light.set_dimmer(state.dimmer);
+            
+            let color = state.beams.iter().filter_map(|beam| beam.color).nth(0);
+            if let Some(color) = color {
+                light.set_color(color);
+            }
         }
     }
 }
