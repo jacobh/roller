@@ -38,7 +38,7 @@ impl From<&Vector> for babylon::Vector3 {
 }
 
 #[derive(Debug, Properties, Clone, PartialEq)]
-pub struct PurePreview3dProps {
+pub struct Preview3dProps {
     pub fixture_states: HashMap<FixtureId, (FixtureParams, Option<FixtureState>)>,
     pub clock: Rc<Clock>,
     pub base_fixture_group_state: Rc<FixtureGroupState>,
@@ -56,48 +56,64 @@ struct CanvasState {
 }
 
 #[derive(Debug)]
+pub enum Preview3dMsg {
+    Tick,
+}
+
+#[derive(Debug)]
 pub struct Preview3dPage {
-    props: PurePreview3dProps,
+    link: ComponentLink<Self>,
+    props: Preview3dProps,
     canvas_ref: NodeRef,
     canvas_state: Option<CanvasState>,
-    tick: Option<gloo::timers::callback::Interval>,
+    tick: gloo::timers::callback::Interval,
 }
 
 impl Component for Preview3dPage {
-    type Message = ();
-    type Properties = PurePreview3dProps;
+    type Message = Preview3dMsg;
+    type Properties = Preview3dProps;
 
-    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         let canvas_ref = NodeRef::default();
 
+        let link1 = link.clone();
+        let tick = gloo::timers::callback::Interval::new(16, move || {
+            link1.send_message(Preview3dMsg::Tick);
+        });
+
         Preview3dPage {
+            link,
             props,
             canvas_ref,
-            tick: None,
+            tick,
             canvas_state: None,
         }
     }
 
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
+    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+        match msg {
+            Preview3dMsg::Tick => {
+                if let Some(canvas_state) = self.canvas_state.as_mut() {
+                    let fixtures: Vec<(&FixtureParams, &FixtureState)> = self
+                        .props
+                        .fixture_states
+                        .values()
+                        .filter_map(|(params, state)| match state {
+                            Some(state) => Some((params, state)),
+                            None => None,
+                        })
+                        .collect();
+
+                    apply_fixture_states_to_canvas(&fixtures, canvas_state);
+                }
+            }
+        }
+
         false
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         let changed = self.props.neq_assign(props);
-
-        if let Some(canvas_state) = self.canvas_state.as_mut() {
-            let fixtures: Vec<(&FixtureParams, &FixtureState)> = self
-                .props
-                .fixture_states
-                .values()
-                .filter_map(|(params, state)| match state {
-                    Some(state) => Some((params, state)),
-                    None => None,
-                })
-                .collect();
-
-            apply_fixture_states_to_canvas(&fixtures, canvas_state);
-        }
 
         false
     }
@@ -231,10 +247,6 @@ impl Component for Preview3dPage {
                 lights,
                 hemispheric_light,
             });
-
-            self.tick = Some(gloo::timers::callback::Interval::new(1_000, || {
-                console_log!("hello...");
-            }));
 
             console_log!("{:?}", self.canvas_state);
         }
