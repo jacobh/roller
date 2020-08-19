@@ -266,7 +266,12 @@ async fn main() -> Result<(), async_std::io::Error> {
             Event::Input(event) => {
                 state.apply_input_event(event);
             }
-            Event::Clock(event) => state.clock.apply_event(event),
+            Event::Clock(event) => {
+                state.clock.apply_event(event);
+                web_server_message_send
+                    .send(ServerMessage::ClockUpdated(state.clock.clone()))
+                    .await;
+            }
         }
     }
     unreachable!()
