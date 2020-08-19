@@ -85,34 +85,18 @@ impl Component for Preview3dPage {
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         let changed = self.props.neq_assign(props);
 
-        // very crudely light the entire room by adding up all the dimmer values
-        let total_dimmer: f64 = self
-            .props
-            .fixture_states
-            .values()
-            .filter_map(|(_, state)| state.as_ref())
-            .map(|state| state.dimmer)
-            .sum();
-
         if let Some(canvas_state) = self.canvas_state.as_mut() {
-            canvas_state
-                .hemispheric_light
-                .set_intensity(0.05 + total_dimmer / 40.0);
-            canvas_state.scene.set_fog_color(babylon::Color3::new(
-                total_dimmer / 50.0,
-                total_dimmer / 50.0,
-                total_dimmer / 50.0,
-            ));
+            let fixtures: Vec<(&FixtureParams, &FixtureState)> = self
+                .props
+                .fixture_states
+                .values()
+                .filter_map(|(params, state)| match state {
+                    Some(state) => Some((params, state)),
+                    None => None,
+                })
+                .collect();
 
-            for (id, (params, state)) in self.props.fixture_states.iter() {
-                if let Some(state) = state {
-                    let light = canvas_state.lights.get_mut(id);
-
-                    if let Some(light) = light {
-                        light.set_dimmer(state.dimmer);
-                    }
-                }
-            }
+            apply_fixture_states_to_canvas(&fixtures, canvas_state);
         }
 
         false
@@ -264,6 +248,31 @@ impl Component for Preview3dPage {
                     <canvas id="preview-3d-canvas" ref=self.canvas_ref.clone()></canvas>
                 </div>
             </div>
+        }
+    }
+}
+
+fn apply_fixture_states_to_canvas(
+    fixtures: &[(&FixtureParams, &FixtureState)],
+    canvas_state: &mut CanvasState,
+) {
+    // very crudely light the entire room by adding up all the dimmer values
+    let total_dimmer: f64 = fixtures.iter().map(|(_, state)| state.dimmer).sum();
+
+    canvas_state
+        .hemispheric_light
+        .set_intensity(0.05 + total_dimmer / 40.0);
+    canvas_state.scene.set_fog_color(babylon::Color3::new(
+        total_dimmer / 50.0,
+        total_dimmer / 50.0,
+        total_dimmer / 50.0,
+    ));
+
+    for (params, state) in fixtures.iter() {
+        let light = canvas_state.lights.get_mut(&params.id);
+
+        if let Some(light) = light {
+            light.set_dimmer(state.dimmer);
         }
     }
 }
