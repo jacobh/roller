@@ -169,6 +169,9 @@ impl Component for App {
                     fader_value,
                 )));
             }
+            AppMsg::ServerMessage(ServerMessage::ClockUpdated(clock)) => {
+                self.clock = Rc::new(clock);
+            }
             AppMsg::ServerMessage(ServerMessage::ButtonStatesUpdated(updates)) => {
                 for (location, coords, state) in updates {
                     let grid = self.button_states.get_mut(&location).unwrap();

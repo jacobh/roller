@@ -1,4 +1,5 @@
 use chrono::{DateTime, Duration, Utc};
+use serde::{Deserialize, Serialize};
 
 pub mod offset;
 pub mod snapshot;
@@ -21,13 +22,13 @@ pub enum ClockEvent {
     Tap(DateTime<Utc>),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 enum ClockState {
     Manual { taps: Vec<DateTime<Utc>> },
     Automatic,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Clock {
     started_at: DateTime<Utc>,
     bpm: f64,

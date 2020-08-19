@@ -28,6 +28,7 @@ pub enum ClientMessage {
 pub enum ServerMessage {
     ButtonStatesUpdated(Vec<(ButtonGridLocation, ButtonCoordinate, ButtonState)>),
     ButtonLabelsUpdated(Vec<(ButtonGridLocation, ButtonCoordinate, String)>),
+    ClockUpdated(clock::Clock),
     FixtureParamsUpdated(Vec<(FixtureId, FixtureParams)>),
     FixtureGroupStatesUpdated(Vec<(Option<FixtureGroupId>, FixtureGroupState)>),
 }

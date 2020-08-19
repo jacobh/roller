@@ -18,4 +18,4 @@ uuid = { version = "*", features = ["serde", "v4"] }
 itertools = "*"
 rand = "*"
 indexmap = { version = "*", features = ["serde-1"] }
-chrono = "*"
+chrono = { version = "*", features = ["serde"] }
