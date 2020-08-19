@@ -7,7 +7,10 @@ use yew::prelude::*;
 use roller_protocol::{
     clock::Clock,
     fixture::{FixtureGroupId, FixtureId, FixtureLocation, FixtureParams, FixtureState},
-    lighting_engine::FixtureGroupState,
+    lighting_engine::{
+        render::{render_fixture_states, FixtureStateRenderContext},
+        FixtureGroupState,
+    },
 };
 
 use crate::{console_log, js::babylon, yewtil::neq_assign::NeqAssign};
@@ -94,17 +97,28 @@ impl Component for Preview3dPage {
         match msg {
             Preview3dMsg::Tick => {
                 if let Some(canvas_state) = self.canvas_state.as_mut() {
-                    let fixtures: Vec<(&FixtureParams, &FixtureState)> = self
+                    let fixture_group_states: Vec<(&FixtureGroupId, &FixtureGroupState)> =
+                        self.props.fixture_group_states.iter().collect();
+
+                    let fixture_params: Vec<&FixtureParams> = self
                         .props
                         .fixture_states
                         .values()
-                        .filter_map(|(params, state)| match state {
-                            Some(state) => Some((params, state)),
-                            None => None,
-                        })
+                        .map(|(params, _)| params)
                         .collect();
 
-                    apply_fixture_states_to_canvas(&fixtures, canvas_state);
+                    let fixture_states = render_fixture_states(
+                        FixtureStateRenderContext {
+                            base_state: &self.props.base_fixture_group_state,
+                            fixture_group_states: &fixture_group_states,
+                            clock_snapshot: self.props.clock.snapshot(),
+                            // TODO
+                            master_dimmer: 1.0,
+                        },
+                        &fixture_params,
+                    );
+
+                    apply_fixture_states_to_canvas(&fixture_states, canvas_state);
                 }
             }
         }
@@ -265,7 +279,7 @@ impl Component for Preview3dPage {
 }
 
 fn apply_fixture_states_to_canvas(
-    fixtures: &[(&FixtureParams, &FixtureState)],
+    fixtures: &[(&FixtureParams, FixtureState)],
     canvas_state: &mut CanvasState,
 ) {
     // very crudely light the entire room by adding up all the dimmer values
