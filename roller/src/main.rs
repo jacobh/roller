@@ -75,15 +75,6 @@ async fn run_tick<'a>(
         dmx_sender.send((universe as i32, dmx_data)).await;
     }
 
-    web_server_message_send
-        .send(ServerMessage::FixtureStatesUpdated(
-            new_fixture_states
-                .into_iter()
-                .map(|(params, state)| (params.id, state))
-                .collect(),
-        ))
-        .await;
-
     // find any fixture group states that have updated since last tick
     let updated_fixture_group_states = {
         let mut states = vec![];

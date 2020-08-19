@@ -186,9 +186,6 @@ impl Component for App {
                     self.fixture_params.insert(fixture_id, fixture_params);
                 }
             }
-            AppMsg::ServerMessage(ServerMessage::FixtureStatesUpdated(updates)) => {
-                // TODO remove
-            }
             AppMsg::ServerMessage(ServerMessage::FixtureGroupStatesUpdated(updates)) => {
                 for (fixture_group_id, fixture_group_state) in updates {
                     if let Some(fixture_group_id) = fixture_group_id {
