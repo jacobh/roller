@@ -181,6 +181,12 @@ extern "C" {
     #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
     pub fn set_intensity(this: &Light, val: f64);
 
+    #[wasm_bindgen(method, getter, js_namespace = BABYLON)]
+    pub fn diffuse(this: &Light) -> Color3;
+
+    #[wasm_bindgen(method, setter, js_namespace = BABYLON)]
+    pub fn set_diffuse(this: &Light, val: Color3);
+
     #[wasm_bindgen(extends = Light)]
     #[derive(Debug, Clone)]
     pub type HemisphericLight;

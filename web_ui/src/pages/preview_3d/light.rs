@@ -4,7 +4,7 @@ use crate::{
     pages::preview_3d::{materials::load_lightbeam_falloff, Vector},
 };
 
-const SPOT_LIGHT_MAX_INTENSITY: f64 = 8.0;
+const SPOT_LIGHT_MAX_INTENSITY: f64 = 10.0;
 
 #[derive(Debug, Clone)]
 pub struct Light {
@@ -26,8 +26,12 @@ impl Light {
     pub fn set_color(&mut self, color: (f64, f64, f64)) {
         if self.color != color {
             self.color = color;
-            self.cone_material
-                .set_emissive_color(&babylon::Color3::new(color.0, color.1, color.2));
+
+            let babylon_color = babylon::Color3::new(color.0, color.1, color.2);
+
+            self.cone_material.set_emissive_color(&babylon_color);
+
+            self.spot_light.set_diffuse(babylon_color);
         }
     }
 }

@@ -277,15 +277,45 @@ fn apply_fixture_states_to_canvas(
     canvas_state: &mut CanvasState,
 ) {
     // very crudely light the entire room by adding up all the dimmer values
-    let total_dimmer: f64 = fixtures.iter().map(|(_, state)| state.dimmer).sum();
+    let total_dimmer: ((f64, f64, f64), f64) = fixtures
+        .iter()
+        .map(|(_, state)| {
+            let color = state
+                .beams
+                .iter()
+                .filter_map(|beam| beam.color)
+                .nth(0)
+                .unwrap_or((1.0, 1.0, 1.0));
+            let (r, g, b) = color;
+
+            (
+                (r * state.dimmer, g * state.dimmer, b * state.dimmer),
+                state.dimmer,
+            )
+        })
+        .fold(
+            ((0.0, 0.0, 0.0), 0.0),
+            |((r1, g1, b1), dimmer1), ((r2, g2, b2), dimmer2)| {
+                ((r1 + r2, g1 + g2, b1 + b2), dimmer1 + dimmer2)
+            },
+        );
 
     canvas_state
         .hemispheric_light
-        .set_intensity(0.05 + total_dimmer / 40.0);
+        .set_intensity(0.05 + total_dimmer.1 / 30.0);
+
+    canvas_state
+        .hemispheric_light
+        .set_diffuse(babylon::Color3::new(
+            (total_dimmer.0).0 / fixtures.len() as f64,
+            (total_dimmer.0).1 / fixtures.len() as f64,
+            (total_dimmer.0).2 / fixtures.len() as f64,
+        ));
+
     canvas_state.scene.set_fog_color(babylon::Color3::new(
-        total_dimmer / 50.0,
-        total_dimmer / 50.0,
-        total_dimmer / 50.0,
+        (total_dimmer.0).0 / 40.0,
+        (total_dimmer.0).1 / 40.0,
+        (total_dimmer.0).2 / 40.0,
     ));
 
     for (params, state) in fixtures.iter() {
@@ -293,7 +323,7 @@ fn apply_fixture_states_to_canvas(
 
         if let Some(light) = light {
             light.set_dimmer(state.dimmer);
-            
+
             let color = state.beams.iter().filter_map(|beam| beam.color).nth(0);
             if let Some(color) = color {
                 light.set_color(color);
