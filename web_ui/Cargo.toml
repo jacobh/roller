@@ -29,4 +29,9 @@ version = "0.3"
 features = [
     "InputEvent",
     "HtmlCanvasElement",
+    "UrlSearchParams",
+    "Location",
+    "Document",
+    "Window",
+    "Url",
 ]
