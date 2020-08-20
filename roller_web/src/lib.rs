@@ -59,7 +59,13 @@ async fn browser_session(
 
     for message in initial_messages {
         let msg = bincode::serialize::<ServerMessage>(&message).unwrap();
-        tx.send(ws::Message::binary(msg)).await.unwrap();
+        match tx.send(ws::Message::binary(msg)).await {
+            Ok(()) => {}
+            Err(_) => {
+                dbg!("Client has hung up");
+                return;
+            }
+        }
     }
 
     enum Event {
@@ -149,7 +155,13 @@ pub fn serve_frontend(
                 }
                 _ => {}
             }
-            server_message_sender.send(server_message).await.unwrap();
+            match server_message_sender.send(server_message).await {
+                Ok(()) => {},
+                Err(_) => {
+                    dbg!("unable to broadcast server message");
+                    return;
+                }
+            }
         }
     });
 
