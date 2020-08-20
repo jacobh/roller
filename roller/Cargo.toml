@@ -12,7 +12,6 @@ roller_web = {path = "../roller_web"}
 async-std = { version = "*", features = ["attributes", "unstable"] }
 serde = { version = "*", features = ["derive"] }
 toml = "*"
-coremidi = "*"
 crossbeam = "*"
 futures = "*"
 palette = "*"
