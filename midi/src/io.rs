@@ -87,7 +87,7 @@ impl MidiInput {
     }
     #[cfg(not(target_os = "macos"))]
     pub fn new(name: &str) -> Result<MidiInput, MidiIoError> {
-        unimplemented!()
+        Err(MidiIoError::InitFailed)
     }
 }
 impl Stream for MidiInput {
@@ -152,7 +152,7 @@ impl MidiOutput {
     }
     #[cfg(not(target_os = "macos"))]
     pub fn new(name: &str) -> Result<MidiOutput, MidiIoError> {
-        unimplemented!()
+        Err(MidiIoError::InitFailed)
     }
     pub async fn send_packet(&self, packet: impl Into<Vec<u8>>) {
         self.output_sender.send(packet.into()).await
