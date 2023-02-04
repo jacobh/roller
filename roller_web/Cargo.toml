@@ -11,5 +11,5 @@ broadcaster = "*"
 futures = "*"
 rustc-hash = "*"
 warp = "*"
-tokio = { version = "0.2" }
+tokio = { version = "1.18" }
 bincode = "*"
